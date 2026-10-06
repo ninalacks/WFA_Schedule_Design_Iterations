@@ -22,10 +22,11 @@
   :root { --blue: #1f4e9c; }
   .panel {
     width: 340px; min-height: 640px; background: #fff; border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.12); position: relative; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.12); position: relative; overflow: visible;
     transition: width .25s ease;
   }
   .panel.collapsed { width: 56px; }
+  .panel.collapsed, .panel.animating { overflow: hidden; }
   .panel-body { width: 340px; min-height: 640px; padding: 20px 18px; position: relative; transition: opacity .15s ease; }
   .panel.collapsed .panel-body { opacity: 0; pointer-events: none; }
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 20px; }
@@ -48,6 +49,13 @@
   .clear-x { border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; padding: 0 4px; }
   .caret { font-size: 10px; color: var(--muted); }
 
+  .sel { position: relative; }
+  .sel select.field { padding-right: 62px; }
+  .sel select.field.empty { color: #666; }
+  .sel .caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .sel .clear-x { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); }
+  .clear-x:hover { color: var(--text); }
+  .clear-x:focus-visible { outline: 2px solid var(--focus); border-radius: 4px; }
   .dropdown { position: relative; }
   .popover {
     position: absolute; top: 44px; left: 0; width: 300px; background: #fff;
@@ -86,9 +94,14 @@
   .seg button[aria-pressed="true"] { background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
   .seg button:focus-visible { outline: 2px solid var(--focus); }
   .field .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hint { font-size: 12px; color: var(--muted); margin: 8px 4px 0; min-height: 16px; }
+  .hint { font-size: 13px; color: var(--muted); margin: 10px 4px 0; min-height: 18px; }
 
-  .footer { position: absolute; left: 18px; right: 18px; bottom: 18px; display: flex; justify-content: space-between; }
+  .footer { position: absolute; left: 18px; right: 18px; bottom: 18px; }
+  .footer .btn.primary { width: 100%; }
+  .clear-row { display: flex; justify-content: flex-end; margin: -6px 0 0; }
+  .link-btn { border: 0; background: none; padding: 4px 2px; font-size: 16px; color: var(--blue); text-decoration: underline; cursor: pointer; }
+  .link-btn:focus-visible { outline: 2px solid var(--focus); border-radius: 2px; }
+  .link-btn:disabled { color: #9aa3b0; cursor: default; }
   .btn { height: 44px; padding: 0 22px; border-radius: 6px; font-size: 17px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
   .btn.primary { background: var(--navy); color: #fff; border-color: var(--navy); font-weight: 600; }
   .btn:disabled { color: #b6bcc4; cursor: default; }
@@ -104,10 +117,16 @@
     </button>
   </div>
 
+  <div class="clear-row"><button class="link-btn" id="clearAll" disabled>Clear All</button></div>
+
   <label>Year</label>
-  <select class="field" id="year" style="appearance:none;-webkit-appearance:none;">
-    <option value="">--- Select a Value ---</option>
+  <div class="sel">
+    <select class="field empty" id="year" style="appearance:none;-webkit-appearance:none;">
+      <option value="">--- Select a Value ---</option>
     </select>
+    <button class="clear-x" type="button" aria-label="Clear Year" hidden>✕</button>
+    <span class="caret">▼</span>
+  </div>
 
   <label>Date</label>
   <div class="dropdown" id="dd">
@@ -123,19 +142,36 @@
       </div>
       <div class="head"><span>Period:</span><span style="grid-column:2 / span 4">Week:</span></div>
       <div class="scroll" id="grid"></div>
-      <div class="hint" id="hint"></div>
+      <div class="hint" id="hint" aria-live="polite"></div>
     </div>
   </div>
 
   <label>Process Manager</label>
-  <div class="field placeholder"><span class="label">--- Select a Value ---</span><span class="caret">▼</span></div>
+  <div class="sel">
+    <select class="field empty" style="appearance:none;-webkit-appearance:none;">
+      <option value="">--- Select a Value ---</option><option>Alex Rivera</option><option>Jordan Lee</option><option>Sam Patel</option>
+    </select>
+    <button class="clear-x" type="button" aria-label="Clear Process Manager" hidden>✕</button>
+    <span class="caret">▼</span>
+  </div>
   <label>Division</label>
-  <div class="field placeholder"><span class="label">--- Select a Value ---</span><span class="caret">▼</span></div>
+  <div class="sel">
+    <select class="field empty" style="appearance:none;-webkit-appearance:none;">
+      <option value="">--- Select a Value ---</option><option>Atlanta</option><option>Cincinnati</option><option>Dallas</option><option>Louisville</option>
+    </select>
+    <button class="clear-x" type="button" aria-label="Clear Division" hidden>✕</button>
+    <span class="caret">▼</span>
+  </div>
   <label>Status</label>
-  <div class="field placeholder"><span class="label">--- Select a Value ---</span><span class="caret">▼</span></div>
+  <div class="sel">
+    <select class="field empty" style="appearance:none;-webkit-appearance:none;">
+      <option value="">--- Select a Value ---</option><option>Draft</option><option>Scheduled</option><option>Complete</option>
+    </select>
+    <button class="clear-x" type="button" aria-label="Clear Status" hidden>✕</button>
+    <span class="caret">▼</span>
+  </div>
 
   <div class="footer">
-    <button class="btn" id="clearAll" disabled>Clear filters</button>
     <button class="btn primary">Apply</button>
   </div>
   </div>
@@ -164,6 +200,9 @@
   const $ = id => document.getElementById(id);
   const trigger = $('trigger'), popover = $('popover'), grid = $('grid'),
         hint = $('hint'), yearSel = $('year'), clearX = $('clearX'), clearAll = $('clearAll');
+
+  const sels = [...document.querySelectorAll('.sel')].map(w => ({ sel: w.querySelector('select'), x: w.querySelector('.clear-x') }));
+  const syncSel = ({ sel, x }) => { x.hidden = !sel.value; sel.classList.toggle('empty', !sel.value); };
 
   // Year options: previous, current, next
   [DEFAULT_YEAR - 1, DEFAULT_YEAR, DEFAULT_YEAR + 1].forEach(y => yearSel.add(new Option(y, y)));
@@ -238,7 +277,8 @@
     trigger.title = has ? label : '';
     trigger.classList.toggle('placeholder', !has);
     clearX.hidden = !has;
-    clearAll.disabled = !has && !year;
+    sels.forEach(syncSel);
+    clearAll.disabled = !has && !sels.some(o => o.sel.value);
   }
 
   const hasValue = () => mode === 'single' ? singles.size > 0 : committed.start !== null;
@@ -259,7 +299,7 @@
     render();
   }
   function syncDraft() { start = committed.start; end = committed.end; hover = null; }
-  function reset() { clearSelection(); year = ''; yearSel.value = ''; render(); }
+  function reset() { clearSelection(); year = ''; sels.forEach(o => { o.sel.value = ''; }); render(); }
 
   function pickPeriod(p) {
     if (mode !== 'range') return;                 // single mode: period numbers do nothing
@@ -315,12 +355,23 @@
   }
   $('modeRange').addEventListener('click', () => setMode('range'));
   $('modeSingle').addEventListener('click', () => setMode('single'));
+  // ✕ inside each select: shown only when it has a value
+  sels.forEach(o => {
+    o.sel.addEventListener('change', () => { syncSel(o); render(); });
+    o.x.addEventListener('click', () => {
+      o.sel.value = '';
+      o.sel.dispatchEvent(new Event('change'));   // Year's own handler also clears Date
+      o.sel.focus();
+    });
+  });
   clearAll.addEventListener('click', () => { reset(); setOpen(false); });
 
   // Panel open / close — the filters and their selections are kept while collapsed
   const panel = $('panel'), body = $('panelBody'), collapseBtn = $('collapseBtn'), expandBtn = $('expandBtn');
   function setPanel(open) {
     if (!open) setOpen(false);                    // collapsing closes the date dropdown (an unfinished range is discarded)
+    panel.classList.add('animating');
+    setTimeout(() => panel.classList.remove('animating'), 300);
     panel.classList.toggle('collapsed', !open);
     body.inert = !open;                           // hidden controls leave the tab order
     expandBtn.tabIndex = open ? -1 : 0;
