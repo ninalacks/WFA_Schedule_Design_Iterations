@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duplicate Reset Blocking</title>
+<style>
+  :root {
+    --navy: #0f1f3d; --blue: #1f4e9c; --text: #1c2430; --muted: #5b6573; --label: #4a5565;
+    --border: #cfd4da; --focus: #2563eb; --range: #dbe8fe; --bg: #eef0f3;
+    --err: #b42318; --err-bg: #fef3f2; --info: #1f4e9c; --info-bg: #eef4ff; --off: #98a1ad;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  button { font: inherit; color: inherit; }
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- Prototype controls (not part of the design) ---------- */
+  .proto { background: #fff; border: 1px dashed #9aa3b0; border-radius: 10px; padding: 12px 16px; margin: 0 auto 14px; max-width: 1000px; font-size: 14px; display: grid; gap: 10px; }
+  .prow { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .tag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .lbl { color: var(--muted); font-size: 13px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 2px; background: #eceef1; border-radius: 999px; padding: 3px; }
+  .seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 999px; color: var(--muted); cursor: pointer; font-size: 13px; }
+  .seg button[aria-pressed="true"] { background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .proto select { height: 32px; border: 1px solid var(--border); border-radius: 6px; padding: 0 8px; background: #fff; max-width: 280px; }
+  .link { border: 0; background: none; color: var(--blue); text-decoration: underline; cursor: pointer; padding: 2px; font-size: 13px; }
+  .about { max-width: 1000px; margin: 0 auto 16px; background: #fff; border-radius: 10px; padding: 12px 16px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .about b { color: var(--text); }
+
+  /* ---------- Modal ---------- */
+  .stage { max-width: 1000px; margin: 0 auto; }
+  .modal { background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.18); padding: 24px 32px 28px; position: relative; }
+  .mhead { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #e3e6ea; margin-bottom: 18px; }
+  .mhead h2 { margin: 0; font-size: 28px; }
+  .mclose { border: 0; background: none; font-size: 22px; color: var(--label); cursor: pointer; width: 36px; height: 36px; border-radius: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px 16px; }
+  .c3 { grid-column: span 3; } .c4 { grid-column: span 4; } .c6 { grid-column: span 6; } .c12 { grid-column: span 12; }
+  .fld { min-width: 0; }
+  .fld .l { display: block; font-weight: 600; font-size: 14px; color: var(--label); margin-bottom: 6px; }
+  .fld .l small { font-weight: 400; color: var(--muted); }
+  .rel { position: relative; }
+  .ctl { width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 6px; background: #fff; padding: 0 12px; font-size: 15px; color: var(--text); display: flex; align-items: center; gap: 8px; text-align: left; font-family: inherit; }
+  textarea.ctl { height: 72px; padding: 8px 12px; resize: vertical; font-family: ui-monospace, Menlo, monospace; font-size: 14px; display: block; }
+  button.ctl { cursor: pointer; }
+  select.ctl { appearance: none; -webkit-appearance: none; padding-right: 30px; cursor: pointer; }
+  .ctl .txt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ctl.empty .txt, select.ctl.empty { color: #666; }
+  .ctl[aria-expanded="true"] { border: 2px solid var(--focus); padding: 0 11px; }
+  .ctl.ro { background: #f1f3f5; color: var(--muted); }
+  .ctl.locked { background: #eceef1; color: var(--off); cursor: not-allowed; }
+  .ctl.err { border-color: var(--err); box-shadow: 0 0 0 1px var(--err); }
+  .caret { position: absolute; right: 12px; top: 19px; transform: translateY(-50%); font-size: 10px; color: var(--muted); pointer-events: none; }
+  .xbtn { position: absolute; right: 30px; top: 19px; transform: translateY(-50%); border: 0; background: none; font-size: 17px; color: var(--muted); cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+  .xbtn:hover { color: var(--text); }
+  .lockico { position: absolute; right: 12px; top: 19px; transform: translateY(-50%); color: var(--off); display: flex; pointer-events: none; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+  .errmsg { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; font-size: 13px; line-height: 1.45; color: var(--err); background: var(--err-bg); border-radius: 6px; padding: 8px 10px; }
+  .errmsg svg { flex: none; margin-top: 1px; }
+  .errmsg a, .pnote a, .mnote a, .osub a { color: var(--blue); text-decoration: underline; cursor: pointer; font-weight: 600; }
+  .mfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+  .cancel { border: 0; background: none; font-size: 18px; padding: 8px 8px; cursor: pointer; }
+  .submit { height: 44px; padding: 0 26px; border-radius: 6px; font-size: 18px; font-weight: 600; background: var(--navy); color: #fff; border: 1px solid var(--navy); cursor: pointer; }
+  .submit[aria-disabled="true"] { background: #c9cfda; border-color: #c9cfda; cursor: not-allowed; }
+
+  /* ---------- Date picker popover ---------- */
+  .picker { position: absolute; top: calc(100% + 4px); left: 0; width: 330px; background: #fff; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 30; padding: 10px 12px 10px; }
+  .picker[hidden], .menu[hidden], .errmsg[hidden], .lockico[hidden], .caret[hidden], .xbtn[hidden] { display: none; }
+  .yr { display: flex; justify-content: center; align-items: center; gap: 28px; padding: 4px 0 10px; border-bottom: 1px solid #e3e6ea; margin-bottom: 8px; }
+  .yr b { font-size: 20px; }
+  .yr button { border: 0; background: none; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 4px; color: var(--text); }
+  .phead, .prow2 { display: grid; grid-template-columns: 56px repeat(4, 1fr); align-items: center; }
+  .phead { color: var(--muted); font-size: 14px; padding-left: 4px; margin-bottom: 4px; }
+  .pscroll { max-height: 250px; overflow-y: auto; }
+  .prow2 { height: 42px; position: relative; }
+  .prow2::before { content: ""; position: absolute; left: 56px; top: 4px; bottom: 4px; border-left: 1px solid #e3e6ea; }
+  .plab { padding-left: 14px; font-size: 15px; }
+  .wk { height: 34px; margin: 4px 0; border: 0; background: transparent; font-size: 15px; color: var(--text); cursor: pointer; display: grid; place-items: center; position: relative; }
+  .wk span { position: relative; z-index: 1; }
+  .wk.inr { background: var(--range); }
+  .wk.bad { background: #fde2df; }
+  .wk.edge::before { content: ""; position: absolute; width: 34px; height: 34px; border-radius: 50%; background: var(--navy); }
+  .wk.edge span { color: #fff; }
+  .wk[aria-disabled="true"] { color: #b3bac4; cursor: not-allowed; }
+  .wk.hatch[aria-disabled="true"] { background: repeating-linear-gradient(135deg, #e9ecf0 0 4px, #fff 4px 8px); border-radius: 4px; color: #8f98a5; }
+  .pnote { margin-top: 8px; border-top: 1px solid #e3e6ea; padding-top: 8px; font-size: 13px; color: var(--muted); line-height: 1.45; min-height: 0; }
+  .pnote:empty { display: none; }
+  .pnote.error { color: var(--err); }
+  .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; background: repeating-linear-gradient(135deg, #cfd5dd 0 3px, #fff 3px 6px); border: 1px solid #c3cad3; }
+
+  /* ---------- Commodity menu ---------- */
+  .menu { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; min-width: 300px; background: #fff; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 30; padding: 10px 8px 8px 10px; }
+  .menu input[type=search] { width: calc(100% - 2px); height: 38px; border: 1px solid var(--border); border-radius: 6px; padding: 0 12px; font-size: 15px; margin-bottom: 8px; }
+  .mnote { background: var(--info-bg); color: #163a73; border-radius: 6px; padding: 8px 10px; font-size: 13px; line-height: 1.45; margin: 0 4px 8px 0; }
+  .opts { max-height: 250px; overflow-y: auto; padding-right: 4px; }
+  .opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 8px; border-radius: 4px; font-size: 15px; cursor: pointer; }
+  .opt:hover, .opt:focus { background: #f3f5f8; outline: none; }
+  .opt:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .opt[aria-disabled="true"] { color: var(--off); cursor: not-allowed; }
+  .opt[aria-disabled="true"]:hover { background: transparent; }
+  .opt.hatch[aria-disabled="true"] { background: repeating-linear-gradient(135deg, #e9ecf0 0 4px, #fff 4px 8px); color: #7d8795; border-radius: 4px; }
+  .opt .ico { flex: none; margin-top: 2px; color: var(--off); display: flex; }
+  .osub { display: block; font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .ohead { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 10px 8px 4px; border-top: 1px solid #e3e6ea; margin-top: 6px; }
+  .none { padding: 12px 8px; color: var(--muted); font-size: 14px; }
+
+  /* ---------- Tooltips ---------- */
+  .kt-tip { position: fixed; z-index: 100; pointer-events: none; font-family: Roboto, -apple-system, "Segoe UI", sans-serif; }
+  .kt-tip[hidden] { display: none; }
+  .kt-tip.kt { background: #1f2023; color: #fff; border-radius: 8px; padding: 14px 20px; max-width: 290px; font-size: 16px; line-height: 1.6; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .kt-tip.kt::before { content: ""; position: absolute; top: -10px; left: 22px; border: 10px solid transparent; border-top: 0; border-bottom-color: #1f2023; }
+  .kt-tip.old { background: #555; color: #fff; border-radius: 3px; padding: 6px 10px; max-width: 250px; font-size: 14px; line-height: 1.35; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 120; }
+  .toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+  @media (max-width: 760px) { .c3, .c4, .c6 { grid-column: span 12; } .modal { padding: 18px; } }
+</style>
+</head>
+<body>
+
+<div class="proto">
+  <div class="prow">
+    <span class="tag">Prototype controls</span>
+    <span class="lbl">Direction</span>
+    <span class="seg" id="variantSeg" role="group" aria-label="Design direction"></span>
+  </div>
+  <div class="prow">
+    <span class="lbl">Modal</span>
+    <span class="seg" id="modeSeg" role="group" aria-label="Modal type">
+      <button type="button" data-m="add" aria-pressed="true">Add new entry</button>
+      <button type="button" data-m="edit" aria-pressed="false">Edit existing entry</button>
+    </span>
+    <select id="editPick" aria-label="Entry to edit" disabled></select>
+    <span class="lbl">Try</span>
+    <button type="button" class="link" id="tryA">Date first → conflict in the Commodity list</button>
+    <button type="button" class="link" id="tryB">Commodity first → conflict in the Date picker</button>
+    <button type="button" class="link" id="resetData">Reset demo data</button>
+  </div>
+</div>
+<div class="about" id="about"></div>
+
+<div class="stage">
+  <div class="modal" role="dialog" aria-labelledby="mTitle">
+    <div class="mhead"><h2 id="mTitle">Add New Entry</h2><button type="button" class="mclose" aria-label="Close">✕</button></div>
+
+    <div class="grid">
+      <!-- Date -->
+      <div class="fld c4" id="dateFld">
+        <label class="l" id="dateLbl">Date</label>
+        <div class="rel" id="dateRel">
+          <button type="button" class="ctl empty" id="dateTrig" aria-haspopup="dialog" aria-expanded="false" aria-labelledby="dateLbl dateText"><span id="dateIco" aria-hidden="true" hidden>▦</span><span class="txt" id="dateText">--- Select a Value ---</span></button>
+          <button type="button" class="xbtn" id="dateX" aria-label="Clear date" hidden>✕</button>
+          <span class="caret">▼</span>
+          <div class="picker" id="picker" hidden>
+            <div class="yr"><button type="button" id="yPrev" aria-label="Previous year">◀</button><b id="yNow">2026</b><button type="button" id="yNext" aria-label="Next year">▶</button></div>
+            <div class="phead"><span>Period:</span><span>Week:</span></div>
+            <div class="pscroll" id="pgrid"></div>
+            <div class="pnote" id="pNote"></div>
+          </div>
+        </div>
+        <div class="errmsg" id="dateErr" role="alert" hidden></div>
+      </div>
+
+      <!-- Type -->
+      <div class="fld c4">
+        <label class="l" for="typeSel">Type</label>
+        <div class="rel"><select class="ctl empty" id="typeSel"><option value="">--- Select a Value ---</option><option>New</option><option>Update</option><option>Remove</option></select><span class="caret">▼</span></div>
+      </div>
+
+      <!-- Division -->
+      <div class="fld c4">
+        <label class="l" for="divSel">Division</label>
+        <div class="rel"><select class="ctl empty" id="divSel"><option value="">--- Select a Value ---</option><option>1 selected</option><option>4 selected</option><option>15 selected</option></select><span class="caret">▼</span></div>
+      </div>
+
+      <div class="c12" id="crossRow" hidden><label class="chk"><input type="checkbox" checked disabled> This is a cross-commodity reset</label></div>
+
+      <!-- Department -->
+      <div class="fld c3">
+        <label class="l" for="deptSel">Department</label>
+        <div class="rel"><select class="ctl empty" id="deptSel"><option value="">--- Select a Value ---</option><option>01 - Grocery</option></select><span class="caret" id="deptCaret">▼</span><span class="lockico" id="deptLock" hidden></span></div>
+      </div>
+
+      <!-- Commodity -->
+      <div class="fld c3" id="cmFld">
+        <label class="l" id="cmLbl">Commodity</label>
+        <div class="rel" id="cmRel">
+          <button type="button" class="ctl empty" id="cmTrig" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="cmLbl cmText"><span class="txt" id="cmText">--- Select a Value ---</span></button>
+          <span class="lockico" id="cmLock" hidden></span>
+          <button type="button" class="xbtn" id="cmX" aria-label="Clear commodity" hidden>✕</button>
+          <span class="caret" id="cmCaret">▼</span>
+          <div class="menu" id="cmMenu" hidden>
+            <input type="search" id="cmSearch" placeholder="Search..." aria-label="Search commodities">
+            <div class="mnote" id="cmNote" hidden></div>
+            <div class="opts" id="cmOpts" role="listbox" aria-label="Commodity"></div>
+          </div>
+        </div>
+        <div class="errmsg" id="cmErr" role="alert" hidden></div>
+      </div>
+
+      <div class="fld c3"><span class="l">CM</span><div class="ctl ro" id="cmVal">—</div></div>
+      <div class="fld c3"><span class="l">PM</span><div class="ctl ro" id="pmVal">—</div></div>
+
+      <div class="fld c6">
+        <label class="l" for="sizeSel" id="sizeLbl">Core Size</label>
+        <div class="rel"><select class="ctl empty" id="sizeSel"><option value="">--- Select a Value ---</option><option>4</option><option>6</option><option>8</option><option>12</option></select><span class="caret">▼</span></div>
+      </div>
+      <div class="fld c6"><label class="l" for="hours">Hours</label><input class="ctl" id="hours" placeholder="Enter a value" inputmode="numeric"></div>
+
+      <div class="fld c12"><label class="l" for="comments">Comments</label><textarea class="ctl" id="comments" placeholder="Comments"></textarea></div>
+      <div class="fld c12"><label class="l" for="notes">Internal Notes <small>(only visible in the history)</small></label><textarea class="ctl" id="notes" placeholder="Internal notes (ex. explaining why the change is happening)"></textarea></div>
+    </div>
+
+    <div class="mfoot"><button type="button" class="cancel" id="cancel">Cancel</button><button type="button" class="submit" id="submit" aria-disabled="true">Submit</button></div>
+  </div>
+</div>
+
+<div class="kt-tip" id="tip" role="tooltip" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const WEEKS = 4, PERIODS = 13;
+
+  /* ---------- Calendar helpers ---------- */
+  const idx = (p, w) => (p - 1) * WEEKS + (w - 1);
+  const pw = i => ({ p: Math.floor(i / WEEKS) + 1, w: (i % WEEKS) + 1 });
+  const wname = i => `P${pw(i).p}W${pw(i).w}`;
+  const rlabel = (a, b) => { const A = pw(a), B = pw(b); return a === b ? wname(a) : A.p === B.p ? `P${A.p}W${A.w}-${B.w}` : `${wname(a)}-${wname(b)}`; };
+  const full = r => `${r.year}: ${rlabel(r.a, r.b)}`;
+
+  /* ---------- Demo data (invented) ---------- */
+  const COMMS = [
+    { code: '003', name: 'Can Beans',         cm: 'Rachel Thompson', pm: 'Christopher Brown' },
+    { code: '005', name: 'Can Seafood',       cm: 'Marcus Hill',     pm: 'Dana Whitfield' },
+    { code: '007', name: 'Shelf Stable Milk', cm: 'Priya Nair',      pm: 'Alex Rivera' },
+    { code: '012', name: 'Mixers',            cm: 'Jordan Lee',      pm: 'Sam Patel' },
+    { code: '016', name: 'Baking Needs',      cm: 'Dana Whitfield',  pm: 'Christopher Brown' },
+    { code: '017', name: 'Flour & Meal',      cm: 'Marcus Hill',     pm: 'Sam Patel' },
+    { code: '025', name: 'Tea',               cm: 'Priya Nair',      pm: 'Jordan Lee' },
+    { code: '030', name: 'Olive Oil',         cm: 'Rachel Thompson', pm: 'Alex Rivera' },
+  ];
+  const cmOf = code => COMMS.find(c => c.code === code);
+  const cname = code => `${code} - ${cmOf(code).name}`;
+  const seed = () => [
+    { id: 'e1', code: '003', year: 2026, a: idx(6, 1),  b: idx(6, 4),  div: 15, type: 'Update', hours: '3', size: '8',  comments: 'Approved by category manager. ALIGN WITH 012 - Mixers' },
+    { id: 'e2', code: '003', year: 2026, a: idx(9, 1),  b: idx(9, 2),  div: 4,  type: 'New',    hours: '2', size: '6',  comments: '' },
+    { id: 'e3', code: '012', year: 2026, a: idx(6, 2),  b: idx(7, 1),  div: 4,  type: 'Update', hours: '4', size: '8',  comments: '' },
+    { id: 'e4', code: '025', year: 2026, a: idx(8, 1),  b: idx(8, 4),  div: 15, type: 'Update', hours: '2', size: '4',  comments: '' },
+    { id: 'e5', code: '007', year: 2026, a: idx(11, 1), b: idx(11, 2), div: 1,  type: 'New',    hours: '3', size: '12', comments: '' },
+  ];
+
+  /* ---------- Design directions (feature flags) ---------- */
+  const VARIANTS = {
+    current:  { label: 'Current', tip: 'slow',
+      about: '<b>Current behavior (baseline).</b> Unavailable options are greyed. The reason appears only on hover, after a delay, in the old grey tooltip. Nothing shows on keyboard focus.' },
+    chosen:   { label: '1 + 5 · Tooltip + calendar state', tip: 'fast', calendar: true, legend: false,
+      about: '<b>1 + 5 · Tooltip + calendar state.</b> Unavailable commodities stay greyed and explain themselves in the instant Kroger tooltip. In the Date picker, taken weeks are hatched, with the same tooltip on hover and keyboard focus. No legend line.' },
+    hatchlist:{ label: '1 + 5 + hatched list', tip: 'fast', calendar: true, legend: false, hatchList: true,
+      about: '<b>1 + 5 + hatched list.</b> Same as 1 + 5, but unavailable commodities in the dropdown get the same hatch pattern as the taken weeks in the calendar, so both lists signal “taken” the same way. Same tooltip.' },
+    tooltip:  { label: '1 · Better tooltip', tip: 'fast',
+      about: '<b>1 · Better tooltip.</b> Same greying, but the reason appears instantly on hover <i>and</i> keyboard focus, in the Kroger tooltip style. The reason is still hidden until someone interacts.' },
+    note:     { label: '2 · Say it in the list', tip: 'none', note: true, second: true,
+      about: '<b>2 · Say it in the list.</b> The reason is written into the dropdown: a note at the top, plus an icon and a second line on each unavailable option. In the calendar, a note under the grid names the commodity.' },
+    group:    { label: '3 · Group unavailable', tip: 'none', note: true, second: true, group: true,
+      about: '<b>3 · Group unavailable.</b> As 2, but unavailable options move into their own “Already scheduled” section at the bottom of the list. The calendar works as in 2 (it has no list to group).' },
+    validate: { label: '4 · Allow, then validate', tip: 'none', validate: true,
+      about: '<b>4 · Allow, then validate.</b> Nothing is disabled. Pick anything: a conflict shows as an inline error under the field with a link to the existing entry, and Submit stays off until it’s resolved.' },
+    calendar: { label: '5 · Calendar state (layer)', tip: 'slow', calendar: true,
+      about: '<b>5 · Calendar state.</b> A layer for the Date picker only: taken weeks are hatched, with a legend naming the commodity. The commodity list is unchanged from today. Meant to combine with 2.' },
+    combo:    { label: '2 + 5 + link', tip: 'fast', note: true, second: true, calendar: true, link: true, lock: true,
+      about: '<b>2 + 5 + link.</b> Note and second line in the list, hatched weeks and a legend in the calendar, a link to the existing entry, a lock icon for locked fields in Edit, and the fast tooltip as a backup.' },
+  };
+
+  /* ---------- State ---------- */
+  let variant = 'chosen';
+  let entries = seed();
+  let modal = { mode: 'add', id: null };
+  const blank = () => ({ range: null, code: null, last: null });
+  let form = blank();
+  let pend = null, hover = null, pickYear = 2026, pickerMsg = '';
+  const F = () => VARIANTS[variant];
+  const ownId = () => modal.mode === 'edit' ? modal.id : null;
+
+  /* ---------- Conflict logic: same commodity + overlapping date; the whole range is blocked ---------- */
+  const others = code => entries.filter(e => e.code === code && e.id !== ownId());
+  const overlap = (e, r) => e.year === r.year && e.a <= r.b && r.a <= e.b;
+  const conflictsFor = (code, r) => (code && r) ? others(code).filter(e => overlap(e, r)) : [];
+  const occupied = (code, year) => {
+    const s = new Set();
+    if (code) others(code).filter(e => e.year === year).forEach(e => { for (let i = e.a; i <= e.b; i++) s.add(i); });
+    return s;
+  };
+
+  const ICON = {
+    lock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    cal: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+    err: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>',
+  };
+  $('deptLock').innerHTML = ICON.lock; $('cmLock').innerHTML = ICON.lock;
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const toast = msg => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); };
+  const divs = n => `${n} ${n === 1 ? 'division' : 'divisions'}`;
+  const TIP_COMM = 'Already scheduled for this date. Choose a different date or commodity.';
+  const TIP_DATE = 'Already scheduled for this commodity. Choose a different date.';
+
+  /* ---------- Tooltip engine ---------- */
+  const tip = $('tip'); let tipTimer = null, tipEl = null, mx = 0, my = 0;
+  const hideTip = () => { clearTimeout(tipTimer); tipTimer = null; tipEl = null; tip.hidden = true; };
+  function showTip(el, byMouse) {
+    if (!el.isConnected) return;
+    const fast = F().tip === 'fast';
+    tip.textContent = el.dataset.tip; tip.className = 'kt-tip ' + (fast ? 'kt' : 'old'); tip.hidden = false;
+    if (fast) {
+      const r = el.getBoundingClientRect();
+      tip.style.left = Math.max(8, Math.min(r.left + 16, innerWidth - tip.offsetWidth - 8)) + 'px';
+      tip.style.top = (r.bottom + 12) + 'px';
+    } else { tip.style.left = Math.min(mx + 14, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (my + 18) + 'px'; }
+  }
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('[data-tip]');
+    if (!el || el === tipEl || F().tip === 'none') return;
+    hideTip(); tipEl = el;
+    tipTimer = setTimeout(() => showTip(el, true), F().tip === 'slow' ? 1100 : 0);   // old behavior waits ~1s
+  });
+  document.addEventListener('mouseout', e => { const el = e.target.closest('[data-tip]'); if (el && !el.contains(e.relatedTarget)) hideTip(); });
+  document.addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); if (el && F().tip === 'fast') showTip(el, false); });
+  document.addEventListener('focusout', hideTip);
+  document.addEventListener('scroll', e => { const t = e.target; if (tipEl && (t === document || (t.nodeType === 1 && t.contains(tipEl)))) hideTip(); }, true);
+
+  /* ---------- Date picker ---------- */
+  const pgrid = $('pgrid');
+  for (let p = 1; p <= PERIODS; p++) {
+    const row = document.createElement('div'); row.className = 'prow2';
+    row.innerHTML = `<div class="plab">${p}</div>` + [1, 2, 3, 4].map(w => `<button type="button" class="wk" data-i="${idx(p, w)}"><span>${w}</span></button>`).join('');
+    pgrid.appendChild(row);
+  }
+  const wkEls = [...pgrid.querySelectorAll('.wk')];
+  const pickerOpen = () => !$('picker').hidden;
+
+  function bounds() {
+    if (pend !== null) { const o = hover !== null ? hover : pend; return { a: Math.min(pend, o), b: Math.max(pend, o), draft: true, year: pickYear }; }
+    return form.range ? { a: form.range.a, b: form.range.b, draft: false, year: form.range.year } : null;
+  }
+  const anyIn = (set, a, b) => { for (let i = a; i <= b; i++) if (set.has(i)) return i; return -1; };
+
+  function renderPicker() {
+    $('yNow').textContent = pickYear;
+    const f = F(), occ = f.validate ? new Set() : occupied(form.code, pickYear);
+    const b = bounds(), show = b && b.year === pickYear;
+    const warnBad = (f.note || f.calendar);
+    const badPreview = show && b.draft && warnBad && anyIn(occ, b.a, b.b) >= 0;
+    wkEls.forEach(el => {
+      const i = +el.dataset.i, off = occ.has(i);
+      el.setAttribute('aria-disabled', off);
+      el.classList.toggle('hatch', off && !!f.calendar);
+      el.classList.toggle('edge', !!show && (i === b.a || i === b.b));
+      const inside = !!show && i > b.a && i < b.b;
+      el.classList.toggle('inr', inside && !badPreview);
+      el.classList.toggle('bad', inside && badPreview);
+      const { p, w } = pw(i);
+      el.setAttribute('aria-label', `Period ${p} week ${w}${off ? `, already scheduled for ${cname(form.code)}` : ''}`);
+      if (off && f.tip !== 'none') el.dataset.tip = TIP_DATE; else delete el.dataset.tip;
+    });
+    // footer note
+    const n = $('pNote'); n.className = 'pnote'; n.innerHTML = '';
+    if (pickerMsg) { n.classList.add('error'); n.textContent = pickerMsg; return; }
+    if (!form.code || !occ.size) return;
+    const first = others(form.code).find(e => e.year === pickYear);
+    const lnk = f.link && first ? ` · <a href="#" data-edit="${first.id}">Edit existing entry</a>` : '';
+    if (f.calendar && f.legend !== false) n.innerHTML = `<span class="sw"></span>Already scheduled for ${esc(cname(form.code))}${lnk}`;
+    else if (f.note) n.innerHTML = `Greyed weeks are already scheduled for ${esc(cname(form.code))}.${lnk}`;
+  }
+
+  function openPicker() {
+    closeMenu(); pickYear = form.range ? form.range.year : pickYear;
+    $('picker').hidden = false; $('dateTrig').setAttribute('aria-expanded', 'true'); renderPicker();
+    // scroll to the chosen range, or to the first taken week, so the relevant weeks are in view
+    const occ = [...occupied(form.code, pickYear)].sort((x, y) => x - y);
+    const target = form.range && form.range.year === pickYear ? form.range.a : occ.length ? occ[0] : null;
+    const sc = $('pgrid').parentElement;
+    sc.scrollTop = target === null ? 0 : Math.max(0, (pw(target).p - 2) * 42);
+  }
+  function closePicker() {
+    if (!pickerOpen()) return;
+    pend = null; hover = null; pickerMsg = '';       // an unfinished range is discarded
+    $('picker').hidden = true; $('dateTrig').setAttribute('aria-expanded', 'false'); renderPicker(); hideTip();
+  }
+  function pickWeek(i) {
+    const f = F(), occ = f.validate ? new Set() : occupied(form.code, pickYear);
+    if (occ.has(i)) return;                                   // unavailable week
+    if (pend === null) { pend = i; hover = null; pickerMsg = ''; }
+    else {
+      const a = Math.min(pend, i), b = Math.max(pend, i), hit = anyIn(occ, a, b);
+      if (hit >= 0) {                                         // whole range is blocked if it touches a taken week
+        if (f.note || f.calendar) pickerMsg = `That range includes ${wname(hit)}, which is already scheduled for ${cname(form.code)}. Choose a range that avoids it.`;
+        renderPicker(); return;
+      }
+      form.range = { year: pickYear, a, b }; form.last = 'date'; pend = null; hover = null; pickerMsg = '';
+    }
+    refresh();
+  }
+  pgrid.addEventListener('click', e => { const b = e.target.closest('.wk'); if (b) pickWeek(+b.dataset.i); });
+  pgrid.addEventListener('mouseover', e => { const b = e.target.closest('.wk'); if (b && pend !== null) { hover = +b.dataset.i; renderPicker(); } });
+  pgrid.addEventListener('mouseleave', () => { if (pend !== null && hover !== null) { hover = null; renderPicker(); } });
+  $('yPrev').addEventListener('click', () => { pickYear--; renderPicker(); });
+  $('yNext').addEventListener('click', () => { pickYear++; renderPicker(); });
+  $('dateTrig').addEventListener('click', () => { if (!pickerOpen()) openPicker(); });
+  $('dateX').addEventListener('click', () => { form.range = null; form.last = 'date'; pend = null; refresh(); $('dateTrig').focus(); });
+
+  /* ---------- Commodity menu ---------- */
+  const menuOpen = () => !$('cmMenu').hidden;
+  function rowsForMenu() {
+    const q = $('cmSearch').value.trim().toLowerCase(), f = F();
+    const items = COMMS.filter(c => cname(c.code).toLowerCase().includes(q)).map(c => ({ c, cs: f.validate ? [] : conflictsFor(c.code, form.range) }));
+    return items;
+  }
+  function renderMenu() {
+    const f = F(), items = rowsForMenu(), box = $('cmOpts'); box.textContent = '';
+    const unavailable = items.filter(x => x.cs.length);
+    const note = $('cmNote');
+    if (f.note && unavailable.length && form.range) {
+      note.hidden = false;
+      note.innerHTML = `Greyed options are already scheduled for ${esc(full(form.range))}.` + (f.link ? ' To add divisions to one of them, edit the existing entry.' : '');
+    } else note.hidden = true;
+    if (!items.length) { box.innerHTML = '<div class="none">No matches</div>'; return; }
+    const mk = ({ c, cs }) => {
+      const off = cs.length, d = document.createElement('div');
+      d.className = 'opt' + (off && f.hatchList ? ' hatch' : ''); d.setAttribute('role', 'option'); d.tabIndex = -1; d.dataset.code = c.code;
+      d.setAttribute('aria-disabled', !!off); d.setAttribute('aria-selected', form.code === c.code);
+      let sub = '';
+      if (off && f.second) {
+        const e = cs[0];
+        sub = `<span class="osub">Already scheduled for ${esc(rlabel(e.a, e.b))} · ${divs(e.div)}${cs.length > 1 ? ` (+${cs.length - 1} more)` : ''}` +
+              (f.link ? ` · <a href="#" data-edit="${e.id}">Edit entry</a>` : '') + '</span>';
+      }
+      d.innerHTML = (off && f.second ? `<span class="ico">${ICON.cal}</span>` : '') + `<span><span>${esc(cname(c.code))}</span>${sub}</span>`;
+      if (off) d.setAttribute('aria-description', `Already scheduled for ${rlabel(cs[0].a, cs[0].b)}`);
+      if (off && f.tip !== 'none') d.dataset.tip = TIP_COMM;
+      return d;
+    };
+    if (f.group) {
+      items.filter(x => !x.cs.length).forEach(x => box.appendChild(mk(x)));
+      if (unavailable.length) {
+        const h = document.createElement('div'); h.className = 'ohead'; h.textContent = `Already scheduled (${unavailable.length})`; box.appendChild(h);
+        unavailable.forEach(x => box.appendChild(mk(x)));
+      }
+    } else items.forEach(x => box.appendChild(mk(x)));
+  }
+  function openMenu() {
+    if (modal.mode === 'edit') return;
+    closePicker(); $('cmMenu').hidden = false; $('cmTrig').setAttribute('aria-expanded', 'true');
+    $('cmSearch').value = ''; renderMenu(); $('cmSearch').focus();
+  }
+  function closeMenu() { if (!menuOpen()) return; $('cmMenu').hidden = true; $('cmTrig').setAttribute('aria-expanded', 'false'); hideTip(); }
+  function chooseCommodity(code) { form.code = code; form.last = 'comm'; closeMenu(); refresh(); $('cmTrig').focus(); }
+  $('cmTrig').addEventListener('click', () => { if (!menuOpen()) openMenu(); });
+  $('cmSearch').addEventListener('input', renderMenu);
+  $('cmX').addEventListener('click', () => { form.code = null; form.last = 'comm'; refresh(); $('cmTrig').focus(); });
+  $('cmOpts').addEventListener('click', e => {
+    if (e.target.closest('a[data-edit]')) return;
+    const o = e.target.closest('.opt'); if (o && o.getAttribute('aria-disabled') !== 'true') chooseCommodity(o.dataset.code);
+  });
+  $('cmMenu').addEventListener('keydown', e => {
+    const opts = [...$('cmOpts').querySelectorAll('.opt')], i = opts.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); (opts[i + 1] || opts[0])?.focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (i <= 0) $('cmSearch').focus(); else opts[i - 1].focus(); }
+    else if ((e.key === 'Enter' || e.key === ' ') && i >= 0) { e.preventDefault(); const o = opts[i]; if (o.getAttribute('aria-disabled') !== 'true') chooseCommodity(o.dataset.code); }
+  });
+
+  /* ---------- Links to the existing entry ---------- */
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[data-edit]');
+    if (a) { e.preventDefault(); closePicker(); closeMenu(); openEdit(a.dataset.edit); toast(`Opened ${cname(entries.find(x => x.id === a.dataset.edit).code)} for editing`); }
+  });
+
+  /* ---------- Outside click / Esc ---------- */
+  document.addEventListener('mousedown', e => {
+    if (!$('dateRel').contains(e.target)) closePicker();
+    if (!$('cmRel').contains(e.target)) closeMenu();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (menuOpen()) { closeMenu(); $('cmTrig').focus(); } if (pickerOpen()) { closePicker(); $('dateTrig').focus(); } } });
+
+  /* ---------- Inline errors (direction 4) ---------- */
+  function renderErrors() {
+    const cs = F().validate ? conflictsFor(form.code, form.range) : [];
+    const on = cs.length > 0, field = form.last === 'date' ? 'date' : 'comm';
+    $('dateTrig').classList.toggle('err', on); $('cmTrig').classList.toggle('err', on);
+    ['dateErr', 'cmErr'].forEach(id => { $(id).hidden = true; $(id).innerHTML = ''; });
+    if (!on) return;
+    const e = cs[0], box = $(field === 'date' ? 'dateErr' : 'cmErr');
+    box.innerHTML = `${ICON.err}<span>${esc(cname(form.code))} is already scheduled for ${esc(rlabel(e.a, e.b))} in ${divs(e.div)}, which overlaps ${esc(full(form.range))}. ` +
+      `Choose a different ${field === 'date' ? 'date' : 'date or commodity'}, or <a href="#" data-edit="${e.id}">edit the existing entry</a> to add divisions.</span>`;
+    box.hidden = false;
+  }
+
+  /* ---------- Rendering ---------- */
+  function refresh() {
+    const edit = modal.mode === 'edit', f = F(), locked = edit;
+    $('mTitle').textContent = edit ? `Edit ${cname(modal.entryCode)}` : 'Add New Entry';
+    $('sizeLbl').textContent = edit ? 'POG Size' : 'Core Size';
+    $('crossRow').hidden = !edit;
+    // date
+    $('dateText').textContent = form.range ? full(form.range) : '--- Select a Value ---';
+    $('dateTrig').classList.toggle('empty', !form.range); $('dateIco').hidden = !form.range; $('dateX').hidden = !form.range;
+    // commodity
+    $('cmText').textContent = form.code ? cname(form.code) : '--- Select a Value ---';
+    $('cmTrig').classList.toggle('empty', !form.code); $('cmTrig').classList.toggle('locked', locked);
+    $('cmTrig').disabled = false; $('cmTrig').setAttribute('aria-disabled', locked);
+    $('cmX').hidden = !form.code || locked;
+    $('cmCaret').hidden = locked && !!f.lock; $('cmLock').hidden = !(locked && f.lock);
+    $('deptSel').classList.toggle('locked', locked); $('deptSel').disabled = locked;
+    $('deptCaret').hidden = locked && !!f.lock; $('deptLock').hidden = !(locked && f.lock);
+    if (locked) $('deptSel').value = '01 - Grocery';
+    $('cmVal').textContent = form.code ? cmOf(form.code).cm : '—'; $('pmVal').textContent = form.code ? cmOf(form.code).pm : '—';
+    renderErrors();
+    const blocked = conflictsFor(form.code, form.range).length > 0;
+    const ready = !!(form.range && form.code) && !blocked;
+    $('submit').setAttribute('aria-disabled', !ready);
+    if (pickerOpen()) renderPicker();
+    if (menuOpen()) renderMenu();
+    hideTip();
+    document.querySelectorAll('select.ctl').forEach(s => s.classList.toggle('empty', !s.value));
+  }
+  $('cmTrig').addEventListener('keydown', e => { if (modal.mode === 'edit' && (e.key === 'Enter' || e.key === ' ')) e.preventDefault(); });
+  document.querySelectorAll('select.ctl').forEach(s => s.addEventListener('change', () => s.classList.toggle('empty', !s.value)));
+
+  function resetFields() {
+    ['typeSel', 'divSel', 'sizeSel', 'hours', 'comments', 'notes'].forEach(id => { $(id).value = ''; });
+    $('deptSel').value = '';
+  }
+  function openAdd() { modal = { mode: 'add', id: null }; form = blank(); pend = null; hover = null; pickerMsg = ''; resetFields(); syncChrome(); refresh(); }
+  function openEdit(id) {
+    const e = entries.find(x => x.id === id); if (!e) return;
+    modal = { mode: 'edit', id, entryCode: e.code }; form = { range: { year: e.year, a: e.a, b: e.b }, code: e.code, last: null };
+    pend = null; hover = null; pickerMsg = ''; resetFields();
+    $('typeSel').value = e.type; $('divSel').value = `${e.div} selected`; $('sizeSel').value = e.size; $('hours').value = e.hours; $('comments').value = e.comments;
+    syncChrome(); refresh();
+  }
+
+  /* ---------- Submit ---------- */
+  $('submit').addEventListener('click', () => {
+    if ($('submit').getAttribute('aria-disabled') === 'true') { $('dateErr').hidden && $('cmErr').hidden || document.querySelector('.errmsg:not([hidden]) a')?.focus(); return; }
+    if (modal.mode === 'add') {
+      const n = parseInt($('divSel').value) || 1;
+      entries.push({ id: 'n' + Date.now(), code: form.code, year: form.range.year, a: form.range.a, b: form.range.b, div: n, type: $('typeSel').value || 'New', hours: $('hours').value, size: $('sizeSel').value, comments: $('comments').value });
+      toast(`Added ${cname(form.code)} · ${full(form.range)}. Try adding it again to see the block.`);
+    } else {
+      const e = entries.find(x => x.id === modal.id); Object.assign(e, { year: form.range.year, a: form.range.a, b: form.range.b });
+      toast(`Saved ${cname(e.code)} · ${full(form.range)}`);
+    }
+    openAdd();
+  });
+  $('cancel').addEventListener('click', () => openAdd());
+
+  /* ---------- Prototype chrome ---------- */
+  const seg = $('variantSeg');
+  Object.entries(VARIANTS).forEach(([k, v]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.v = k; b.textContent = v.label; seg.appendChild(b); });
+  function syncChrome() {
+    seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === variant));
+    $('about').innerHTML = F().about;
+    $('modeSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modal.mode));
+    const pick = $('editPick'); pick.disabled = modal.mode !== 'edit';
+    pick.innerHTML = entries.map(e => `<option value="${e.id}">${esc(cname(e.code))} · ${esc(full(e))}</option>`).join('');
+    if (modal.mode === 'edit') pick.value = modal.id;
+  }
+  seg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; variant = b.dataset.v; pickerMsg = ''; closeMenu(); syncChrome(); refresh(); });
+  $('modeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; closePicker(); closeMenu(); b.dataset.m === 'add' ? openAdd() : openEdit($('editPick').value || entries[0].id); });
+  $('editPick').addEventListener('change', e => { closePicker(); closeMenu(); openEdit(e.target.value); });
+  const resetAll = () => { closePicker(); closeMenu(); entries = seed(); openAdd(); };
+  $('resetData').addEventListener('click', resetAll);
+  $('tryA').addEventListener('click', () => { resetAll(); form.range = { year: 2026, a: idx(6, 1), b: idx(6, 4) }; form.last = 'date'; refresh(); openMenu(); });
+  $('tryB').addEventListener('click', () => { resetAll(); form.code = '003'; form.last = 'comm'; refresh(); openPicker(); });
+
+  openAdd();
+})();
+</script>
+</body>
+</html>
