@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WFA Date Filter – Iteration 4</title>
+<style>
+  :root {
+    --navy: #0f1f3d;
+    --range: #dbe8fe;
+    --border: #cfd4da;
+    --text: #1c2430;
+    --muted: #5b6573;
+    --focus: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px; background: #eef0f3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+  }
+  .panel {
+    width: 340px; min-height: 640px; background: #fff; border-radius: 12px;
+    padding: 20px 18px; box-shadow: 0 2px 12px rgba(0,0,0,.12); position: relative;
+  }
+  h1 { font-size: 28px; margin: 0 0 20px; }
+  label { display: block; font-weight: 600; font-size: 14px; color: var(--muted); margin: 18px 0 6px; }
+  .field {
+    width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px;
+    background: #fff; display: flex; align-items: center; padding: 0 10px; gap: 8px;
+    font-size: 15px; color: var(--text); cursor: pointer; text-align: left;
+  }
+  .field.placeholder { color: #666; }
+  .field[aria-expanded="true"], .field:focus-visible { border: 2px solid var(--focus); outline: none; padding: 0 9px; }
+  .field .label { flex: 1; }
+  .clear-x { border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; padding: 0 4px; }
+  .caret { font-size: 10px; color: var(--muted); }
+
+  .dropdown { position: relative; }
+  .popover {
+    position: absolute; top: 44px; left: 0; width: 300px; background: #fff;
+    border: 1px solid var(--border); border-radius: 6px; padding: 12px 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 10;
+  }
+  .popover[hidden] { display: none; }
+  .head, .row { display: grid; grid-template-columns: 52px repeat(4, 1fr); align-items: center; }
+  .head { color: var(--muted); font-size: 14px; margin-bottom: 6px; padding-left: 4px; }
+  .head span:first-child { grid-column: 1; }
+  .head span:nth-child(2) { grid-column: 2; }
+  .scroll { max-height: 280px; overflow-y: auto; }
+  .row { height: 44px; position: relative; }
+  .plabel {
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 15px; margin-left: 4px; border-right: 0;
+  }
+  .plabel.clickable { cursor: pointer; }
+  .plabel.clickable:not(.edge):hover { background: var(--range); }
+  .plabel:focus-visible { outline: 2px solid var(--focus); }
+  .plabel.edge { background: var(--navy); color: #fff; }
+  .week {
+    height: 36px; border: 0; background: transparent; font-size: 15px; color: var(--text);
+    cursor: pointer; display: grid; place-items: center; margin: 4px 0; position: relative;
+  }
+  .week.inrange, .week.preview { background: var(--range); }
+  .week.edge::before {
+    content: ""; position: absolute; width: 36px; height: 36px; border-radius: 50%;
+    background: var(--navy); z-index: 0;
+  }
+  .week.edge span { position: relative; z-index: 1; color: #fff; }
+  .week:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .divider { border-left: 1px solid #e3e6ea; position: absolute; left: 52px; top: 4px; bottom: 4px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: #eceef1; border-radius: 999px; padding: 3px; margin: 0 4px 12px; }
+  .seg button { border: 0; background: transparent; height: 30px; border-radius: 999px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .seg button:focus-visible { outline: 2px solid var(--focus); }
+  .field .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hint { font-size: 12px; color: var(--muted); margin: 8px 4px 0; min-height: 16px; }
+
+  .footer { position: absolute; left: 18px; right: 18px; bottom: 18px; display: flex; justify-content: space-between; }
+  .btn { height: 44px; padding: 0 22px; border-radius: 6px; font-size: 17px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
+  .btn.primary { background: var(--navy); color: #fff; border-color: var(--navy); font-weight: 600; }
+  .btn:disabled { color: #b6bcc4; cursor: default; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <h1>Filters</h1>
+
+  <label>Year</label>
+  <select class="field" id="year" style="appearance:none;-webkit-appearance:none;">
+    <option value="">--- Select a Value ---</option>
+    </select>
+
+  <label>Date</label>
+  <div class="dropdown" id="dd">
+    <div class="field placeholder" id="trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+      <span class="label" id="triggerLabel">--- Select a Value ---</span>
+      <button class="clear-x" id="clearX" aria-label="Clear date" hidden>✕</button>
+      <span class="caret">▼</span>
+    </div>
+    <div class="popover" id="popover" hidden>
+      <div class="seg" role="group" aria-label="Selection mode">
+        <button type="button" id="modeRange" aria-pressed="true">Range</button>
+        <button type="button" id="modeSingle" aria-pressed="false">Single dates</button>
+      </div>
+      <div class="head"><span>Period:</span><span style="grid-column:2 / span 4">Week:</span></div>
+      <div class="scroll" id="grid"></div>
+      <div class="hint" id="hint"></div>
+    </div>
+  </div>
+
+  <label>Process Manager</label>
+  <div class="field placeholder"><span class="label">--- Select a Value ---</span><span class="caret">▼</span></div>
+  <label>Division</label>
+  <div class="field placeholder"><span class="label">--- Select a Value ---</span><span class="caret">▼</span></div>
+  <label>Status</label>
+  <div class="field placeholder"><span class="label">--- Select a Value ---</span><span class="caret">▼</span></div>
+
+  <div class="footer">
+    <button class="btn" id="clearAll" disabled>Clear filters</button>
+    <button class="btn primary">Apply</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const PERIODS = 13, WEEKS = 4;
+  // A week's position in the calendar: 0..51
+  const idx = (p, w) => (p - 1) * WEEKS + (w - 1);
+  const name = i => `P${Math.floor(i / WEEKS) + 1}W${(i % WEEKS) + 1}`;
+
+  const DEFAULT_YEAR = new Date().getFullYear();   // auto-fill uses the current year
+  // committed = what the filter actually holds; start/end/hover = draft while the dropdown is open
+  let committed = { start: null, end: null };
+  let start = null, end = null, hover = null;
+  let mode = 'range';              // 'range' | 'single'
+  const singles = new Set();       // committed selection in single mode
+  let year = '';
+
+  const $ = id => document.getElementById(id);
+  const trigger = $('trigger'), popover = $('popover'), grid = $('grid'),
+        hint = $('hint'), yearSel = $('year'), clearX = $('clearX'), clearAll = $('clearAll');
+
+  // Year options: previous, current, next
+  [DEFAULT_YEAR - 1, DEFAULT_YEAR, DEFAULT_YEAR + 1].forEach(y => yearSel.add(new Option(y, y)));
+
+  // Build grid
+  for (let p = 1; p <= PERIODS; p++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<div class="plabel" data-p="${p}">${p}</div><div class="divider"></div>`;
+    for (let w = 1; w <= WEEKS; w++) {
+      const b = document.createElement('button');
+      b.className = 'week';
+      b.type = 'button';
+      b.dataset.i = idx(p, w);
+      b.innerHTML = `<span>${w}</span>`;
+      b.setAttribute('aria-label', `Period ${p} week ${w}`);
+      row.appendChild(b);
+    }
+    grid.appendChild(row);
+  }
+  const weekEls = [...grid.querySelectorAll('.week')];
+  const plabels = [...grid.querySelectorAll('.plabel')];
+
+  function bounds() {
+    // While choosing the end, the range follows the hovered week (Airbnb-style)
+    if (mode !== 'range' || start === null) return null;
+    const other = end !== null ? end : (hover !== null ? hover : start);
+    return [Math.min(start, other), Math.max(start, other)];
+  }
+
+  function render() {
+    const b = bounds();
+    const picking = start !== null && end === null;
+    weekEls.forEach(el => {
+      const i = +el.dataset.i;
+      el.setAttribute('aria-pressed', mode === 'single' ? singles.has(i) : 'false');
+      if (mode === 'single') {
+        el.classList.toggle('edge', singles.has(i));
+        el.classList.remove('inrange', 'preview');
+        return;
+      }
+      const edge = b && (i === b[0] || i === b[1]);
+      const inside = b && i > b[0] && i < b[1];
+      el.classList.toggle('edge', !!edge);
+      el.classList.toggle('inrange', !!inside && !picking);
+      el.classList.toggle('preview', !!inside && picking);
+    });
+    plabels.forEach(el => {
+      const p = +el.dataset.p;
+      const on = mode === 'single'
+        ? [...singles].some(i => Math.floor(i / WEEKS) + 1 === p)
+        : !!b && (Math.floor(b[0] / WEEKS) + 1 === p || Math.floor(b[1] / WEEKS) + 1 === p);
+      el.classList.toggle('edge', on);
+      el.classList.toggle('clickable', mode === 'range');
+      if (mode === 'range') { el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', `Select all of period ${p}`); }
+      else { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label'); }
+    });
+
+    $('modeRange').setAttribute('aria-pressed', mode === 'range');
+    $('modeSingle').setAttribute('aria-pressed', mode === 'single');
+    hint.textContent = mode === 'single'
+      ? (singles.size ? `${singles.size} selected. Click a selected week to remove it.` : 'Click any weeks to select them individually.')
+      : start === null ? 'Click a week to start your range.'
+      : end === null ? 'Now click an end week.' : '';
+
+    const c = committed, y = year || DEFAULT_YEAR;
+    const has = hasValue();
+    const label = !has ? '--- Select a Value ---'
+      : mode === 'single' ? `${y}: ${[...singles].sort((a, b) => a - b).map(name).join(', ')}`
+      : `${y}: ${name(Math.min(c.start, c.end))}-${name(Math.max(c.start, c.end))}`;
+    $('triggerLabel').textContent = label;
+    trigger.title = has ? label : '';
+    trigger.classList.toggle('placeholder', !has);
+    clearX.hidden = !has;
+    clearAll.disabled = !has && !year;
+  }
+
+  const hasValue = () => mode === 'single' ? singles.size > 0 : committed.start !== null;
+  const clearSelection = () => { committed = { start: null, end: null }; singles.clear(); syncDraft(); };
+  function pick(i) {
+    if (mode === 'single') {
+      singles.has(i) ? singles.delete(i) : singles.add(i);
+      if (singles.size && !year) { year = String(DEFAULT_YEAR); yearSel.value = year; }
+      render();
+      return;
+    }
+    if (start === null || end !== null) { start = i; end = null; hover = null; }  // begin new range
+    else {                                                                         // finish range; stay open
+      end = i;
+      committed = { start, end };
+      if (!year) { year = String(DEFAULT_YEAR); yearSel.value = year; }          // Date fills in Year
+    }
+    render();
+  }
+  function syncDraft() { start = committed.start; end = committed.end; hover = null; }
+  function reset() { clearSelection(); year = ''; yearSel.value = ''; render(); }
+
+  function pickPeriod(p) {
+    if (mode !== 'range') return;                 // single mode: period numbers do nothing
+    start = idx(p, 1); end = idx(p, WEEKS); hover = null;
+    committed = { start, end };
+    if (!year) { year = String(DEFAULT_YEAR); yearSel.value = year; }
+    render();
+  }
+  grid.addEventListener('click', e => {
+    const pl = e.target.closest('.plabel');
+    if (pl) return pickPeriod(+pl.dataset.p); const b = e.target.closest('.week'); if (b) pick(+b.dataset.i); });
+  grid.addEventListener('mouseover', e => {
+    const b = e.target.closest('.week');
+    if (mode === 'range' && b && start !== null && end === null) { hover = +b.dataset.i; render(); }
+  });
+  grid.addEventListener('mouseleave', () => { if (end === null && hover !== null) { hover = null; render(); } });
+  grid.addEventListener('keydown', e => {
+    const pl = e.target.closest('.plabel');
+    if (pl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPeriod(+pl.dataset.p); }
+  });
+  // Keyboard: focus on a week also previews
+  grid.addEventListener('focusin', e => {
+    const b = e.target.closest('.week');
+    if (mode === 'range' && b && start !== null && end === null) { hover = +b.dataset.i; render(); }
+  });
+
+  // Open / close — only outside click (or Esc) closes it
+  const setOpen = open => {
+    if (!open && !popover.hidden) syncDraft();   // closing discards an unfinished range
+    if (open) syncDraft();
+    popover.hidden = !open; trigger.setAttribute('aria-expanded', open);
+    render();
+  };
+  trigger.addEventListener('click', e => {
+    if (e.target === clearX) return;
+    if (popover.hidden) setOpen(true);   // clicking the field again does not toggle it shut
+  });
+  trigger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } });
+  document.addEventListener('mousedown', e => { if (!$('dd').contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+
+  clearX.addEventListener('click', e => { e.stopPropagation(); clearSelection(); render(); });
+  yearSel.addEventListener('change', () => {
+    year = yearSel.value;
+    if (!year) clearSelection();   // clearing Year clears Date
+    render();
+  });
+  function setMode(m) {
+    if (m === mode) return;
+    mode = m;
+    clearSelection();   // the two modes mean different things, so switching starts fresh (Year is kept)
+    render();
+  }
+  $('modeRange').addEventListener('click', () => setMode('range'));
+  $('modeSingle').addEventListener('click', () => setMode('single'));
+  clearAll.addEventListener('click', () => { reset(); setOpen(false); });
+
+  render();
+})();
+</script>
+</body>
+</html>
