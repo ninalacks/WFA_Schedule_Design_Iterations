@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Period Overview 2</title>
+<style>
+  :root {
+    --navy: #0f1f3d; --blue: #1f4e9c; --text: #1c2430; --muted: #5b6573; --border: #d5d9df; --focus: #2563eb; --bg: #f3f4f6;
+    --warn-bg: #fdf3c8; --warn-text: #5c4300; --over: #b45309; --over-bg: #fde7c8; --bar: #3b6fc4; --bar-bg: #e6edf8;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  button { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .topbar { background: var(--navy); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+  .brand { color: #fff; font-weight: 700; font-size: 18px; border: 1px solid #fff8; border-radius: 4px; padding: 8px 14px; }
+  .topbar a { color: #8fb4ff; font-weight: 700; font-size: 18px; text-decoration: underline; text-underline-offset: 6px; }
+  .app { padding: 18px 24px 40px; max-width: 1500px; margin: 0 auto; }
+  .layout { display: flex; gap: 16px; align-items: flex-start; }
+  .layout > main { flex: 1; min-width: 0; }
+  @media (max-width: 900px) { .layout { flex-direction: column; } .layout > main { width: 100%; } }
+
+  /* Prototype controls (not part of the design) */
+  .proto { border: 1px dashed #9aa3b0; border-radius: 6px; background: #fff; padding: 10px 14px; display: grid; gap: 8px; font-size: 14px; margin-bottom: 16px; }
+  .prow { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; }
+  .pgroup { display: inline-flex; align-items: center; gap: 8px; }
+  .plabel { font-weight: 600; font-size: 13px; }
+  .seg { display: inline-flex; gap: 6px; }
+  .seg button { border: 1px solid var(--border); background: #fff; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 13px; }
+  .seg button[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .ptag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .about { background: #fff; border-radius: 6px; padding: 10px 14px; font-size: 14px; line-height: 1.5; color: var(--muted); margin-bottom: 16px; }
+  .about b { color: var(--text); }
+  .layout.gray { filter: grayscale(1); }
+
+  .titlerow { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+  h1 { font-size: 30px; margin: 0; }
+  .meta { text-align: right; font-size: 15px; color: #333; line-height: 1.35; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+  .tb { height: 38px; padding: 0 14px; border: 1px solid var(--border); background: #fff; border-radius: 4px; font-size: 16px; cursor: pointer; }
+
+  /* Overview strip */
+  .ov { background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; padding: 14px 16px 16px; margin-bottom: 14px; }
+  .ovh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ovh h2 { margin: 0; font-size: 17px; }
+  .ovh .hint { font-size: 13px; color: var(--muted); }
+  .legend { display: inline-flex; gap: 14px; font-size: 12px; color: var(--muted); align-items: center; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .strip { display: grid; grid-template-columns: 56px repeat(13, minmax(70px, 1fr)); gap: 4px; overflow-x: auto; padding-bottom: 4px; }
+  .tile { border: 1px solid var(--border); background: #fff; border-radius: 8px; padding: 8px 6px 7px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 6px; min-width: 0; position: relative; }
+  .tile:hover { border-color: #9aa3b0; }
+  .tile.inscope { background: #f5f8fe; border-color: #9db4dc; }
+  .tile[aria-pressed="true"] { border-color: var(--navy); box-shadow: inset 0 0 0 1px var(--navy); background: #f5f8fe; }
+  .tile .top { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; }
+  .tile .n { font-weight: 400; font-size: 11px; color: var(--muted); }
+  .tile .ft { font-size: 12px; color: var(--muted); }
+  .tile .ft b { color: var(--text); font-size: 13px; }
+  .tile.all { justify-content: center; align-items: center; text-align: center; gap: 2px; }
+  .tile.all .big { font-size: 15px; font-weight: 700; }
+  .warnb { color: var(--over); display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; }
+  .bars { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; align-items: end; height: 44px; }
+  .bars .b { background: var(--bar); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .bars .b.over { background: var(--over); }
+  .bars .b.zero { background: #d8dce2; }
+  .bars .capline { position: absolute; left: 0; right: 0; border-top: 1px dashed #7a8494; pointer-events: none; }
+  .heat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+  .heat .c { height: 30px; border-radius: 3px; display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--text); }
+  .heat .c.over { color: #6b3304; outline: 2px solid var(--over); outline-offset: -2px; }
+  .wl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; font-size: 10px; color: var(--muted); text-align: center; margin-top: -3px; }
+
+  /* Scope summary */
+  .sum { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center; margin: 0 0 10px; padding: 12px 16px; background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; }
+  .sum .scope { font-size: 18px; font-weight: 700; margin-right: 6px; }
+  .stat { display: flex; flex-direction: column; line-height: 1.2; }
+  .stat b { font-size: 20px; }
+  .stat span { font-size: 12px; color: var(--muted); }
+  .stat.alert b { color: var(--over); }
+  .sum .sp { flex: 1; }
+  .btn2 { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+  .btn2[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* Issues */
+  .issues { background: #fff; border: 1px solid #e3e6ea; border-left: 4px solid var(--over); border-radius: 8px; margin-bottom: 12px; }
+  .issues h3 { margin: 0; padding: 12px 16px 6px; font-size: 15px; }
+  .issues ul { list-style: none; margin: 0; padding: 0 8px 8px; max-height: 280px; overflow: auto; }
+  .issues li { display: grid; grid-template-columns: 112px 1fr auto; gap: 12px; align-items: center; padding: 8px; border-top: 1px solid #eceef1; font-size: 14px; }
+  .issues li:first-child { border-top: 0; }
+  .kind { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .kind.over { background: var(--over-bg); color: #7a3a04; }
+  .kind.owner { background: #e6e0f7; color: #43307d; }
+  .kind.align { background: #dff1f4; color: #0f5560; }
+  .issues .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .none { padding: 4px 16px 14px; color: var(--muted); font-size: 14px; }
+
+  .gridbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; margin-bottom: 8px; font-size: 15px; color: var(--muted); }
+  .tag { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 3px 4px 3px 12px; font-size: 14px; color: var(--text); }
+  .tag button { border: 0; background: #eceef1; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; }
+  .tags { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+  /* Filter rail + panel (pattern from date-filter-v6) */
+  .panel { width: 320px; flex: none; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.12); position: relative; transition: width .25s ease; min-height: 68px; }
+  .panel.collapsed { width: 56px; }
+  .panel.collapsed, .panel.animating { overflow: hidden; }
+  .panel-body { width: 320px; padding: 20px 18px 20px; position: relative; transition: opacity .15s ease; }
+  .panel.collapsed .panel-body { opacity: 0; pointer-events: none; position: absolute; top: 0; left: 0; height: 0; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 6px; }
+  .panel-head h2 { font-size: 26px; margin: 0; }
+  .icon-btn { width: 40px; height: 40px; border: 0; background: transparent; border-radius: 8px; color: var(--blue); cursor: pointer; display: grid; place-items: center; position: relative; }
+  .icon-btn:hover { background: #eef2fa; }
+  .prail { position: absolute; top: 0; left: 0; width: 56px; padding-top: 14px; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .15s ease .1s; }
+  .panel.collapsed .prail { opacity: 1; pointer-events: auto; }
+  .badge { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; border-radius: 9px; background: var(--navy); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; }
+  @media (prefers-reduced-motion: reduce) { .panel, .panel-body, .prail { transition: none; } }
+  .flabel { display: block; font-weight: 600; font-size: 14px; color: var(--muted); margin: 16px 0 6px; }
+  .field { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; background: #fff; display: flex; align-items: center; padding: 0 10px; gap: 8px; font-size: 15px; color: var(--text); cursor: pointer; text-align: left; }
+  .field.placeholder, .sel select.field.empty { color: #666; }
+  .field[aria-expanded="true"], .field:focus-visible { border: 2px solid var(--focus); outline: none; padding: 0 9px; }
+  .field .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .clear-x { border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; padding: 0 4px; }
+  .clear-x:hover { color: var(--text); }
+  .clear-x:focus-visible { outline: 2px solid var(--focus); border-radius: 4px; }
+  .caret { font-size: 10px; color: var(--muted); }
+  .sel { position: relative; }
+  .sel select.field { padding-right: 62px; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; }
+  .sel .caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .sel .clear-x { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); }
+  .dropdown { position: relative; }
+  .popover { position: absolute; top: 44px; left: 0; width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px 10px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 10; }
+  .popover[hidden] { display: none; }
+  .pk-head, .pk-row { display: grid; grid-template-columns: 52px repeat(4, 1fr); align-items: center; }
+  .pk-head { color: var(--muted); font-size: 14px; margin-bottom: 6px; padding-left: 4px; }
+  .pk-scroll { max-height: 280px; overflow-y: auto; }
+  .pk-row { height: 44px; position: relative; }
+  .pk-plabel { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; margin-left: 4px; }
+  .pk-plabel.clickable { cursor: pointer; }
+  .pk-plabel.clickable:not(.edge):hover { background: #dbe8fe; }
+  .pk-plabel:focus-visible { outline: 2px solid var(--focus); }
+  .pk-plabel.edge { background: var(--navy); color: #fff; }
+  .pk-week { height: 36px; border: 0; background: transparent; font-size: 15px; color: var(--text); cursor: pointer; display: grid; place-items: center; margin: 4px 0; position: relative; }
+  .pk-week.inrange, .pk-week.preview { background: #dbe8fe; }
+  .pk-week.edge::before { content: ""; position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); z-index: 0; }
+  .pk-week.edge span { position: relative; z-index: 1; color: #fff; }
+  .pk-week:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .pk-div { border-left: 1px solid #e3e6ea; position: absolute; left: 52px; top: 4px; bottom: 4px; }
+  .pk-seg { display: grid; grid-template-columns: 1fr 1fr; background: #eceef1; border-radius: 999px; padding: 3px; margin: 0 4px 12px; }
+  .pk-seg button { border: 0; background: transparent; height: 30px; border-radius: 999px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .pk-seg button[aria-pressed="true"] { background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .pk-seg button:focus-visible { outline: 2px solid var(--focus); }
+  .pk-hint { font-size: 13px; color: var(--muted); margin: 10px 4px 0; min-height: 18px; }
+  .clear-row { display: flex; justify-content: flex-end; margin: 0; }
+  .link-btn { border: 0; background: none; padding: 4px 2px; font-size: 16px; color: var(--blue); text-decoration: underline; cursor: pointer; }
+  .link-btn:focus-visible { outline: 2px solid var(--focus); border-radius: 2px; }
+  .link-btn:disabled { color: #9aa3b0; cursor: default; }
+  .pbtn { width: 100%; height: 44px; margin-top: 24px; border-radius: 6px; font-size: 17px; border: 1px solid var(--navy); background: var(--navy); color: #fff; font-weight: 600; cursor: pointer; }
+
+  /* Table */
+  .tablewrap { background: #fff; border: 1px solid #e3e6ea; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 1550px; font-size: 15px; }
+  th { background: #f1f2f4; text-align: left; font-weight: 700; padding: 12px 10px; border-bottom: 2px solid #dde0e5; font-size: 15px; white-space: nowrap; }
+  td { padding: 12px 10px; border-bottom: 1px solid #eceef1; vertical-align: middle; }
+  td { white-space: nowrap; }
+  td.com { min-width: 280px; max-width: 340px; white-space: normal; }
+  tr.hl td { background: #fff6d6; }
+  th.wk, td.wk { text-align: center; width: 76px; padding-left: 4px; padding-right: 4px; }
+  th.wk { background: #e8eef9; border-left: 1px solid #fff; }
+  th.wk small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+  td.wk { border-left: 1px solid #f1f2f4; }
+  td.wk.on { background: var(--bar-bg); font-weight: 700; color: #163a73; border-left-color: #fff; }
+  td.wk.over { background: var(--over-bg); color: #6b3304; }
+  tfoot td { background: #f8f9fb; font-weight: 700; border-top: 2px solid #dde0e5; border-bottom: 0; }
+  tfoot td.wk { vertical-align: top; }
+  tfoot td.wk.over { background: var(--over-bg); color: #6b3304; }
+  tfoot .of { font-weight: 400; font-size: 11px; color: var(--muted); display: block; }
+  tfoot td.wk.over .of { color: #7a3a04; }
+  .flag { display: inline-flex; align-items: center; gap: 3px; color: var(--over); font-weight: 700; font-size: 13px; background: var(--over-bg); border-radius: 999px; padding: 1px 8px; border: 0; cursor: pointer; }
+  .st { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .st.Draft { background: #eceef1; color: #3b4452; } .st.Scheduled { background: #e1eafb; color: #1f4e9c; } .st.Complete { background: #d7efdd; color: #17653a; }
+  tr.grp td { background: #eef2f9; border-top: 2px solid #cfd8e8; padding: 8px 10px; }
+  tr.grp.open td { background: #e3eaf6; }
+  tr.grp td.wk { border-left: 1px solid #fff; font-weight: 700; font-size: 16px; }
+  tr.grp td.wk.over { background: var(--over-bg); color: #6b3304; }
+  tr.grp td.wk.dim { color: #98a1ae; font-weight: 400; }
+  tr.grp .of { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+  tr.grp td.wk.over .of { color: #7a3a04; }
+  .gtog { display: inline-flex; align-items: center; gap: 10px; border: 0; background: none; cursor: pointer; font-size: 17px; font-weight: 700; padding: 4px 6px; border-radius: 6px; }
+  .gtog:hover { background: rgba(255,255,255,.7); }
+  .gtog svg { transition: transform .15s; } .gtog[aria-expanded="true"] svg { transform: rotate(90deg); }
+  .gchips { display: inline-flex; gap: 14px; align-items: center; margin-left: 10px; font-size: 14px; color: var(--muted); }
+  .gchips b { color: var(--text); }
+  tr.cont td { color: #4a5565; }
+  @media (prefers-reduced-motion: reduce) { .gtog svg { transition: none; } }
+  .emp { text-align: center; color: var(--muted); padding: 32px; }
+  .spill { font-size: 12px; color: var(--muted); display: block; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; max-width: 90vw; }
+  .toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="topbar"><span class="brand">Kroger | Reset Planner</span><a href="#" onclick="return false">Resets</a></div>
+
+<div class="app">
+  <div class="proto" id="proto"></div>
+  <div class="about" id="about"></div>
+
+  <div class="layout" id="layout">
+  <aside class="panel" id="panel" aria-label="Filters">
+    <div class="panel-body" id="panelBody">
+      <div class="panel-head">
+        <h2>Filters</h2>
+        <button class="icon-btn" id="collapseBtn" aria-label="Collapse filters" aria-controls="panelBody" aria-expanded="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+      </div>
+      <div class="clear-row"><button class="link-btn" id="clearAll" disabled>Clear All</button></div>
+      <div id="fieldYear"></div>
+      <label class="flabel" id="dateLbl">Date</label>
+      <div class="dropdown" id="dd">
+        <div class="field placeholder" id="trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="dateLbl">
+          <span class="label" id="triggerLabel">--- Select a Value ---</span>
+          <button class="clear-x" id="clearX" aria-label="Clear date" hidden>✕</button>
+          <span class="caret">▼</span>
+        </div>
+        <div class="popover" id="popover" hidden>
+          <div class="pk-seg" role="group" aria-label="Selection mode">
+            <button type="button" id="modeRange" aria-pressed="true">Range</button>
+            <button type="button" id="modeSingle" aria-pressed="false">Individual weeks</button>
+          </div>
+          <div class="pk-head"><span>Period:</span><span style="grid-column:2 / span 4">Week:</span></div>
+          <div class="pk-scroll" id="pgrid"></div>
+          <div class="pk-hint" id="pkHint" aria-live="polite"></div>
+        </div>
+      </div>
+      <div id="fieldRest"></div>
+      <button class="pbtn" id="applyBtn">Apply</button>
+    </div>
+    <div class="prail">
+      <button class="icon-btn" id="expandBtn" aria-label="Open filters" aria-controls="panelBody" aria-expanded="false" tabindex="-1">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true"><path d="M3 6h9M18 6h3M3 12h3M12 12h9M3 18h11M20 18h1"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg>
+        <span class="badge" id="badge" hidden></span>
+      </button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div class="titlerow">
+      <h1>KOMPASS Schedule</h1>
+      <div class="meta">2026 Resets<br>Version: 2026.02<br>Updated on: 10/9/2026 3:28PM</div>
+    </div>
+    <div class="toolbar">
+      <button class="tb" data-stub>New Entry</button>
+      <button class="tb" data-stub>Create New Draft</button>
+      <button class="tb" data-stub>Download</button>
+    </div>
+
+
+    <div class="sum" id="sum" aria-live="polite"></div>
+    <div id="issues"></div>
+    <div class="gridbar" id="gridbar"></div>
+    <div class="tablewrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody><tfoot id="tfoot"></tfoot></table></div>
+  </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2800); };
+  const WARN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></svg>';
+
+  /*DATA-START*/
+  /* Demo data (invented). hours = hours of work in EACH week the reset runs. */
+  const T = (type, dept, comm, cm, pm, size, start, dur, hours, divs, comments) => ({ type, dept, comm, cm, pm, size, start, dur, hours, divs, comments });
+  const ROWS = [
+    T('Update','01 - Grocery','017 - Flour & Meal','Monica White','Kelly Jacob',12,'P1 W1',4,4,'All','Reset postponed due to inventory delays at the regional distribution center'),
+    T('Update','43 - Liquor','012 - Mixers','Alexander Nguyen','Isabella Garcia',16,'P1 W1',4,4,'All','ALIGN WITH 003 - Can Beans'),
+    T('NII','01 - Grocery','221 - Granola','Tom Alvarez','Ana Petrova',8,'P1 W2',2,3,6,''),
+    T('Maintenance','02 - Dairy','062 - Yogurt','Peter Grey','Ian Smith',16,'P1 W3',4,6,'All','Vendor confirmed new timeline. ALIGN WITH 007 - Shelf Stable Milk'),
+    T('NII','17 - Natural Foods','410 - NF Cereal','Sarah Johnson','Michael Lee',10,'P1 W3',2,2,'All',''),
+    T('Update','01 - Grocery','005 - Soup','Monica White','Kelly Jacob',12,'P1 W2',1,3,'All','Same crew as Flour & Meal'),
+    T('NII','01 - Grocery','007 - Shelf Stable Milk','Maria Carmen','Teresa Mayfly',12,'P2 W2',4,5,'All','ALIGN WITH 062 - Yogurt'),
+    T('Update','02 - Dairy','071 - Cheese','William Turner','Zoe Henderson',20,'P2 W1',3,4,'All',''),
+    T('Maintenance','01 - Grocery','030 - Snacks','Rachel Thompson','Christopher Brown',24,'P2 W2',2,5,'All',''),
+    T('NII','43 - Liquor','044 - Wine','Alexander Nguyen','Isabella Garcia',16,'P2 W2',1,3,9,''),
+    T('Update','17 - Natural Foods','680 - NF Snacks','David Chen','Emma Wilson',8,'P3 W1',1,2,'All',''),
+    T('NII','01 - Grocery','144 - Pasta Sauce','Laura Kim','Omar Reyes',12,'P3 W3',2,3,'All',''),
+    T('Update','02 - Dairy','065 - Butter','William Turner','Zoe Henderson',8,'P3 W4',1,2,'All',''),
+    T('NII','01 - Grocery','102 - Coffee','Tom Alvarez','Ana Petrova',16,'P4 W1',3,4,'All',''),
+    T('Maintenance','17 - Natural Foods','290 - NF Yogurt','David Chen','Emma Wilson',24,'P4 W2',2,2,'All','Adjustments made to display fixtures'),
+    T('Update','43 - Liquor','050 - Spirits','Alexander Nguyen','Isabella Garcia',20,'P5 W1',2,4,'All',''),
+    T('NII','01 - Grocery','088 - Baking','Rachel Thompson','Christopher Brown',12,'P5 W3',3,3,'All',''),
+    T('Update','02 - Dairy','069 - Eggs','Peter Grey','Ian Smith',8,'P6 W2',1,2,'All',''),
+    T('NII','01 - Grocery','120 - Tea','Laura Kim','Omar Reyes',8,'P6 W3',2,2,'All',''),
+    T('Update','17 - Natural Foods','677 - NF Baking Mixes','Sarah Johnson','Michael Lee',10,'P9 W1',1,2,12,'New layout implemented for improved flow. ALIGN WITH 062 - Yogurt'),
+    T('NII','01 - Grocery','150 - Pet Food','Maria Carmen','Teresa Mayfly',16,'P7 W1',2,3,'All',''),
+    T('Update','02 - Dairy','075 - Cream','William Turner','Zoe Henderson',8,'P7 W3',2,2,'All',''),
+    T('NII','01 - Grocery','003 - Can Beans','Rachel Thompson','Christopher Brown',8,'P8 W1',4,3,'All','Approved by category manager. ALIGN WITH 012 - Mixers'),
+    T('Update','01 - Grocery','227 - Cereal Bars','Tom Alvarez','Ana Petrova',8,'P8 W1',2,4,6,''),
+    T('Maintenance','43 - Liquor','055 - Beer','Alexander Nguyen','Isabella Garcia',24,'P8 W2',3,5,'All',''),
+    T('NII','17 - Natural Foods','300 - NF Frozen','David Chen','Emma Wilson',16,'P8 W2',2,4,'All',''),
+    T('Update','02 - Dairy','062 - Yogurt','William Turner','Zoe Henderson',12,'P9 W2',2,3,'All','ALIGN WITH 677 - NF Baking Mixes'),
+    T('NII','01 - Grocery','160 - Candy','Laura Kim','Omar Reyes',12,'P9 W2',3,4,'All',''),
+    T('Update','01 - Grocery','018 - Rice & Pasta','Monica White','Kelly Jacob',12,'P9 W3',2,3,'All',''),
+    T('Update','02 - Dairy','080 - Ice Cream','Peter Grey','Ian Smith',20,'P10 W1',2,3,'All',''),
+    T('NII','01 - Grocery','190 - Water','Maria Carmen','Teresa Mayfly',16,'P10 W3',1,2,'All',''),
+    T('Update','17 - Natural Foods','320 - NF Beverages','Sarah Johnson','Michael Lee',10,'P11 W1',2,2,'All',''),
+    T('NII','01 - Grocery','170 - Juice','Rachel Thompson','Christopher Brown',12,'P11 W3',2,3,'All',''),
+    T('Update','43 - Liquor','060 - Seltzer','Alexander Nguyen','Isabella Garcia',8,'P12 W2',1,2,'All',''),
+    T('Maintenance','01 - Grocery','200 - Paper Goods','Laura Kim','Omar Reyes',24,'P12 W1',2,4,'All',''),
+    T('NII','02 - Dairy','062 - Yogurt Cups','William Turner','Zoe Henderson',12,'P13 W4',4,3,'All','Runs into next year'),
+    T('Update','01 - Grocery','210 - Cleaning','Tom Alvarez','Ana Petrova',16,'P13 W1',3,3,'All',''),
+  ].map((r, i) => Object.assign(r, { id: i + 1 }));
+
+  const WEEKS = 52, P = 13;
+  const wkIdx = s => { const m = /P(\d+)\s*W(\d+)/.exec(s); return (+m[1] - 1) * 4 + (+m[2] - 1); };
+  const wkLbl = i => `P${Math.floor(i / 4) + 1} W${(i % 4) + 1}`;
+  const span = e => { const a = wkIdx(e.start); return [a, Math.min(WEEKS - 1, a + e.dur - 1)]; };
+  const covers = (e, w) => { const [a, b] = span(e); return w >= a && w <= b; };
+
+  const DATA_YEAR = 2026;
+  const DIVS = ['Atlanta', 'Central', 'Cincinnati', 'Dallas', 'Delta', 'Houston', 'Louisville', 'Michigan', 'Mid-Atlantic', 'Nashville', 'Pacific', 'Mountain'];
+  ROWS.forEach((e, i) => {
+    e.year = DATA_YEAR;
+    const n = e.divs === 'All' ? DIVS.length : +e.divs;
+    e.divList = Array.from({ length: n }, (_, k) => DIVS[(i + k) % DIVS.length]);
+    e.status = i % 7 === 3 ? 'Draft' : span(e)[1] < 32 ? 'Complete' : 'Scheduled';
+  });
+
+  /* Loads per week + potential conflicts. cap = comfortable hours per week. */
+  function calc(rows, cap) {
+    const load = Array(WEEKS).fill(0), ids = Array.from({ length: WEEKS }, () => []);
+    rows.forEach(e => { const [a, b] = span(e); for (let w = a; w <= b; w++) { load[w] += e.hours; ids[w].push(e.id); } });
+    const issues = [];
+    load.forEach((h, w) => {
+      if (h <= cap) return;
+      let best = null; for (let k = Math.max(0, w - 4); k <= Math.min(WEEKS - 1, w + 4); k++) if (k !== w && load[k] < cap && (best === null || load[k] < load[best])) best = k;
+      issues.push({ kind: 'over', wk: [w], ids: ids[w], title: `${wkLbl(w)} is over capacity`, sub: `${h} hrs planned vs ${cap} hr capacity, ${ids[w].length} resets.` + (best !== null ? ` Lightest nearby: ${wkLbl(best)} (${load[best]} hrs).` : '') });
+    });
+    const seen = new Set();
+    for (let i = 0; i < rows.length; i++) for (let j = i + 1; j < rows.length; j++) {
+      const x = rows[i], y = rows[j], [xa, xb] = span(x), [ya, yb] = span(y);
+      const lo = Math.max(xa, ya), hi = Math.min(xb, yb);
+      if (x.cm === y.cm && lo <= hi) issues.push({ kind: 'owner', wk: Array.from({ length: hi - lo + 1 }, (_, k) => lo + k), ids: [x.id, y.id], title: `${x.cm} has two resets at once`, sub: `${x.comm} and ${y.comm} overlap ${lo === hi ? wkLbl(lo) : wkLbl(lo) + ' to ' + wkLbl(hi)}.` });
+    }
+    rows.forEach(x => {
+      const m = /ALIGN WITH (\d+) - ([^.]+)/.exec(x.comments); if (!m) return;
+      const y = rows.find(r => r !== x && r.comm.startsWith(m[1] + ' -'));
+      if (!y) return;
+      const key = [x.id, y.id].sort().join('-'); if (seen.has(key)) return; seen.add(key);
+      const a = wkIdx(x.start), b = wkIdx(y.start);
+      if (a !== b) issues.push({ kind: 'align', wk: [a, b], ids: [x.id, y.id], title: `${x.comm} and ${y.comm} should align`, sub: `${x.comm} starts ${x.start}; ${y.comm} starts ${y.start}.` });
+    });
+    return { load, issues };
+  }
+  /*DATA-END*/
+
+  /* ---------- Filter state ----------
+     draft = what the panel shows; applied = what the page uses (changes on Apply).
+     The Date filter is a "zoom", not a data filter: it narrows the table and numbers,
+     but the year strip keeps showing every period so you can move around. */
+  const YEAR = DATA_YEAR;
+  const FKEYS = ['dept', 'comm', 'type', 'cm', 'pm', 'div', 'status'];
+  const FNAME = { year: 'Year', date: 'Date', dept: 'Department', comm: 'Commodity', type: 'Type', cm: 'Category Manager', pm: 'Process Manager', div: 'Division', status: 'Status' };
+  const blank = () => ({ year: '', mode: 'range', start: null, end: null, singles: [], dept: '', comm: '', type: '', cm: '', pm: '', div: '', status: '' });
+  const clone = f => ({ ...f, singles: [...f.singles] });
+  let applied = blank(), draft = blank();
+  let cap = 12, gray = false, issuesOpen = false, hl = new Set(), expanded = new Set();
+
+  const idx = (p, w) => (p - 1) * 4 + (w - 1);
+  const nm = i => `P${Math.floor(i / 4) + 1}W${(i % 4) + 1}`;
+  const pOf = w => Math.floor(w / 4) + 1;
+  const pWeeks = p => [0, 1, 2, 3].map(i => (p - 1) * 4 + i);
+  const hasDate = f => f.mode === 'single' ? f.singles.length > 0 : f.start !== null;
+  const dateList = f => !hasDate(f) ? null : f.mode === 'single' ? [...f.singles].sort((a, b) => a - b)
+    : Array.from({ length: Math.abs(f.end - f.start) + 1 }, (_, k) => Math.min(f.start, f.end) + k);
+  const dateText = f => { const l = dateList(f); return f.mode === 'single' ? l.map(nm).join(', ') : `${nm(l[0])}-${nm(l[l.length - 1])}`; };
+  const dateLabel = f => `${f.year || YEAR}: ${dateText(f)}`;
+  const activeKeys = f => [f.year && 'year', hasDate(f) && 'date', ...FKEYS.filter(k => f[k])].filter(Boolean);
+  const clearDate = f => { f.start = null; f.end = null; f.singles = []; };
+  const baseRows = () => ROWS.filter(e => (!applied.year || +applied.year === e.year) &&
+    ['dept', 'comm', 'type', 'cm', 'pm', 'status'].every(k => !applied[k] || e[k] === applied[k]) && (!applied.div || e.divList.includes(applied.div)));
+  const scopeWs = () => dateList(applied);
+  function scopeName() {
+    const l = scopeWs(); if (!l) return 'All periods';
+    if (applied.mode === 'single') return `${l.length} ${l.length === 1 ? 'week' : 'weeks'} selected`;
+    const a = l[0], b = l[l.length - 1];
+    if (a % 4 === 0 && b % 4 === 3) return pOf(a) === pOf(b) ? `Period ${pOf(a)}` : `Periods ${pOf(a)}–${pOf(b)}`;
+    return a === b ? nm(a) : `${nm(a)}–${nm(b)}`;
+  }
+  const KIND = { over: 'Over capacity', owner: 'Same owner', align: 'Misaligned' };
+
+  /* ---------- Summary + issues ---------- */
+  function renderSummary(c, shown, sw) {
+    const ws = sw || [...Array(WEEKS).keys()];
+    const total = ws.reduce((a, w) => a + c.load[w], 0);
+    let peak = ws[0]; ws.forEach(w => { if (c.load[w] > c.load[peak]) peak = w; });
+    const live = ws.filter(w => c.load[w] > 0), avg = live.length ? total / live.length : 0;
+    const iss = c.issues.filter(i => !sw || i.wk.some(w => sw.includes(w))), over = iss.filter(i => i.kind === 'over').length;
+    $('sum').innerHTML = `<span class="scope">${esc(scopeName())}</span>` +
+      `<div class="stat"><b>${shown.length}</b><span>${sw ? 'resets running' : 'resets'}</span></div>` +
+      `<div class="stat"><b>${total}</b><span>total hours</span></div>` +
+      `<div class="stat"><b>${avg.toFixed(1)}</b><span>avg hrs / active week</span></div>` +
+      `<div class="stat ${c.load[peak] > cap ? 'alert' : ''}"><b>${c.load[peak]}</b><span>peak week · ${wkLbl(peak)}</span></div>` +
+      `<div class="stat ${iss.length ? 'alert' : ''}"><b>${iss.length}</b><span>${over ? over + ' over capacity · ' : ''}potential conflicts</span></div><span class="sp"></span>` +
+      `<button class="btn2" id="issBtn" aria-expanded="${issuesOpen}" aria-controls="issues">${iss.length ? WARN : '✔'} ${issuesOpen ? 'Hide' : 'Review'} conflicts</button>`;
+    const el = $('issues'); el.hidden = !issuesOpen; if (!issuesOpen) return;
+    el.innerHTML = iss.length
+      ? `<div class="issues"><h3>Needs attention · ${esc(scopeName())}</h3><ul>${iss.map(i => `<li><span class="kind ${i.kind}">${KIND[i.kind]}</span><div><b>${esc(i.title)}</b><div class="sub">${esc(i.sub)}</div></div><button class="btn2" data-iss="${c.issues.indexOf(i)}">Show resets</button></li>`).join('')}</ul></div>`
+      : `<div class="issues" style="border-left-color:#2f855a"><div class="none"><h3 style="padding-left:0">All clear</h3>No conflicts in ${sw ? esc(scopeName()) : 'the year'} at ${cap} hrs/week capacity.</div></div>`;
+  }
+
+  /* ---------- Table: one group of rows per period ---------- */
+  const groupsFor = (base, sw) => {
+    const out = [];
+    for (let p = 1; p <= P; p++) {
+      const act = pWeeks(p).filter(w => !sw || sw.includes(w));
+      if (!act.length) continue;
+      const rows = base.filter(e => act.some(w => covers(e, w))).sort((a, b) => wkIdx(a.start) - wkIdx(b.start) || a.id - b.id);
+      out.push({ p, act, rows });
+    }
+    return out;
+  };
+  const wkNote = (e, p) => {
+    const a = wkIdx(e.start), b = span(e)[1], bits = [];
+    if (pOf(a) < p) bits.push(`from ${wkLbl(a)}`);
+    if (pOf(b) > p) bits.push(`to ${wkLbl(b)}`);
+    return bits.length ? `<span class="spill">${bits.join(' · ')}</span>` : '';
+  };
+  const CHEV = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+  function renderTable(c, shown, sw, groups) {
+    const flagsFor = id => c.issues.filter(i => i.ids.includes(id));
+    const base = [['flags', ''], ['comm', 'Commodity'], ['start', 'Start'], ['dur', 'Duration'], ['hours', 'Hours / wk']];
+    const tail = [['type', 'Type'], ['dept', 'Department'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['size', 'Core Size'], ['status', 'Status'], ['divs', 'Nr of Divisions'], ['comments', 'Comments']];
+    const nBase = base.length, WK = [1, 2, 3, 4];
+    $('thead').innerHTML = '<tr>' + base.map(([k, l]) => `<th scope="col"${k === 'flags' ? ' style="width:60px"' : ''}>${k === 'flags' ? '<span style="position:absolute;left:-9999px">Flags</span>' : l}</th>`).join('') +
+      WK.map(w => `<th scope="col" class="wk">Week ${w}<small>hrs</small></th>`).join('') + tail.map(([, l]) => `<th scope="col">${l}</th>`).join('') + '</tr>';
+    const cellHtml = (k, e, p) => {
+      if (k === 'flags') { const f = flagsFor(e.id); return `<td>${f.length ? `<button class="flag" data-flag="${e.id}" aria-label="${f.length} potential conflicts for ${esc(e.comm)}. Show">${WARN}${f.length}</button>` : ''}</td>`; }
+      if (k === 'dur') return `<td>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
+      if (k === 'comments') return `<td class="com">${esc(e.comments)}</td>`;
+      if (k === 'status') return `<td><span class="st ${e.status}">${e.status}</span></td>`;
+      if (k === 'divs') return `<td title="${esc(e.divList.join(', '))}">${esc(e.divs)}</td>`;
+      if (k === 'start') return `<td>${esc(e.start)}${wkNote(e, p)}</td>`;
+      return `<td>${esc(e[k])}</td>`;
+    };
+    let html = '';
+    groups.forEach(g => {
+      const open = expanded.has(g.p), hrs = g.act.reduce((a, w) => a + c.load[w], 0);
+      const n = c.issues.filter(i => i.wk.some(w => g.act.includes(w))).length;
+      html += `<tr class="grp ${open ? 'open' : ''}"><td colspan="${nBase}"><button class="gtog" data-tg="${g.p}" aria-expanded="${open}" aria-label="Period ${g.p}, ${g.rows.length} resets, ${hrs} hours${n ? ', ' + n + ' potential conflicts' : ''}">${CHEV}Period ${g.p}</button>` +
+        `<span class="gchips"><span><b>${g.rows.length}</b> ${g.rows.length === 1 ? 'reset' : 'resets'}</span><span><b>${hrs}</b> hrs</span>${n ? `<button class="flag" data-pc="${g.p}" aria-label="Show ${n} potential conflicts in period ${g.p}">${WARN}${n}</button>` : ''}</span></td>` +
+        pWeeks(g.p).map(w => {
+          if (!g.act.includes(w)) return '<td class="wk dim">–</td>';
+          const v = c.load[w], r = Math.min(1, v / (cap * 1.25));
+          return `<td class="wk ${v > cap ? 'over' : ''}" style="${v > cap ? '' : `background:${v ? `rgba(59,111,196,${.1 + r * .5})` : '#f3f4f6'}`}">${v > cap ? WARN + ' ' : ''}${v}<span class="of">${v > cap ? '+' + (v - cap) + ' over' : (cap - v) + ' free'}</span></td>`;
+        }).join('') + `<td colspan="${tail.length}"></td></tr>`;
+      if (open) html += g.rows.length ? g.rows.map(e => `<tr data-id="${e.id}" class="${hl.has(e.id) ? 'hl' : ''} ${pOf(wkIdx(e.start)) < g.p ? 'cont' : ''}">` + base.map(([k]) => cellHtml(k, e, g.p)).join('') +
+        pWeeks(g.p).map(w => g.act.includes(w) && covers(e, w) ? `<td class="wk on ${c.load[w] > cap ? 'over' : ''}">${e.hours}</td>` : '<td class="wk"></td>').join('') +
+        tail.map(([k]) => cellHtml(k, e, g.p)).join('') + '</tr>').join('')
+        : `<tr><td class="emp" colspan="${nBase + 4 + tail.length}">No resets running in this period.</td></tr>`;
+    });
+    $('tbody').innerHTML = groups.length ? html : `<tr><td class="emp" colspan="${nBase + 4 + tail.length}">No periods to show.</td></tr>`;
+    $('tfoot').innerHTML = '';
+    const filtered = activeKeys(applied).length > 0;
+    if (!shown.length && filtered) $('tbody').innerHTML = `<tr><td class="emp" colspan="${nBase + 4 + tail.length}">No resets match these filters. <button class="link-btn" data-clearall>Clear all filters</button></td></tr>`;
+    const tags = activeKeys(applied).map(k => `<span class="tag">${FNAME[k]}: ${esc(k === 'date' ? dateText(applied) : applied[k])}<button data-rm="${k}" aria-label="Remove ${FNAME[k]} filter">✕</button></span>`).join('') +
+      (hl.size ? `<span class="tag">${hl.size} highlighted<button id="clrHl" aria-label="Clear highlight">✕</button></span>` : '');
+    const all = groups.length && groups.every(g => expanded.has(g.p));
+    $('gridbar').innerHTML = `<span>${shown.length} of ${ROWS.length} resets · ${groups.length} ${groups.length === 1 ? 'period' : 'periods'}. A reset that spans periods appears in each one it runs in. Orange = over ${cap} hrs/week.</span>` +
+      `<span class="tags">${tags}<button class="btn2" data-allgroups="${all ? 'collapse' : 'expand'}">${all ? 'Collapse all' : 'Expand all'}</button></span>`;
+  }
+
+  function render() {
+    const base = baseRows(), c = calc(base, cap), sw = scopeWs();
+    const groups = groupsFor(base, sw);
+    const shown = sw ? base.filter(e => sw.some(w => covers(e, w))) : base;
+    $('layout').classList.toggle('gray', gray);
+    renderSummary(c, shown, sw); renderTable(c, shown, sw, groups); renderPanel(); renderProto();
+  }
+  const autoExpand = () => { const sw = scopeWs(); if (!sw) return; const ps = [...new Set(sw.map(pOf))]; if (ps.length <= 2) ps.forEach(p => expanded.add(p)); };
+
+  /* ---------- Filter panel: fields ---------- */
+  const uniq = k => [...new Set(ROWS.map(e => e[k]))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const selHtml = (key, label, opts) => `<label class="flabel" for="f_${key}">${label}</label><div class="sel"><select class="field empty" id="f_${key}" data-k="${key}"><option value="">--- Select a Value ---</option>${opts.map(o => `<option>${esc(o)}</option>`).join('')}</select><button class="clear-x" type="button" data-clr="${key}" aria-label="Clear ${label}" hidden>✕</button><span class="caret">▼</span></div>`;
+  $('fieldYear').innerHTML = selHtml('year', 'Year', [YEAR - 1, YEAR, YEAR + 1].map(String));
+  $('fieldRest').innerHTML = [['dept', 'Department', uniq('dept')], ['comm', 'Commodity', uniq('comm')], ['type', 'Type', uniq('type')], ['cm', 'Category Manager', uniq('cm')],
+    ['pm', 'Process Manager', uniq('pm')], ['div', 'Division', DIVS], ['status', 'Status', ['Draft', 'Scheduled', 'Complete']]].map(x => selHtml(...x)).join('');
+
+  const trigger = $('trigger'), popover = $('popover'), pgrid = $('pgrid'), clearX = $('clearX'), clearAllBtn = $('clearAll');
+  const pk = { s: null, e: null, h: null };   // in-progress range while picking
+  for (let p = 1; p <= P; p++) {
+    const row = document.createElement('div'); row.className = 'pk-row';
+    row.innerHTML = `<div class="pk-plabel" data-p="${p}">${p}</div><div class="pk-div"></div>`;
+    for (let w = 1; w <= 4; w++) {
+      const b = document.createElement('button'); b.className = 'pk-week'; b.type = 'button'; b.dataset.i = idx(p, w);
+      b.innerHTML = `<span>${w}</span>`; b.setAttribute('aria-label', `Period ${p} week ${w}`); row.appendChild(b);
+    }
+    pgrid.appendChild(row);
+  }
+  const weekEls = [...pgrid.querySelectorAll('.pk-week')], plabels = [...pgrid.querySelectorAll('.pk-plabel')];
+  const pkBounds = () => {
+    if (draft.mode !== 'range' || pk.s === null) return null;
+    const o = pk.e !== null ? pk.e : (pk.h !== null ? pk.h : pk.s);
+    return [Math.min(pk.s, o), Math.max(pk.s, o)];
+  };
+  function renderPicker() {
+    const b = pkBounds(), picking = pk.s !== null && pk.e === null, single = draft.mode === 'single';
+    weekEls.forEach(el => {
+      const i = +el.dataset.i, on = draft.singles.includes(i);
+      el.setAttribute('aria-pressed', single ? on : 'false');
+      if (single) { el.classList.toggle('edge', on); el.classList.remove('inrange', 'preview'); return; }
+      const edge = b && (i === b[0] || i === b[1]), inside = b && i > b[0] && i < b[1];
+      el.classList.toggle('edge', !!edge); el.classList.toggle('inrange', !!inside && !picking); el.classList.toggle('preview', !!inside && picking);
+    });
+    plabels.forEach(el => {
+      const p = +el.dataset.p;
+      const on = single ? draft.singles.some(i => pOf(i) === p) : !!b && (pOf(b[0]) === p || pOf(b[1]) === p);
+      el.classList.toggle('edge', on); el.classList.toggle('clickable', !single);
+      if (!single) { el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', `Select all of period ${p}`); }
+      else { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label'); }
+    });
+    $('modeRange').setAttribute('aria-pressed', !single); $('modeSingle').setAttribute('aria-pressed', single);
+    $('pkHint').textContent = single ? (draft.singles.length ? `${draft.singles.length} selected. Click a selected week to remove it.` : 'Click weeks to select them individually.')
+      : pk.s === null ? 'Click a week to start your range.' : pk.e === null ? 'Now click an end week.' : '';
+    const has = hasDate(draft), label = has ? dateLabel(draft) : '--- Select a Value ---';
+    $('triggerLabel').textContent = label; trigger.title = has ? label : ''; trigger.classList.toggle('placeholder', !has); clearX.hidden = !has;
+  }
+  function renderPanel() {
+    ['year', ...FKEYS].forEach(k => {
+      const s = $('f_' + k); s.value = draft[k]; s.classList.toggle('empty', !draft[k]);
+      document.querySelector(`[data-clr="${k}"]`).hidden = !draft[k];
+    });
+    renderPicker();
+    const n = activeKeys(applied).length;
+    $('badge').hidden = !n; $('badge').textContent = n;
+    clearAllBtn.disabled = !activeKeys(draft).length && !n;
+  }
+  const syncPicker = () => { pk.s = draft.start; pk.e = draft.end; pk.h = null; };
+  function setOpen(open) {
+    if (open === !popover.hidden) return;
+    syncPicker(); popover.hidden = !open; trigger.setAttribute('aria-expanded', open); renderPicker();
+  }
+  function pick(i) {
+    if (draft.mode === 'single') {
+      const k = draft.singles.indexOf(i); k >= 0 ? draft.singles.splice(k, 1) : draft.singles.push(i);
+      if (draft.singles.length && !draft.year) draft.year = String(YEAR);
+    } else if (pk.s === null || pk.e !== null) { pk.s = i; pk.e = null; pk.h = null; }
+    else { pk.e = i; draft.start = pk.s; draft.end = pk.e; if (!draft.year) draft.year = String(YEAR); }
+    renderPanel();
+  }
+  function pickPeriod(p) {
+    if (draft.mode !== 'range') return;
+    pk.s = idx(p, 1); pk.e = idx(p, 4); pk.h = null; draft.start = pk.s; draft.end = pk.e;
+    if (!draft.year) draft.year = String(YEAR);
+    renderPanel();
+  }
+  pgrid.addEventListener('click', e => {
+    const pl = e.target.closest('.pk-plabel'); if (pl) return pickPeriod(+pl.dataset.p);
+    const b = e.target.closest('.pk-week'); if (b) pick(+b.dataset.i);
+  });
+  const hoverWeek = e => { const b = e.target.closest('.pk-week'); if (draft.mode === 'range' && b && pk.s !== null && pk.e === null) { pk.h = +b.dataset.i; renderPicker(); } };
+  pgrid.addEventListener('mouseover', hoverWeek); pgrid.addEventListener('focusin', hoverWeek);
+  pgrid.addEventListener('mouseleave', () => { if (pk.e === null && pk.h !== null) { pk.h = null; renderPicker(); } });
+  pgrid.addEventListener('keydown', e => { const pl = e.target.closest('.pk-plabel'); if (pl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPeriod(+pl.dataset.p); } });
+  trigger.addEventListener('click', e => { if (e.target === clearX) return; setOpen(true); });
+  trigger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } });
+  document.addEventListener('mousedown', e => { if (!$('dd').contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+  clearX.addEventListener('click', e => { e.stopPropagation(); clearDate(draft); syncPicker(); renderPanel(); });
+  const setMode = m => { if (m === draft.mode) return; draft.mode = m; clearDate(draft); syncPicker(); renderPanel(); };
+  $('modeRange').addEventListener('click', () => setMode('range')); $('modeSingle').addEventListener('click', () => setMode('single'));
+
+  function setField(k, v) { draft[k] = v; if (k === 'year' && !v) { clearDate(draft); syncPicker(); } renderPanel(); }   // clearing Year clears Date
+  $('panelBody').addEventListener('change', e => { const s = e.target.closest('select[data-k]'); if (s) setField(s.dataset.k, s.value); });
+  $('panelBody').addEventListener('click', e => { const x = e.target.closest('[data-clr]'); if (x) { setField(x.dataset.clr, ''); $('f_' + x.dataset.clr).focus(); } });
+
+  $('applyBtn').addEventListener('click', () => {
+    applied = clone(draft); hl = new Set(); setOpen(false); autoExpand(); render();
+    const n = baseRows().length; toast(activeKeys(applied).length ? `Filters applied · ${n} ${n === 1 ? 'reset' : 'resets'} match` : 'No filters applied');
+  });
+  function clearEverything() { applied = blank(); draft = blank(); hl = new Set(); pk.s = pk.e = pk.h = null; setOpen(false); render(); }
+  clearAllBtn.addEventListener('click', clearEverything);
+
+  /* Tags change the applied filters directly */
+  function removeFilter(k) {
+    for (const f of [applied, draft]) { if (k === 'date') clearDate(f); else if (k === 'year') { f.year = ''; clearDate(f); } else f[k] = ''; }
+    syncPicker(); render();
+  }
+
+  /* Panel open / close — selections are kept while collapsed */
+  const panel = $('panel'), body = $('panelBody'), collapseBtn = $('collapseBtn'), expandBtn = $('expandBtn');
+  function setPanel(open) {
+    if (!open) setOpen(false);
+    panel.classList.add('animating'); setTimeout(() => panel.classList.remove('animating'), 300);
+    panel.classList.toggle('collapsed', !open); body.inert = !open; expandBtn.tabIndex = open ? -1 : 0;
+    collapseBtn.setAttribute('aria-expanded', open); expandBtn.setAttribute('aria-expanded', open);
+    (open ? collapseBtn : expandBtn).focus();
+  }
+  collapseBtn.addEventListener('click', () => setPanel(false)); expandBtn.addEventListener('click', () => setPanel(true));
+
+  /* ---------- Events ---------- */
+  const showIssues = (ids, wks) => {
+    hl = new Set(ids); issuesOpen = true;
+    new Set(wks.map(pOf)).forEach(p => expanded.add(p));
+    render(); $('tbody').querySelector('tr.hl')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
+    const tg = e.target.closest('[data-tg]'); if (tg) { const p = +tg.dataset.tg; expanded.has(p) ? expanded.delete(p) : expanded.add(p); render(); $('tbody').querySelector(`[data-tg="${p}"]`)?.focus(); return; }
+    const ag = e.target.closest('[data-allgroups]'); if (ag) { const g = groupsFor(baseRows(), scopeWs()); ag.dataset.allgroups === 'expand' ? g.forEach(x => expanded.add(x.p)) : expanded.clear(); render(); return; }
+    const rm = e.target.closest('[data-rm]'); if (rm) { removeFilter(rm.dataset.rm); return; }
+    if (e.target.closest('[data-clearall]')) { clearEverything(); return; }
+    if (e.target.closest('#issBtn')) { issuesOpen = !issuesOpen; render(); return; }
+    if (e.target.closest('#clrHl')) { hl = new Set(); render(); return; }
+    const pc = e.target.closest('[data-pc]');
+    if (pc) { const p = +pc.dataset.pc, mine = calc(baseRows(), cap).issues.filter(i => i.wk.some(w => pOf(w) === p)); showIssues(mine.flatMap(i => i.ids), [(p - 1) * 4]); return; }
+    const fl = e.target.closest('[data-flag]');
+    if (fl) { const id = +fl.dataset.flag, mine = calc(baseRows(), cap).issues.filter(i => i.ids.includes(id)); showIssues(mine.flatMap(i => i.ids), mine.flatMap(i => i.wk)); toast(mine.map(i => i.title).join(' · ')); return; }
+    const is = e.target.closest('[data-iss]');
+    if (is) { const i = calc(baseRows(), cap).issues[+is.dataset.iss]; showIssues(i.ids, i.wk); }
+  });
+
+  /* ---------- Prototype controls ---------- */
+  const SEGS = [
+    { label: 'Capacity / week', opts: [['10', '10 hrs'], ['12', '12 hrs'], ['16', '16 hrs']], get: () => String(cap), set: v => { cap = +v; hl = new Set(); } },
+    { label: 'Period groups', opts: [['c', 'Collapsed'], ['e', 'Expanded']], get: () => groupsFor(baseRows(), scopeWs()).length && groupsFor(baseRows(), scopeWs()).every(g => expanded.has(g.p)) ? 'e' : 'c',
+      set: v => { v === 'e' ? groupsFor(baseRows(), scopeWs()).forEach(g => expanded.add(g.p)) : expanded.clear(); } },
+    { label: 'Check without color', opts: [['off', 'Off'], ['on', 'Grayscale']], get: () => gray ? 'on' : 'off', set: v => { gray = v === 'on'; } },
+  ];
+  function renderProto() {
+    $('proto').innerHTML = '<div class="prow"><span class="ptag">Prototype controls</span><span style="color:#6b7280;font-size:13px">(temporary — capacity is a placeholder; real value to be confirmed)</span></div>' +
+      '<div class="prow">' + SEGS.map((s, i) => `<span class="pgroup"><span class="plabel">${s.label}</span><span class="seg" role="group" aria-label="${s.label}">${
+        s.opts.map(([v, l]) => `<button type="button" data-seg="${i}" data-v="${v}" aria-pressed="${s.get() === v}">${l}</button>`).join('')}</span></span>`).join('') + '</div>';
+    $('about').innerHTML = '<b>Idea 2: the table is the overview.</b> Same Resets table, grouped by period. Each period header row carries the weekly totals under the Week 1–4 columns, so collapsed it reads like a 13-row summary, and expanding a period shows its resets with their hours in the same columns (the Excel grid). ' +
+      '<b>Filters.</b> The left rail narrows everything. Date limits which periods appear (and which weeks count inside them) and opens them when 2 or fewer. ' +
+      '<b>Assumption.</b> “Hours” is counted in every week a reset runs, so a reset spanning two periods appears in both. <b>Conflicts</b> = a week over capacity, one category manager on two resets at once, or resets marked “ALIGN WITH” that start in different weeks.';
+  }
+  $('proto').addEventListener('click', e => { const b = e.target.closest('[data-seg]'); if (!b) return; SEGS[+b.dataset.seg].set(b.dataset.v); render(); });
+
+  expanded.add(1); expanded.add(2); render();
+})();
+</script>
+</body>
+</html>

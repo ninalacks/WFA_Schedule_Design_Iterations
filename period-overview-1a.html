@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Period Overview 1A</title>
+<style>
+  :root {
+    --navy: #0f1f3d; --blue: #1f4e9c; --text: #1c2430; --muted: #5b6573; --border: #d5d9df; --focus: #2563eb; --bg: #f3f4f6;
+    --warn-bg: #fdf3c8; --warn-text: #5c4300; --over: #b45309; --over-bg: #fde7c8; --bar: #3b6fc4; --bar-bg: #e6edf8;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  button { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .topbar { background: var(--navy); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+  .brand { color: #fff; font-weight: 700; font-size: 18px; border: 1px solid #fff8; border-radius: 4px; padding: 8px 14px; }
+  .topbar a { color: #8fb4ff; font-weight: 700; font-size: 18px; text-decoration: underline; text-underline-offset: 6px; }
+  .app { padding: 18px 16px 12px; margin: 0; }
+  .results { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+  .results .gridbar { flex: none; }
+  .layout { display: flex; gap: 16px; align-items: stretch; flex: 1; min-height: 0; }
+  .tblarea { display: flex; flex-direction: column; min-height: 0; }
+  .layout > .tblarea { flex: 1; min-width: 0; }
+  @media (max-width: 900px) { .results { height: auto; display: block; } .layout { flex-direction: column; } .layout > .tblarea { width: 100%; } .tablewrap { max-height: 75vh; } .panel { min-height: 68px; } }
+
+
+  .titlerow { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 14.7px; }
+  h1 { font-size: 30px; margin: 0; }
+  .meta { text-align: right; font-size: 15px; color: #333; line-height: 1.35; }
+
+  /* Overview strip */
+  .ov { background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; padding: 14px 16px 16px; margin-bottom: 8px; }
+  .ovh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ovh h2 { margin: 0; font-size: 17px; }
+  .ovtog { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; font: inherit; font-weight: 700; color: inherit; cursor: pointer; padding: 4px 8px 4px 4px; margin: -4px 0 -4px -4px; border-radius: 6px; }
+  .ovtog:hover { background: #eef2fa; }
+  .ovtog svg { transition: transform .2s ease; color: var(--blue); }
+  .ov.collapsed .ovtog svg { transform: rotate(-90deg); }
+  .ovbody { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .2s ease; }
+  .ovin { min-height: 0; overflow: hidden; }
+  .ov.collapsed .ovbody { grid-template-rows: 0fr; }
+  .ov.collapsed { padding-bottom: 14px; }
+  .ov.collapsed .ovh { margin-bottom: 0; }
+  .ov.collapsed .hint, .ov.collapsed .legend { display: none; }
+  .ovsum { font-size: 14px; color: var(--text); font-weight: 600; background: #eef2fa; border-radius: 999px; padding: 2px 12px; margin-right: auto; margin-left: 4px; }
+  @media (prefers-reduced-motion: reduce) { .ovtog svg, .ovbody { transition: none; } }
+  .ovh .hint { font-size: 13px; color: var(--muted); }
+  .legend { display: inline-flex; gap: 14px; font-size: 12px; color: var(--muted); align-items: center; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .strip { display: grid; grid-template-columns: 54px repeat(13, minmax(68px, 1fr)); gap: 4px; overflow-x: auto; padding-bottom: 4px; }
+  .tile { border: 1px solid var(--border); background: #fff; border-radius: 8px; padding: 8px 3px 7px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 6px; min-width: 0; position: relative; }
+  .tile:hover { border-color: #9aa3b0; }
+  .tile.inscope { background: #f5f8fe; border-color: #9db4dc; }
+  .tile[aria-pressed="true"] { border-color: var(--navy); box-shadow: inset 0 0 0 1px var(--navy); background: #f5f8fe; }
+  .tile .top { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; padding: 0 3px; }
+  .tile .n { font-weight: 400; font-size: 11px; color: var(--muted); }
+  .tile .ft { font-size: 12px; color: var(--muted); }
+  .tile .ft b { color: var(--text); font-size: 13px; }
+  .tile.all { justify-content: center; align-items: center; text-align: center; gap: 2px; }
+  .tile.all .big { font-size: 15px; font-weight: 700; }
+  .bars { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; align-items: end; height: 44px; }
+  .bars .b { background: var(--bar); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .bars .b.over { background: var(--over); }
+  .bars .b.zero { background: #d8dce2; }
+  .bars .capline { position: absolute; left: 0; right: 0; border-top: 1px dashed #7a8494; pointer-events: none; }
+  .wl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; font-size: 10px; font-weight: 600; color: var(--text); text-align: center; margin-top: -3px; }
+  .wl .over { color: var(--over); }
+
+  /* Scope summary */
+  .btn2 { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+  .btn2[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  .gridbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; margin-bottom: 8px; font-size: 15px; color: var(--muted); }
+  .tags { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+  /* Filter rail + panel (pattern from date-filter-v6) */
+  .panel { width: 320px; flex: none; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.12); position: relative; transition: width .25s ease; }
+  .panel:not(.collapsed):not(.animating) { overflow-y: auto; }
+  .panel.collapsed { width: 56px; }
+  .panel.collapsed, .panel.animating { overflow: hidden; }
+  .panel-body { width: 320px; padding: 20px 18px 0; position: relative; transition: opacity .15s ease; }
+  .panel.collapsed .panel-body { opacity: 0; pointer-events: none; position: absolute; top: 0; left: 0; height: 0; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 6px; }
+  .panel-head h2 { font-size: 26px; margin: 0; }
+  .icon-btn { width: 40px; height: 40px; border: 0; background: transparent; border-radius: 8px; color: var(--blue); cursor: pointer; display: grid; place-items: center; position: relative; }
+  .icon-btn:hover { background: #eef2fa; }
+  .prail { position: absolute; top: 0; left: 0; width: 56px; padding-top: 14px; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .15s ease .1s; }
+  .panel.collapsed .prail { opacity: 1; pointer-events: auto; }
+  .badge { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; border-radius: 9px; background: var(--navy); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; }
+  @media (prefers-reduced-motion: reduce) { .panel, .panel-body, .prail { transition: none; } }
+  .flabel { display: block; font-weight: 600; font-size: 14px; color: var(--muted); margin: 16px 0 6px; }
+  .field { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; background: #fff; display: flex; align-items: center; padding: 0 10px; gap: 8px; font-size: 15px; color: var(--text); cursor: pointer; text-align: left; }
+  .field.placeholder, .sel select.field.empty { color: #666; }
+  .field[aria-expanded="true"], .field:focus-visible { border: 2px solid var(--focus); outline: none; padding: 0 9px; }
+  .field .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .clear-x { border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; padding: 0 4px; }
+  .clear-x:hover { color: var(--text); }
+  .clear-x:focus-visible { outline: 2px solid var(--focus); border-radius: 4px; }
+  .caret { font-size: 10px; color: var(--muted); }
+  .sel { position: relative; }
+  .sel select.field { padding-right: 62px; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; }
+  .sel .caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .sel .clear-x { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); }
+  .dropdown { position: relative; }
+  .popover { position: absolute; top: 44px; left: 0; width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px 10px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 10; }
+  .popover[hidden] { display: none; }
+  .pk-head, .pk-row { display: grid; grid-template-columns: 52px repeat(4, 1fr); align-items: center; }
+  .pk-head { color: var(--muted); font-size: 14px; margin-bottom: 6px; padding-left: 4px; }
+  .pk-scroll { max-height: 280px; overflow-y: auto; }
+  .pk-row { height: 44px; position: relative; }
+  .pk-plabel { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; margin-left: 4px; }
+  .pk-plabel.clickable { cursor: pointer; }
+  .pk-plabel.clickable:not(.edge):hover { background: #dbe8fe; }
+  .pk-plabel:focus-visible { outline: 2px solid var(--focus); }
+  .pk-plabel.edge { background: var(--navy); color: #fff; }
+  .pk-week { height: 36px; border: 0; background: transparent; font-size: 15px; color: var(--text); cursor: pointer; display: grid; place-items: center; margin: 4px 0; position: relative; }
+  .pk-week.inrange, .pk-week.preview { background: #dbe8fe; }
+  .pk-week.edge::before { content: ""; position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); z-index: 0; }
+  .pk-week.edge span { position: relative; z-index: 1; color: #fff; }
+  .pk-week:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .pk-div { border-left: 1px solid #e3e6ea; position: absolute; left: 52px; top: 4px; bottom: 4px; }
+  .pk-seg { display: grid; grid-template-columns: 1fr 1fr; background: #eceef1; border-radius: 999px; padding: 3px; margin: 0 4px 12px; }
+  .pk-seg button { border: 0; background: transparent; height: 30px; border-radius: 999px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .pk-seg button[aria-pressed="true"] { background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .pk-seg button:focus-visible { outline: 2px solid var(--focus); }
+  .pk-hint { font-size: 13px; color: var(--muted); margin: 10px 4px 0; min-height: 18px; }
+  .clear-row { display: flex; justify-content: flex-end; margin: 0; }
+  .link-btn { border: 0; background: none; padding: 4px 2px; font-size: 16px; color: var(--blue); text-decoration: underline; cursor: pointer; }
+  .link-btn:focus-visible { outline: 2px solid var(--focus); border-radius: 2px; }
+  .link-btn:disabled { color: #9aa3b0; cursor: default; }
+  .pfoot { position: sticky; bottom: 0; background: #fff; padding: 12px 0 16px; margin-top: 12px; }
+  .pbtn { width: 100%; height: 44px; border-radius: 6px; font-size: 17px; border: 1px solid var(--navy); background: var(--navy); color: #fff; font-weight: 600; cursor: pointer; }
+
+  /* Table */
+  .tablewrap { background: #fff; border: 1px solid #e3e6ea; overflow: auto; flex: 1; min-height: 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 1500px; font-size: 15px; }
+  th { background: #f1f2f4; text-align: left; font-weight: 700; padding: 12px 10px; border-bottom: 2px solid #dde0e5; font-size: 15px; white-space: nowrap; }
+  td { padding: 12px 10px; border-bottom: 1px solid #eceef1; vertical-align: middle; }
+  td { white-space: nowrap; }
+  td.com { min-width: 280px; max-width: 340px; white-space: normal; }
+  th.wk, td.wk { text-align: center; width: 76px; padding-left: 4px; padding-right: 4px; }
+  th.wk { border-left: 1px solid #dde0e5; }
+  th.wk small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+  td.wk { border-left: 1px solid #f1f2f4; }
+  td.wk.on { font-weight: 700; }
+  td.wk.over { color: var(--over); }
+  tfoot td { background: #f8f9fb; font-weight: 700; border-top: 2px solid #dde0e5; border-bottom: 0; }
+  tfoot td.wk { vertical-align: top; }
+  tfoot td.wk.over { color: var(--over); }
+  .st { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .st { padding: 2px 12px; } .st.Added { background: #d7efdd; color: #17653a; } .st.Modified { background: #e1eafb; color: #1f4e9c; }
+  tr.add td { background: #e9f6ec; } td.chg { background: #dbe8fe !important; }
+  th.wk.pg { font-size: 13px; padding: 6px 2px; }
+  th.wk.w { font-size: 12px; padding: 4px 2px; font-weight: 600; color: var(--muted); }
+  th.wk.ps { border-left: 2px solid #cfd5de; }
+  td.wk.ps { border-left: 1px solid #cfd5de; } 
+  table.cmp th.wk, table.cmp td.wk { width: 34px; min-width: 34px; padding-left: 0; padding-right: 0; font-size: 13px; }
+  .stk { position: sticky; z-index: 1; background: #fff; }
+  th.stk { background: #f1f2f4; z-index: 3; }
+  .stk1 { left: 0; }
+  .stk1, .stk2 { border-right: 0 !important; box-shadow: inset -1px 0 0 #dde0e5; }
+  .stk2 { left: var(--c1w, 180px); box-shadow: inset -1px 0 0 #dde0e5, 6px 0 6px -6px rgba(15,31,61,.25); }
+  th, td { border-right: 1px solid #e3e6ea; }
+  thead th { position: sticky; top: 0; z-index: 2; border: 0 !important; box-shadow: inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5; }
+  thead th.wk.ps { box-shadow: inset 2px 0 0 #cfd5de, inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5; }
+  thead th.wk.w { top: var(--h1, 40px); }
+  thead th.wk { z-index: 2; }
+  thead th.stk1 { box-shadow: inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5; }
+  thead th.stk2 { box-shadow: inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5, 6px 0 6px -6px rgba(15,31,61,.25); }
+  th { border-right-color: #dde0e5; line-height: 1.15; }
+  tfoot td.stk { background: #f8f9fb; }
+  .hwrap { display: inline-flex; align-items: center; gap: 8px; }
+  .sorth { border: 0; background: none; font: inherit; font-weight: 700; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; margin: 0; text-align: left; line-height: 1.15; white-space: nowrap; border-radius: 4px; }
+  .sorth .sa { display: inline-flex; color: #8a94a3; opacity: 0; transition: opacity .1s; }
+  .sorth:hover .sa, .sorth:focus-visible .sa { opacity: 1; }
+  .sorth.on .sa { opacity: 1; color: var(--navy); }
+  .sorth:hover { color: var(--blue); }
+  th[aria-sort] { background: #e6eaf1; }
+  @media (prefers-reduced-motion: reduce) { .sorth .sa { transition: none; } }
+  .xbtn { width: 26px; height: 26px; border: 1px solid #b9c2d0; background: #fff; border-radius: 6px; cursor: pointer; display: inline-grid; place-items: center; color: var(--blue); padding: 0; }
+  .xbtn:hover { background: #eef2fa; }
+  .xbtn[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .gt { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text); font-weight: 600; }
+  .switch { width: 38px; height: 22px; border-radius: 999px; background: #c3c9d2; border: 0; position: relative; cursor: pointer; padding: 0; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: left .15s; }
+  .switch[aria-checked="true"] { background: var(--navy); }
+  .switch[aria-checked="true"]::after { left: 18px; }
+  @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+  .emp { text-align: center; color: var(--muted); padding: 32px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; max-width: 90vw; }
+  .toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="topbar"><span class="brand">Kroger | Reset Planner</span><a href="#" onclick="return false">Resets</a></div>
+
+<div class="app">
+
+  <main id="main">
+    <div class="titlerow">
+      <h1>KOMPASS Schedule</h1>
+      <div class="meta">2026 Resets<br>Version: 2026.02<br>Updated on: 10/9/2026 3:28PM</div>
+    </div>
+
+    <section class="ov" id="ov" aria-labelledby="ovT">
+      <div class="ovh">
+        <h2 id="ovT"><button type="button" class="ovtog" id="ovToggle" aria-expanded="true" aria-controls="ovBody"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>Weekly Workload</button></h2>
+        <span class="ovsum" id="ovSum" hidden></span>
+        <span class="hint" id="ovHint"></span>
+        <span class="legend" id="legend"></span>
+      </div>
+      <div class="ovbody" id="ovBody"><div class="ovin"><div class="strip" id="strip"></div></div></div>
+    </section>
+
+    <div class="results" id="results">
+    <div class="gridbar" id="gridbar"></div>
+    <div class="layout" id="layout">
+  <aside class="panel collapsed" id="panel" aria-label="Filters">
+    <div class="panel-body" id="panelBody" inert>
+      <div class="panel-head">
+        <h2>Filters</h2>
+        <button class="icon-btn" id="collapseBtn" aria-label="Collapse filters" aria-controls="panelBody" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+      </div>
+      <div class="clear-row"><button class="link-btn" id="clearAll" disabled>Clear All</button></div>
+      <div id="fieldYear"></div>
+      <label class="flabel" id="dateLbl">Date</label>
+      <div class="dropdown" id="dd">
+        <div class="field placeholder" id="trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="dateLbl">
+          <span class="label" id="triggerLabel">--- Select a Value ---</span>
+          <button class="clear-x" id="clearX" aria-label="Clear date" hidden>✕</button>
+          <span class="caret">▼</span>
+        </div>
+        <div class="popover" id="popover" hidden>
+          <div class="pk-seg" role="group" aria-label="Selection mode">
+            <button type="button" id="modeRange" aria-pressed="true">Range</button>
+            <button type="button" id="modeSingle" aria-pressed="false">Individual weeks</button>
+          </div>
+          <div class="pk-head"><span>Period:</span><span style="grid-column:2 / span 4">Week:</span></div>
+          <div class="pk-scroll" id="pgrid"></div>
+          <div class="pk-hint" id="pkHint" aria-live="polite"></div>
+        </div>
+      </div>
+      <div id="fieldRest"></div>
+      <div class="pfoot"><button class="pbtn" id="applyBtn">Apply</button></div>
+    </div>
+    <div class="prail">
+      <button class="icon-btn" id="expandBtn" aria-label="Open filters" aria-controls="panelBody" aria-expanded="false">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true"><path d="M3 6h9M18 6h3M3 12h3M12 12h9M3 18h11M20 18h1"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg>
+        <span class="badge" id="badge" hidden></span>
+      </button>
+    </div>
+  </aside>
+    <div class="tblarea">
+      <div class="tablewrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody><tfoot id="tfoot"></tfoot></table></div>
+    </div>
+    </div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2800); };
+  const WARN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></svg>';
+
+  /*DATA-START*/
+  /* Demo data (invented). hours = hours of work in EACH week the reset runs. */
+  const T = (type, dept, comm, cm, pm, size, start, dur, hours, divs, comments) => ({ type, dept, comm, cm, pm, size, start, dur, hours, divs, comments });
+  const ROWS = [
+    T('Update','01 - Grocery','017 - Flour & Meal','Monica White','Kelly Jacob',12,'P1 W1',1,12,'All','Reset postponed due to inventory delays at the regional distribution center'),
+    T('Update','43 - Liquor','012 - Mixers','Alexander Nguyen','Isabella Garcia',16,'P1 W1',1,3,'All','ALIGN WITH 003 - Can Beans'),
+    T('NII','01 - Grocery','221 - Granola','Tom Alvarez','Ana Petrova',8,'P1 W2',1,6,6,''),
+    T('Maintenance','02 - Dairy','062 - Yogurt','Peter Grey','Ian Smith',16,'P1 W3',1,10,'All','Vendor confirmed new timeline. ALIGN WITH 007 - Shelf Stable Milk'),
+    T('NII','17 - Natural Foods','410 - NF Cereal','Sarah Johnson','Michael Lee',10,'P1 W3',1,8,'All',''),
+    T('Update','01 - Grocery','005 - Soup','Monica White','Kelly Jacob',12,'P1 W2',1,5,'All','Same crew as Flour & Meal'),
+    T('NII','01 - Grocery','007 - Shelf Stable Milk','Maria Carmen','Teresa Mayfly',12,'P2 W2',1,5,'All','ALIGN WITH 062 - Yogurt'),
+    T('Update','02 - Dairy','071 - Cheese','William Turner','Zoe Henderson',20,'P2 W1',1,8,'All',''),
+    T('Maintenance','01 - Grocery','030 - Snacks','Rachel Thompson','Christopher Brown',24,'P2 W2',1,12,'All',''),
+    T('NII','43 - Liquor','044 - Wine','Alexander Nguyen','Isabella Garcia',16,'P2 W2',1,6,9,''),
+    T('Update','17 - Natural Foods','680 - NF Snacks','David Chen','Emma Wilson',8,'P3 W1',1,10,'All',''),
+    T('NII','01 - Grocery','144 - Pasta Sauce','Laura Kim','Omar Reyes',12,'P3 W3',1,11,'All',''),
+    T('Update','02 - Dairy','065 - Butter','William Turner','Zoe Henderson',8,'P3 W4',2,7,'All',''),
+    T('NII','01 - Grocery','102 - Coffee','Tom Alvarez','Ana Petrova',16,'P4 W1',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','290 - NF Yogurt','David Chen','Emma Wilson',24,'P4 W2',1,5,'All','Adjustments made to display fixtures'),
+    T('Update','43 - Liquor','050 - Spirits','Alexander Nguyen','Isabella Garcia',20,'P5 W1',1,4,'All',''),
+    T('NII','01 - Grocery','088 - Baking','Rachel Thompson','Christopher Brown',12,'P5 W3',1,9,'All',''),
+    T('Update','02 - Dairy','069 - Eggs','Peter Grey','Ian Smith',8,'P6 W2',1,6,'All',''),
+    T('NII','01 - Grocery','120 - Tea','Laura Kim','Omar Reyes',8,'P6 W3',1,3,'All',''),
+    T('Update','17 - Natural Foods','677 - NF Baking Mixes','Sarah Johnson','Michael Lee',10,'P9 W1',1,6,12,'New layout implemented for improved flow. ALIGN WITH 062 - Yogurt'),
+    T('NII','01 - Grocery','150 - Pet Food','Maria Carmen','Teresa Mayfly',16,'P7 W1',1,4,'All',''),
+    T('Update','02 - Dairy','075 - Cream','William Turner','Zoe Henderson',8,'P7 W3',1,8,'All',''),
+    T('NII','01 - Grocery','003 - Can Beans','Rachel Thompson','Christopher Brown',8,'P8 W1',1,11,'All','Approved by category manager. ALIGN WITH 012 - Mixers'),
+    T('Update','01 - Grocery','227 - Cereal Bars','Tom Alvarez','Ana Petrova',8,'P8 W1',2,5,6,''),
+    T('Maintenance','43 - Liquor','055 - Beer','Alexander Nguyen','Isabella Garcia',24,'P8 W2',1,12,'All',''),
+    T('NII','17 - Natural Foods','300 - NF Frozen','David Chen','Emma Wilson',16,'P8 W2',1,6,'All',''),
+    T('Update','02 - Dairy','062 - Yogurt','William Turner','Zoe Henderson',12,'P9 W2',1,9,'All','ALIGN WITH 677 - NF Baking Mixes'),
+    T('NII','01 - Grocery','160 - Candy','Laura Kim','Omar Reyes',12,'P9 W2',1,3,'All',''),
+    T('Update','01 - Grocery','018 - Rice & Pasta','Monica White','Kelly Jacob',12,'P9 W3',1,3,'All',''),
+    T('Update','02 - Dairy','080 - Ice Cream','Peter Grey','Ian Smith',20,'P10 W1',1,7,'All',''),
+    T('NII','01 - Grocery','190 - Water','Maria Carmen','Teresa Mayfly',16,'P10 W3',1,8,'All',''),
+    T('Update','17 - Natural Foods','320 - NF Beverages','Sarah Johnson','Michael Lee',10,'P11 W1',1,4,'All',''),
+    T('NII','01 - Grocery','170 - Juice','Rachel Thompson','Christopher Brown',12,'P11 W3',1,3,'All',''),
+    T('Update','43 - Liquor','060 - Seltzer','Alexander Nguyen','Isabella Garcia',8,'P12 W2',1,4,'All',''),
+    T('Maintenance','01 - Grocery','200 - Paper Goods','Laura Kim','Omar Reyes',24,'P12 W1',2,4,'All',''),
+    T('NII','02 - Dairy','062 - Yogurt Cups','William Turner','Zoe Henderson',12,'P13 W4',1,7,'All','Runs into next year'),
+    T('Update','01 - Grocery','210 - Cleaning','Tom Alvarez','Ana Petrova',16,'P13 W1',1,3,'All',''),
+    T('Update','01 - Grocery','230 - Spices','Monica White','Kelly Jacob',8,'P1 W1',1,4,'All',''),
+    T('NII','02 - Dairy','085 - Dips','Peter Grey','Ian Smith',12,'P1 W1',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','330 - NF Pasta','Sarah Johnson','Michael Lee',16,'P2 W1',1,7,'All',''),
+    T('Update','01 - Grocery','240 - Oils','Laura Kim','Omar Reyes',8,'P2 W1',1,5,'All',''),
+    T('NII','02 - Dairy','095 - Creamer','Tom Alvarez','Ana Petrova',12,'P2 W4',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','310 - NF Bars','Rachel Thompson','Christopher Brown',16,'P2 W4',1,7,'All',''),
+    T('Update','01 - Grocery','235 - Sauces','Maria Carmen','Teresa Mayfly',8,'P2 W4',1,8,'All',''),
+    T('NII','02 - Dairy','260 - Bread','Monica White','Kelly Jacob',12,'P3 W2',1,4,'All',''),
+    T('Maintenance','17 - Natural Foods','098 - Kefir','Peter Grey','Ian Smith',16,'P3 W3',1,7,'All',''),
+    T('Update','01 - Grocery','340 - NF Chips','Sarah Johnson','Michael Lee',8,'P3 W3',1,12,'All',''),
+    T('NII','02 - Dairy','245 - Vinegar','Laura Kim','Omar Reyes',12,'P4 W1',1,8,'All',''),
+    T('Maintenance','17 - Natural Foods','270 - Tortillas','Tom Alvarez','Ana Petrova',16,'P4 W2',1,11,'All',''),
+    T('Update','01 - Grocery','100 - Sour Cream','Rachel Thompson','Christopher Brown',8,'P4 W4',1,9,'All',''),
+    T('NII','02 - Dairy','350 - NF Soup','Maria Carmen','Teresa Mayfly',12,'P4 W4',1,6,'All',''),
+    T('Maintenance','17 - Natural Foods','255 - Syrup','Monica White','Kelly Jacob',16,'P4 W4',1,7,'All',''),
+    T('Update','01 - Grocery','280 - Crackers','Peter Grey','Ian Smith',8,'P5 W3',1,10,'All',''),
+    T('NII','02 - Dairy','105 - Cottage Cheese','Sarah Johnson','Michael Lee',12,'P5 W3',1,4,'All',''),
+    T('Maintenance','17 - Natural Foods','360 - NF Nuts','Laura Kim','Omar Reyes',16,'P5 W3',1,7,'All',''),
+    T('Update','01 - Grocery','265 - Jam','Tom Alvarez','Ana Petrova',8,'P6 W2',1,8,'All',''),
+    T('NII','02 - Dairy','290 - Pretzels','Rachel Thompson','Christopher Brown',12,'P6 W2',2,3,'All',''),
+    T('Maintenance','17 - Natural Foods','110 - Milk','Maria Carmen','Teresa Mayfly',16,'P6 W2',2,7,'All',''),
+    T('Update','01 - Grocery','370 - NF Tea','Monica White','Kelly Jacob',8,'P7 W1',1,6,'All',''),
+    T('NII','02 - Dairy','275 - Honey','Peter Grey','Ian Smith',12,'P7 W1',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','295 - Popcorn','Sarah Johnson','Michael Lee',16,'P7 W1',1,8,'All',''),
+    T('Update','01 - Grocery','115 - Cream Cheese','Laura Kim','Omar Reyes',8,'P7 W4',1,5,'All',''),
+    T('NII','02 - Dairy','380 - NF Oats','Tom Alvarez','Ana Petrova',12,'P7 W4',1,10,'All',''),
+    T('Maintenance','17 - Natural Foods','285 - Peanut Butter','Rachel Thompson','Christopher Brown',16,'P7 W4',1,9,'All',''),
+    T('Update','01 - Grocery','300 - Cookies','Maria Carmen','Teresa Mayfly',8,'P8 W3',1,9,'All',''),
+    T('NII','02 - Dairy','120 - Half & Half','Monica White','Kelly Jacob',12,'P8 W4',1,6,'All',''),
+    T('Maintenance','17 - Natural Foods','390 - NF Rice','Peter Grey','Ian Smith',16,'P9 W1',1,3,'All',''),
+    T('Update','01 - Grocery','230 - Spices','Sarah Johnson','Michael Lee',8,'P9 W4',1,3,'All',''),
+    T('NII','02 - Dairy','085 - Dips','Laura Kim','Omar Reyes',12,'P9 W4',1,7,'All',''),
+    T('Maintenance','17 - Natural Foods','330 - NF Pasta','Tom Alvarez','Ana Petrova',16,'P10 W1',1,8,'All',''),
+    T('Update','01 - Grocery','240 - Oils','Rachel Thompson','Christopher Brown',8,'P10 W3',1,11,'All',''),
+    T('NII','02 - Dairy','095 - Creamer','Maria Carmen','Teresa Mayfly',12,'P10 W3',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','310 - NF Bars','Monica White','Kelly Jacob',16,'P10 W4',1,4,'All',''),
+    T('Update','01 - Grocery','235 - Sauces','Peter Grey','Ian Smith',8,'P10 W4',1,7,'All',''),
+    T('NII','02 - Dairy','260 - Bread','Sarah Johnson','Michael Lee',12,'P11 W2',1,6,'All',''),
+    T('Maintenance','17 - Natural Foods','098 - Kefir','Laura Kim','Omar Reyes',16,'P11 W3',1,6,'All',''),
+    T('Update','01 - Grocery','340 - NF Chips','Tom Alvarez','Ana Petrova',8,'P11 W3',1,6,'All',''),
+    T('NII','02 - Dairy','245 - Vinegar','Rachel Thompson','Christopher Brown',12,'P12 W1',1,7,'All',''),
+    T('Maintenance','17 - Natural Foods','270 - Tortillas','Maria Carmen','Teresa Mayfly',16,'P12 W2',1,10,'All',''),
+    T('Update','01 - Grocery','100 - Sour Cream','Monica White','Kelly Jacob',8,'P12 W3',1,5,'All',''),
+    T('NII','02 - Dairy','350 - NF Soup','Peter Grey','Ian Smith',12,'P12 W3',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','255 - Syrup','Sarah Johnson','Michael Lee',16,'P12 W4',1,11,'All',''),
+    T('Update','01 - Grocery','280 - Crackers','Laura Kim','Omar Reyes',8,'P13 W2',1,10,'All',''),
+    T('NII','02 - Dairy','105 - Cottage Cheese','Tom Alvarez','Ana Petrova',12,'P13 W2',1,8,'All',''),
+    T('Maintenance','17 - Natural Foods','360 - NF Nuts','Rachel Thompson','Christopher Brown',16,'P13 W3',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','500 - NF Pasta','Sarah Johnson','Michael Lee',12,'P1 W1',1,12,'All',''),
+    T('Maintenance','01 - Grocery','400 - Spices','Maria Carmen','Teresa Mayfly',10,'P1 W2',1,4,'All',''),
+    T('Update','01 - Grocery','401 - Oils','Tom Alvarez','Ana Petrova',24,'P1 W2',1,11,'All',''),
+    T('Maintenance','01 - Grocery','402 - Vinegar','Maria Carmen','Teresa Mayfly',10,'P1 W2',1,10,10,''),
+    T('Update','43 - Liquor','070 - Whiskey','Alexander Nguyen','Isabella Garcia',8,'P1 W3',1,6,'All',''),
+    T('Update','01 - Grocery','403 - Syrup','Rachel Thompson','Christopher Brown',20,'P1 W3',1,9,12,''),
+    T('Update','02 - Dairy','120 - Milk','Peter Grey','Ian Smith',24,'P1 W3',1,10,'All',''),
+    T('Update','01 - Grocery','404 - Jam','Laura Kim','Omar Reyes',20,'P1 W4',1,10,'All',''),
+    T('Update','01 - Grocery','405 - Crackers','Tom Alvarez','Ana Petrova',16,'P1 W4',1,6,4,''),
+    T('Update','01 - Grocery','406 - Cookies','Maria Carmen','Teresa Mayfly',8,'P1 W4',1,8,'All',''),
+    T('NII','02 - Dairy','121 - Cream','William Turner','Zoe Henderson',8,'P1 W4',1,3,'All',''),
+    T('Update','01 - Grocery','407 - Pretzels','Monica White','Kelly Jacob',20,'P1 W4',1,8,'All',''),
+    T('Maintenance','02 - Dairy','122 - Half & Half','Peter Grey','Ian Smith',12,'P2 W1',1,6,'All',''),
+    T('NII','01 - Grocery','408 - Popcorn','Laura Kim','Omar Reyes',8,'P2 W1',1,8,'All',''),
+    T('Update','02 - Dairy','123 - Kefir','William Turner','Zoe Henderson',8,'P2 W2',2,3,'All',''),
+    T('Update','01 - Grocery','409 - Tortillas','Tom Alvarez','Ana Petrova',24,'P2 W2',1,11,'All',''),
+    T('Update','01 - Grocery','410 - Bread','Tom Alvarez','Ana Petrova',16,'P2 W3',1,4,'All',''),
+    T('Update','02 - Dairy','124 - Sour Cream','William Turner','Zoe Henderson',8,'P2 W3',1,9,'All',''),
+    T('Update','01 - Grocery','411 - Canned Tomatoes','Maria Carmen','Teresa Mayfly',12,'P2 W3',2,3,'All',''),
+    T('Maintenance','01 - Grocery','412 - Canned Fruit','Tom Alvarez','Ana Petrova',8,'P2 W3',1,3,12,''),
+    T('Update','01 - Grocery','413 - Canned Vegetables','Rachel Thompson','Christopher Brown',8,'P2 W3',1,10,'All',''),
+    T('NII','43 - Liquor','071 - Vodka','Alexander Nguyen','Isabella Garcia',8,'P2 W4',1,6,'All',''),
+    T('Update','01 - Grocery','414 - Pickles','Monica White','Kelly Jacob',8,'P2 W4',1,9,'All',''),
+    T('NII','43 - Liquor','072 - Tequila','Alexander Nguyen','Isabella Garcia',10,'P3 W1',1,4,'All',''),
+    T('Update','43 - Liquor','073 - Rum','Alexander Nguyen','Isabella Garcia',16,'P3 W1',1,8,'All',''),
+    T('Update','01 - Grocery','415 - Olives','Rachel Thompson','Christopher Brown',12,'P3 W1',1,9,'All',''),
+    T('Maintenance','01 - Grocery','416 - Mustard','Rachel Thompson','Christopher Brown',12,'P3 W1',1,7,'All',''),
+    T('NII','02 - Dairy','125 - Cottage Cheese','Peter Grey','Ian Smith',8,'P3 W2',1,11,'All',''),
+    T('Update','01 - Grocery','417 - Ketchup','Monica White','Kelly Jacob',12,'P3 W2',1,8,'All',''),
+    T('Maintenance','02 - Dairy','126 - Cream Cheese','Peter Grey','Ian Smith',20,'P3 W2',1,3,'All',''),
+    T('Update','01 - Grocery','418 - Mayonnaise','Maria Carmen','Teresa Mayfly',10,'P3 W2',1,6,'All',''),
+    T('Maintenance','01 - Grocery','419 - Salad Dressing','Tom Alvarez','Ana Petrova',8,'P3 W3',1,7,'All',''),
+    T('Update','01 - Grocery','420 - Marinades','Rachel Thompson','Christopher Brown',8,'P3 W3',1,3,6,''),
+    T('Update','01 - Grocery','421 - Taco Kits','Tom Alvarez','Ana Petrova',8,'P3 W4',1,3,'All',''),
+    T('Maintenance','01 - Grocery','422 - Instant Noodles','Laura Kim','Omar Reyes',10,'P3 W4',1,11,'All',''),
+    T('NII','01 - Grocery','423 - Cereal','Laura Kim','Omar Reyes',16,'P3 W4',1,12,'All',''),
+    T('Update','17 - Natural Foods','501 - NF Bars','David Chen','Emma Wilson',20,'P3 W4',1,7,'All',''),
+    T('Maintenance','02 - Dairy','127 - Shredded Cheese','Peter Grey','Ian Smith',8,'P4 W1',1,5,3,''),
+    T('NII','17 - Natural Foods','502 - NF Chips','David Chen','Emma Wilson',10,'P4 W1',1,5,'All',''),
+    T('NII','01 - Grocery','424 - Oatmeal','Monica White','Kelly Jacob',8,'P4 W1',2,7,'All',''),
+    T('NII','01 - Grocery','425 - Pancake Mix','Laura Kim','Omar Reyes',8,'P4 W2',1,5,'All',''),
+    T('Update','02 - Dairy','128 - Sliced Cheese','William Turner','Zoe Henderson',16,'P4 W2',1,8,12,''),
+    T('Update','02 - Dairy','129 - String Cheese','William Turner','Zoe Henderson',8,'P4 W2',1,10,'All',''),
+    T('NII','01 - Grocery','426 - Baking Chips','Laura Kim','Omar Reyes',20,'P4 W3',1,9,8,''),
+    T('Update','17 - Natural Foods','503 - NF Soup','Sarah Johnson','Michael Lee',24,'P4 W3',1,7,'All',''),
+    T('Update','17 - Natural Foods','504 - NF Nuts','David Chen','Emma Wilson',20,'P4 W3',1,6,'All',''),
+    T('NII','01 - Grocery','427 - Sugar','Rachel Thompson','Christopher Brown',20,'P4 W3',1,8,4,''),
+    T('Update','01 - Grocery','428 - Broth','Monica White','Kelly Jacob',12,'P4 W3',1,4,'All',''),
+    T('NII','17 - Natural Foods','505 - NF Tea','David Chen','Emma Wilson',20,'P4 W4',1,8,'All',''),
+    T('Update','17 - Natural Foods','506 - NF Oats','David Chen','Emma Wilson',12,'P4 W4',1,7,'All',''),
+    T('Update','02 - Dairy','130 - Butter Spreads','William Turner','Zoe Henderson',16,'P5 W1',1,11,9,''),
+    T('NII','01 - Grocery','429 - Gravy','Rachel Thompson','Christopher Brown',8,'P5 W1',2,4,'All',''),
+    T('Update','01 - Grocery','430 - Hot Sauce','Laura Kim','Omar Reyes',20,'P5 W1',1,5,'All',''),
+    T('NII','17 - Natural Foods','507 - NF Rice','Sarah Johnson','Michael Lee',24,'P5 W1',1,12,9,''),
+    T('Maintenance','17 - Natural Foods','508 - NF Granola','Sarah Johnson','Michael Lee',20,'P5 W2',1,6,'All',''),
+    T('Update','02 - Dairy','131 - Egg Substitutes','William Turner','Zoe Henderson',8,'P5 W2',1,9,'All',''),
+    T('Maintenance','01 - Grocery','431 - Nut Butters','Maria Carmen','Teresa Mayfly',8,'P5 W2',2,4,'All',''),
+    T('Update','01 - Grocery','432 - Dried Fruit','Tom Alvarez','Ana Petrova',12,'P5 W2',1,5,'All',''),
+    T('Update','01 - Grocery','433 - Trail Mix','Rachel Thompson','Christopher Brown',20,'P5 W2',1,5,'All',''),
+    T('NII','01 - Grocery','434 - Granola Bars','Maria Carmen','Teresa Mayfly',8,'P5 W3',1,4,'All',''),
+    T('Update','01 - Grocery','435 - Fruit Snacks','Rachel Thompson','Christopher Brown',10,'P5 W4',1,5,'All',''),
+    T('Update','01 - Grocery','436 - Chips','Tom Alvarez','Ana Petrova',10,'P5 W4',1,6,'All',''),
+    T('Maintenance','01 - Grocery','437 - Salsa','Laura Kim','Omar Reyes',24,'P5 W4',1,12,'All',''),
+    T('Update','17 - Natural Foods','509 - NF Crackers','David Chen','Emma Wilson',8,'P5 W4',1,10,'All',''),
+    T('NII','02 - Dairy','132 - Whipped Topping','Peter Grey','Ian Smith',12,'P5 W4',1,7,'All',''),
+    T('NII','01 - Grocery','438 - Dips','Tom Alvarez','Ana Petrova',16,'P6 W1',1,9,'All',''),
+    T('Update','17 - Natural Foods','510 - NF Juice','Sarah Johnson','Michael Lee',8,'P6 W1',1,8,'All',''),
+    T('NII','01 - Grocery','439 - Honey','Rachel Thompson','Christopher Brown',8,'P6 W1',1,10,'All',''),
+    T('Update','01 - Grocery','440 - Rice Cakes','Maria Carmen','Teresa Mayfly',8,'P6 W1',1,4,8,''),
+    T('NII','02 - Dairy','133 - Plant Milk','William Turner','Zoe Henderson',24,'P6 W1',1,10,'All',''),
+    T('Update','02 - Dairy','134 - Yogurt Cups','Peter Grey','Ian Smith',12,'P6 W2',1,6,'All',''),
+    T('Update','01 - Grocery','441 - Soup Mixes','Tom Alvarez','Ana Petrova',24,'P6 W3',1,3,'All',''),
+    T('NII','02 - Dairy','135 - Drinkable Yogurt','William Turner','Zoe Henderson',24,'P6 W3',1,5,'All',''),
+    T('Update','17 - Natural Foods','511 - NF Kombucha','Sarah Johnson','Michael Lee',12,'P6 W3',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','512 - NF Dressings','Sarah Johnson','Michael Lee',10,'P6 W3',1,7,'All',''),
+    T('NII','17 - Natural Foods','513 - NF Pasta Sauce','Sarah Johnson','Michael Lee',12,'P6 W4',1,5,'All',''),
+    T('Update','01 - Grocery','442 - Pasta Sides','Rachel Thompson','Christopher Brown',20,'P6 W4',1,12,11,''),
+    T('NII','01 - Grocery','443 - Frozen Pizza','Tom Alvarez','Ana Petrova',8,'P6 W4',1,5,'All',''),
+    T('Update','43 - Liquor','074 - Gin','Alexander Nguyen','Isabella Garcia',24,'P6 W4',1,6,'All',''),
+    T('Update','02 - Dairy','136 - Pudding','William Turner','Zoe Henderson',8,'P6 W4',1,6,'All',''),
+    T('NII','17 - Natural Foods','514 - NF Frozen Meals','Sarah Johnson','Michael Lee',12,'P7 W1',1,9,'All',''),
+    T('NII','01 - Grocery','444 - Frozen Vegetables','Tom Alvarez','Ana Petrova',16,'P7 W2',1,8,'All',''),
+    T('NII','17 - Natural Foods','515 - NF Plant Milk','Sarah Johnson','Michael Lee',8,'P7 W2',1,6,'All',''),
+    T('Update','01 - Grocery','445 - Ice Pops','Rachel Thompson','Christopher Brown',8,'P7 W2',1,10,'All',''),
+    T('NII','01 - Grocery','446 - Bottled Water','Rachel Thompson','Christopher Brown',16,'P7 W2',1,12,'All',''),
+    T('Update','02 - Dairy','137 - Biscuit Dough','William Turner','Zoe Henderson',20,'P7 W2',2,3,'All',''),
+    T('Update','43 - Liquor','075 - Cider','Alexander Nguyen','Isabella Garcia',12,'P7 W3',1,5,12,''),
+    T('NII','17 - Natural Foods','516 - NF Protein','Sarah Johnson','Michael Lee',24,'P7 W3',1,5,'All',''),
+    T('Maintenance','43 - Liquor','076 - Red Wine','Alexander Nguyen','Isabella Garcia',12,'P7 W3',1,9,'All',''),
+    T('Maintenance','17 - Natural Foods','517 - NF Seeds','David Chen','Emma Wilson',10,'P7 W3',1,6,12,''),
+    T('Maintenance','01 - Grocery','447 - Sports Drinks','Laura Kim','Omar Reyes',16,'P7 W4',1,8,8,''),
+    T('Update','01 - Grocery','448 - Energy Drinks','Rachel Thompson','Christopher Brown',8,'P7 W4',1,8,'All',''),
+    T('Update','01 - Grocery','449 - Coffee Pods','Rachel Thompson','Christopher Brown',12,'P8 W1',1,3,'All',''),
+    T('NII','02 - Dairy','138 - Cookie Dough','William Turner','Zoe Henderson',24,'P8 W1',1,7,'All',''),
+    T('Update','01 - Grocery','450 - Creamers','Rachel Thompson','Christopher Brown',8,'P8 W1',1,10,'All',''),
+    T('NII','01 - Grocery','451 - Flour Mixes','Maria Carmen','Teresa Mayfly',8,'P8 W2',1,5,'All',''),
+    T('Update','17 - Natural Foods','518 - NF Honey','Sarah Johnson','Michael Lee',8,'P8 W2',1,9,'All',''),
+    T('Maintenance','17 - Natural Foods','519 - NF Spreads','David Chen','Emma Wilson',24,'P8 W2',1,3,'All',''),
+    T('Update','43 - Liquor','077 - White Wine','Alexander Nguyen','Isabella Garcia',8,'P8 W3',1,6,'All',''),
+    T('NII','01 - Grocery','452 - Cake Mixes','Rachel Thompson','Christopher Brown',8,'P8 W3',1,12,'All',''),
+    T('NII','43 - Liquor','078 - Sparkling Wine','Alexander Nguyen','Isabella Garcia',8,'P8 W3',1,10,'All',''),
+    T('NII','01 - Grocery','453 - Frosting','Laura Kim','Omar Reyes',24,'P8 W3',1,11,'All',''),
+    T('NII','02 - Dairy','139 - Parmesan','Peter Grey','Ian Smith',8,'P8 W4',1,10,'All',''),
+    T('NII','01 - Grocery','454 - Sprinkles','Rachel Thompson','Christopher Brown',16,'P8 W4',1,10,'All',''),
+    T('Update','02 - Dairy','140 - Ricotta','Peter Grey','Ian Smith',8,'P8 W4',1,10,12,''),
+    T('Update','17 - Natural Foods','520 - NF Snack Mix','David Chen','Emma Wilson',16,'P8 W4',1,4,'All',''),
+    T('NII','43 - Liquor','079 - Hard Seltzer','Alexander Nguyen','Isabella Garcia',12,'P9 W1',1,10,'All',''),
+    T('Update','01 - Grocery','455 - Peanuts','Monica White','Kelly Jacob',16,'P9 W1',1,12,'All',''),
+    T('NII','01 - Grocery','456 - Almonds','Laura Kim','Omar Reyes',10,'P9 W1',1,6,8,''),
+    T('Update','02 - Dairy','141 - Feta','William Turner','Zoe Henderson',16,'P9 W2',1,6,'All',''),
+    T('NII','01 - Grocery','457 - Cashews','Tom Alvarez','Ana Petrova',8,'P9 W2',1,5,'All',''),
+    T('NII','01 - Grocery','458 - Seltzer Water','Laura Kim','Omar Reyes',12,'P9 W2',1,12,7,''),
+    T('NII','02 - Dairy','142 - Goat Cheese','William Turner','Zoe Henderson',24,'P9 W3',1,8,'All',''),
+    T('NII','17 - Natural Foods','521 - NF Jerky','David Chen','Emma Wilson',8,'P9 W3',2,6,'All',''),
+    T('Update','01 - Grocery','459 - Soda','Maria Carmen','Teresa Mayfly',12,'P9 W3',1,4,'All',''),
+    T('Update','17 - Natural Foods','522 - NF Broth','Sarah Johnson','Michael Lee',16,'P9 W3',1,9,'All',''),
+    T('Update','01 - Grocery','460 - Hot Cocoa','Monica White','Kelly Jacob',16,'P9 W4',1,3,'All',''),
+    T('Update','17 - Natural Foods','523 - NF Beans','Sarah Johnson','Michael Lee',20,'P9 W4',1,11,12,''),
+    T('Update','01 - Grocery','461 - Rice Mixes','Maria Carmen','Teresa Mayfly',16,'P9 W4',1,5,'All',''),
+    T('Update','01 - Grocery','462 - Stuffing','Tom Alvarez','Ana Petrova',20,'P10 W1',1,5,'All',''),
+    T('NII','17 - Natural Foods','524 - NF Cookies','David Chen','Emma Wilson',16,'P10 W1',2,7,'All',''),
+    T('NII','01 - Grocery','463 - Couscous','Maria Carmen','Teresa Mayfly',16,'P10 W1',2,5,'All',''),
+    T('Update','17 - Natural Foods','525 - NF Cereal','Sarah Johnson','Michael Lee',24,'P10 W2',1,6,'All',''),
+    T('Update','01 - Grocery','464 - Lentils','Laura Kim','Omar Reyes',8,'P10 W2',1,3,'All',''),
+    T('NII','01 - Grocery','465 - Quinoa','Tom Alvarez','Ana Petrova',8,'P10 W2',1,5,'All',''),
+    T('NII','02 - Dairy','143 - Deli Cheese','Peter Grey','Ian Smith',8,'P10 W2',1,10,'All',''),
+    T('Update','01 - Grocery','466 - Tuna','Tom Alvarez','Ana Petrova',12,'P10 W2',1,3,'All',''),
+    T('NII','01 - Grocery','467 - Chili','Maria Carmen','Teresa Mayfly',10,'P10 W3',1,12,'All',''),
+    T('Update','01 - Grocery','468 - Ramen','Maria Carmen','Teresa Mayfly',16,'P10 W3',1,8,'All',''),
+    T('Update','17 - Natural Foods','526 - NF Coffee','David Chen','Emma Wilson',16,'P10 W4',1,10,'All',''),
+    T('NII','17 - Natural Foods','527 - NF Syrup','David Chen','Emma Wilson',10,'P10 W4',1,4,'All',''),
+    T('Maintenance','02 - Dairy','144 - Buttermilk','Peter Grey','Ian Smith',16,'P10 W4',1,9,'All',''),
+    T('Update','02 - Dairy','145 - Chocolate Milk','William Turner','Zoe Henderson',20,'P11 W1',1,7,5,''),
+    T('Maintenance','01 - Grocery','469 - Stew','Maria Carmen','Teresa Mayfly',16,'P11 W1',1,8,11,''),
+    T('Maintenance','01 - Grocery','470 - Pudding Cups','Laura Kim','Omar Reyes',12,'P11 W1',1,10,'All',''),
+    T('Update','01 - Grocery','471 - Applesauce','Rachel Thompson','Christopher Brown',24,'P11 W1',1,10,'All',''),
+    T('Update','01 - Grocery','472 - Baby Food','Monica White','Kelly Jacob',12,'P11 W2',2,5,'All',''),
+    T('Update','01 - Grocery','473 - Pet Treats','Tom Alvarez','Ana Petrova',8,'P11 W2',1,7,'All',''),
+    T('Update','01 - Grocery','474 - Spices','Maria Carmen','Teresa Mayfly',10,'P11 W2',1,8,'All',''),
+    T('NII','17 - Natural Foods','528 - NF Flour','David Chen','Emma Wilson',20,'P11 W2',1,11,'All',''),
+    T('NII','17 - Natural Foods','529 - NF Oils','Sarah Johnson','Michael Lee',20,'P11 W3',1,9,'All',''),
+    T('NII','01 - Grocery','475 - Oils','Monica White','Kelly Jacob',12,'P11 W3',1,8,'All',''),
+    T('NII','17 - Natural Foods','530 - NF Vinegar','Sarah Johnson','Michael Lee',10,'P11 W4',1,11,'All',''),
+    T('Maintenance','02 - Dairy','146 - Eggnog','William Turner','Zoe Henderson',16,'P11 W4',1,7,'All',''),
+    T('Update','01 - Grocery','476 - Vinegar','Maria Carmen','Teresa Mayfly',16,'P11 W4',1,7,'All',''),
+    T('NII','02 - Dairy','147 - Mozzarella','William Turner','Zoe Henderson',8,'P11 W4',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','531 - NF Salsa','David Chen','Emma Wilson',20,'P11 W4',1,7,'All',''),
+    T('Update','17 - Natural Foods','532 - NF Pasta','Sarah Johnson','Michael Lee',8,'P12 W1',1,8,'All',''),
+    T('Update','01 - Grocery','477 - Syrup','Rachel Thompson','Christopher Brown',12,'P12 W1',1,9,12,''),
+    T('Update','17 - Natural Foods','533 - NF Bars','Sarah Johnson','Michael Lee',12,'P12 W1',1,5,'All',''),
+    T('Update','02 - Dairy','148 - Cheddar','Peter Grey','Ian Smith',16,'P12 W2',1,7,'All',''),
+    T('NII','17 - Natural Foods','534 - NF Chips','Sarah Johnson','Michael Lee',20,'P12 W2',1,8,'All',''),
+    T('NII','02 - Dairy','149 - Swiss','William Turner','Zoe Henderson',12,'P12 W2',1,7,'All',''),
+    T('Update','01 - Grocery','478 - Jam','Laura Kim','Omar Reyes',16,'P12 W3',1,7,'All',''),
+    T('Maintenance','02 - Dairy','150 - Brie','Peter Grey','Ian Smith',16,'P12 W3',1,11,'All',''),
+    T('Maintenance','02 - Dairy','151 - Gouda','William Turner','Zoe Henderson',10,'P12 W3',1,7,'All',''),
+    T('NII','01 - Grocery','479 - Crackers','Monica White','Kelly Jacob',8,'P12 W4',1,9,'All',''),
+    T('Update','01 - Grocery','480 - Cookies','Maria Carmen','Teresa Mayfly',12,'P12 W4',1,10,'All',''),
+    T('Maintenance','01 - Grocery','481 - Pretzels','Tom Alvarez','Ana Petrova',12,'P12 W4',2,3,'All',''),
+    T('Update','17 - Natural Foods','535 - NF Soup','David Chen','Emma Wilson',8,'P12 W4',1,9,'All',''),
+    T('Update','02 - Dairy','152 - Milk','William Turner','Zoe Henderson',8,'P13 W1',2,4,'All',''),
+    T('NII','02 - Dairy','153 - Cream','William Turner','Zoe Henderson',24,'P13 W1',1,3,'All',''),
+    T('NII','02 - Dairy','154 - Half & Half','Peter Grey','Ian Smith',16,'P13 W1',1,11,'All',''),
+    T('Update','01 - Grocery','482 - Popcorn','Tom Alvarez','Ana Petrova',8,'P13 W1',1,6,'All',''),
+    T('Update','02 - Dairy','155 - Kefir','Peter Grey','Ian Smith',20,'P13 W2',1,6,9,''),
+    T('Update','17 - Natural Foods','536 - NF Nuts','David Chen','Emma Wilson',8,'P13 W2',2,3,'All',''),
+    T('Update','02 - Dairy','156 - Sour Cream','Peter Grey','Ian Smith',16,'P13 W2',1,6,6,''),
+    T('NII','01 - Grocery','483 - Tortillas','Laura Kim','Omar Reyes',24,'P13 W3',1,3,'All',''),
+    T('NII','01 - Grocery','484 - Bread','Laura Kim','Omar Reyes',12,'P13 W3',1,11,3,''),
+    T('Update','01 - Grocery','485 - Canned Tomatoes','Laura Kim','Omar Reyes',8,'P13 W3',1,12,'All',''),
+    T('Update','17 - Natural Foods','537 - NF Tea','David Chen','Emma Wilson',16,'P13 W3',1,5,'All',''),
+    T('Update','01 - Grocery','486 - Canned Fruit','Rachel Thompson','Christopher Brown',12,'P13 W4',1,6,'All',''),
+    T('Update','43 - Liquor','080 - Craft Beer','Alexander Nguyen','Isabella Garcia',20,'P13 W4',1,11,'All',''),
+    T('NII','01 - Grocery','487 - Canned Vegetables','Laura Kim','Omar Reyes',24,'P13 W4',1,6,'All',''),
+    T('NII','17 - Natural Foods','538 - NF Oats','Sarah Johnson','Michael Lee',16,'P13 W4',1,6,10,''),
+  ].map((r, i) => Object.assign(r, { id: i + 1 }));
+
+  const WEEKS = 52, P = 13;
+  const wkIdx = s => { const m = /P(\d+)\s*W(\d+)/.exec(s); return (+m[1] - 1) * 4 + (+m[2] - 1); };
+  const wkLbl = i => `P${Math.floor(i / 4) + 1} W${(i % 4) + 1}`;
+  const span = e => { const a = wkIdx(e.start); return [a, Math.min(WEEKS - 1, a + e.dur - 1)]; };
+  const covers = (e, w) => { const [a, b] = span(e); return w >= a && w <= b; };
+
+  const DATA_YEAR = 2026;
+  const DIVS = ['Atlanta', 'Central', 'Cincinnati', 'Dallas', 'Delta', 'Houston', 'Louisville', 'Michigan', 'Mid-Atlantic', 'Nashville', 'Pacific', 'Mountain'];
+  ROWS.forEach((e, i) => {
+    e.year = DATA_YEAR;
+    const n = e.divs === 'All' ? DIVS.length : +e.divs;
+    e.divList = Array.from({ length: n }, (_, k) => DIVS[(i + k) % DIVS.length]);
+    e.status = i === 0 || i === 14 || i === 27 ? 'Added' : i === 18 || i === 8 || i === 31 ? 'Modified' : '';
+  });
+
+  /* Loads per week. cap = comfortable hours per week. */
+  function calc(rows, cap) {
+    const load = Array(WEEKS).fill(0);
+    rows.forEach(e => { const [a, b] = span(e); for (let w = a; w <= b; w++) { load[w] += e.hours; } });
+    return { load };
+  }
+  /*DATA-END*/
+
+  /* ---------- Filter state ----------
+     draft = what the panel shows; applied = what the page uses (changes on Apply).
+     The Date filter is a "zoom", not a data filter: it narrows the table and numbers,
+     but the year strip keeps showing every period so you can move around. */
+  const YEAR = DATA_YEAR;
+  const FKEYS = ['dept', 'comm', 'type', 'cm', 'pm', 'div', 'status'];
+  const blank = () => ({ year: '', mode: 'range', start: null, end: null, singles: [], dept: '', comm: '', type: '', cm: '', pm: '', div: '', status: '' });
+  const clone = f => ({ ...f, singles: [...f.singles] });
+  let applied = blank(), draft = blank();
+  const VARIANT = 'toggle';
+  const cap = 40;   // weekly capacity, fixed for now
+  let gridOn = false, startOpen = false;
+  let sortKey = null, sortDir = 'asc';   // null = default order (changed rows first, then start week)
+  const MAXGRID = 8;
+
+  const idx = (p, w) => (p - 1) * 4 + (w - 1);
+  const nm = i => `P${Math.floor(i / 4) + 1}W${(i % 4) + 1}`;
+  const pOf = w => Math.floor(w / 4) + 1;
+  const pWeeks = p => [0, 1, 2, 3].map(i => (p - 1) * 4 + i);
+  const hasDate = f => f.mode === 'single' ? f.singles.length > 0 : f.start !== null;
+  const dateList = f => !hasDate(f) ? null : f.mode === 'single' ? [...f.singles].sort((a, b) => a - b)
+    : Array.from({ length: Math.abs(f.end - f.start) + 1 }, (_, k) => Math.min(f.start, f.end) + k);
+  const dateText = f => {
+    const l = dateList(f);
+    if (f.mode !== 'single') return `${nm(l[0])}-${nm(l[l.length - 1])}`;
+    const by = {}; l.forEach(w => { (by[pOf(w)] = by[pOf(w)] || []).push(w); });
+    return Object.keys(by).map(Number).sort((a, b) => a - b).map(p => by[p].length === 4 ? `P${p}` : by[p].map(nm).join(', ')).join(', ');
+  };
+  const periodsOf = f => {                 // the periods in the date filter, or null if any period is only partly selected
+    const l = dateList(f); if (!l) return null;
+    const n = {}; l.forEach(w => { n[pOf(w)] = (n[pOf(w)] || 0) + 1; });
+    const ps = Object.keys(n).map(Number).sort((a, b) => a - b);
+    return ps.every(p => n[p] === 4) ? ps : null;
+  };
+  const dateLabel = f => `${f.year || YEAR}: ${dateText(f)}`;
+  const activeKeys = f => [f.year && 'year', hasDate(f) && 'date', ...FKEYS.filter(k => f[k])].filter(Boolean);
+  const clearDate = f => { f.start = null; f.end = null; f.singles = []; };
+  const baseRows = () => ROWS.filter(e => (!applied.year || +applied.year === e.year) &&
+    ['dept', 'comm', 'type', 'cm', 'pm', 'status'].every(k => !applied[k] || e[k] === applied[k]) && (!applied.div || e.divList.includes(applied.div)));
+  const scopeWs = () => dateList(applied);
+  function scopeName() {
+    const l = scopeWs(); if (!l) return 'All periods';
+    const ps = periodsOf(applied);
+    if (ps) return ps.length === 1 ? `Period ${ps[0]}` : ps.every((p, k) => !k || p === ps[k - 1] + 1) ? `Periods ${ps[0]}–${ps[ps.length - 1]}` : `Periods ${ps.join(', ')}`;
+    if (applied.mode === 'single') return `${l.length} ${l.length === 1 ? 'week' : 'weeks'} selected`;
+    return l[0] === l[l.length - 1] ? nm(l[0]) : `${nm(l[0])}–${nm(l[l.length - 1])}`;
+  }
+
+  /* ---------- Overview strip ---------- */
+  function renderStrip(c, base) {
+    const sw = scopeWs(), max = Math.max(cap * 1.5, ...c.load);
+    const total = c.load.reduce((a, b) => a + b, 0);
+    const pressedP = p => !!sw && pWeeks(p).every(w => sw.includes(w));
+    let h = `<button class="tile all" data-tile="" aria-pressed="${!sw}"><span class="big">All</span><span class="n">${base.length} resets</span><span class="ft"><b>${total}</b> hrs</span></button>`;
+    for (let p = 1; p <= P; p++) {
+      const ws = pWeeks(p), loads = ws.map(w => c.load[w]), sum = loads.reduce((a, b) => a + b, 0);
+      const press = pressedP(p), inS = !!sw && !press && sw.some(w => pOf(w) === p);
+      const vis = `<div class="bars" aria-hidden="true">${loads.map((v, k) => `<div class="b ${v > cap ? 'over' : v === 0 ? 'zero' : ''}" title="${wkLbl(ws[k])}: ${v} hrs" style="height:${Math.max(v ? 6 : 2, Math.round(v / max * 100))}%"></div>`).join('')}<div class="capline" style="bottom:${Math.round(cap / max * 100)}%"></div></div><div class="wl" aria-hidden="true">${loads.map(v => `<span${v > cap ? ' class="over"' : ''}>${v}</span>`).join('')}</div>`
+      const label = `Period ${p}: ${sum} hours (${loads.map((v, k) => 'week ' + (k + 1) + ' ' + v).join(', ')})`;
+      h += `<button class="tile ${inS ? 'inscope' : ''}" data-tile="${p}" aria-pressed="${press}" aria-label="${label}"><span class="top">P${p}</span>${vis}</button>`;
+    }
+    $('strip').innerHTML = h;
+    const sm = $('ovSum'); sm.textContent = sw ? `Showing ${scopeName()}` : 'Showing all periods'; sm.hidden = !$('ov').classList.contains('collapsed');
+    $('ovHint').textContent = (base.length < ROWS.length ? `Based on ${base.length} of ${ROWS.length} resets that match your filters. ` : '') + (sw ? `Showing ${scopeName()}. Select a period again to remove it, or All to clear.` : 'Select one or more periods to filter the table.');
+    $('legend').innerHTML = `<span><i style="background:var(--bar)"></i>Hours per week (W1–W4)</span><span><i style="background:var(--over)"></i>Over capacity</span>`;
+  }
+
+  /* ---------- Table ---------- */
+  const CH = d => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  /* Sorting re-orders a stored list of row ids. Ties keep the order they already had (no automatic secondary sort),
+     so clicking one column and then another builds a two-level sort. Clearing the sort restores the default order: rows with a status (changes since the last published calendar) first,
+     then everything else, each group by start week. */
+  const dflt = (a, b) => (a.status ? 0 : 1) - (b.status ? 0 : 1) || wkIdx(a.start) - wkIdx(b.start) || a.id - b.id;
+  const SORTV = { status: e => e.status, type: e => e.type, dept: e => e.dept, comm: e => e.comm, cm: e => e.cm, pm: e => e.pm, size: e => e.size,
+    start: e => wkIdx(e.start), dur: e => e.dur, hours: e => e.hours, divs: e => e.divList.length, comments: e => e.comments };
+  let rowOrder = null;
+  const ensureOrder = () => { if (!rowOrder) rowOrder = ROWS.slice().sort(dflt).map(e => e.id); };
+  function applySort() {
+    ensureOrder();
+    const byId = new Map(ROWS.map(e => [e.id, e])), sg = sortDir === 'desc' ? -1 : 1;
+    rowOrder = rowOrder.map(id => byId.get(id)).sort((a, b) => {
+      const x = SORTV[sortKey](a), y = SORTV[sortKey](b), ex = x === '' || x == null, ey = y === '' || y == null;
+      if (ex !== ey) return ex ? 1 : -1;                                   // blanks always last
+      return sg * (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true, sensitivity: 'base' }));
+    }).map(e => e.id);
+  }
+  const FSORT = { status: 'Status', type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
+  function renderTable(c, shown, sw) {
+    const showGrid = VARIANT === 'toggle' ? gridOn : startOpen;
+    const gw = showGrid ? (sw || [...Array(WEEKS).keys()]) : [], cmp = gw.length > MAXGRID, two = gw.length > 0;
+    ensureOrder();
+    const pos = new Map(rowOrder.map((id, i) => [id, i]));
+    const rows = shown.slice().sort((a, b) => pos.get(a.id) - pos.get(b.id));
+    const pre = [['status', 'Status'], ['type', 'Type'], ['dept', 'Department'], ['comm', 'Commodity'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['size', 'Core Size'], ['start', 'Start']];
+    const post = [['dur', 'Duration'], ['hours', 'Hours'], ['divs', 'Nr of Divisions'], ['comments', 'Comments']];
+    const rs = two ? ' rowspan="2"' : '';
+    const stk = k => k === 'comm' ? 'stk stk1' : k === 'start' ? 'stk stk2' : '';
+    const cl = (k, x = '') => { const v = (x + ' ' + stk(k)).trim(); return v ? ` class="${v}"` : ''; };
+    const groups = []; gw.forEach(w => { const g = groups[groups.length - 1]; g && g.p === pOf(w) ? g.n++ : groups.push({ p: pOf(w), n: 1 }); });
+    const xbtn = VARIANT === 'start' ? `<button type="button" class="xbtn" data-startx aria-expanded="${startOpen}" aria-label="${startOpen ? 'Hide' : 'Show'} weekly hours next to Start" title="${startOpen ? 'Hide' : 'Show'} weekly hours">${startOpen ? CH('M15 5l-7 7 7 7') : CH('M9 5l7 7-7 7')}</button>` : '';
+    const ARR = { asc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor"/><path d="M5 11L1 6h8z" fill="currentColor" opacity=".25"/></svg>', desc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor" opacity=".25"/><path d="M5 11L1 6h8z" fill="currentColor"/></svg>', none: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1zM5 11L1 6h8z" fill="currentColor"/></svg>' };
+    const sortBtn = (k, l) => { const on = sortKey === k; return `<button type="button" class="sorth${on ? ' on' : ''}" data-sort="${k}" title="Sort by ${l}"><span>${l}</span><i class="sa">${on ? ARR[sortDir] : ARR.none}</i></button>`; };
+    const th = ([k, l]) => `<th scope="col"${rs}${cl(k)} data-c="${k}"${sortKey === k ? ` aria-sort="${sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${k === 'start' && xbtn ? `<span class="hwrap">${sortBtn(k, l)}${xbtn}</span>` : sortBtn(k, l)}</th>`;
+    $('thead').parentElement.classList.toggle('cmp', cmp);
+    queueMicrotask(pinOffset);
+    $('thead').innerHTML = '<tr>' + pre.map(th).join('') + groups.map(g => `<th scope="colgroup" colspan="${g.n}" class="wk pg ps">P${g.p}</th>`).join('') + post.map(th).join('') + '</tr>' +
+      (two ? '<tr>' + gw.map(w => `<th scope="col" class="wk w${w % 4 === 0 ? ' ps' : ''}" aria-label="${wkLbl(w)}">W${w % 4 + 1}</th>`).join('') + '</tr>' : '');
+    const cellHtml = (k, e) => {
+      if (k === 'dur') return `<td${e.status === 'Modified' ? ' class="chg"' : ''}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
+      if (k === 'comments') return `<td class="com">${esc(e.comments)}</td>`;
+      if (k === 'status') return `<td>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;
+      if (k === 'divs') return `<td title="${esc(e.divList.join(', '))}">${esc(e.divs)}</td>`;
+      return `<td${cl(k, k === 'hours' && e.status === 'Modified' ? 'chg' : '')}>${esc(e[k])}</td>`;
+    };
+    const ps = w => w % 4 === 0 ? ' ps' : '';
+    const filtered = activeKeys(applied).length > 0, ncol = pre.length + gw.length + post.length;
+    $('tbody').innerHTML = rows.length ? rows.map(e => `<tr data-id="${e.id}" class="${e.status === 'Added' ? 'add' : ''}">` + pre.map(([k]) => cellHtml(k, e)).join('') +
+      gw.map(w => covers(e, w) ? `<td class="wk on${c.load[w] > cap ? ' over' : ''}${ps(w)}">${e.hours}</td>` : `<td class="wk${ps(w)}"></td>`).join('') +
+      post.map(([k]) => cellHtml(k, e)).join('') + '</tr>').join('')
+      : `<tr><td class="emp" colspan="${ncol}">No resets match these filters.${filtered ? ' <button class="link-btn" data-clearall>Clear all filters</button>' : ''}</td></tr>`;
+    $('tfoot').innerHTML = two && rows.length ? `<tr><td colspan="${pre.length}" style="text-align:right">Total hours per week</td>` +
+      gw.map(w => { const v = c.load[w], o = v > cap; return `<td class="wk${o ? ' over' : ''}${ps(w)}"${o ? ` title="${wkLbl(w)}: ${v - cap} over capacity"` : ''}>${cmp ? v : (o ? WARN + ' ' : '') + v}</td>`; }).join('') +
+      `<td colspan="${post.length}"></td></tr>` : '';
+    const gt = VARIANT === 'toggle' ? `<span class="gt"><span id="gtl">Weekly hours</span><button type="button" class="switch" data-gridtog role="switch" aria-checked="${gridOn}" aria-labelledby="gtl"></button></span>` : '';
+    $('gridbar').innerHTML = `<span>Showing ${rows.length} of ${ROWS.length} resets</span><span class="tags">${gt}</span>`;
+  }
+  const pinOffset = () => {
+    const t = document.querySelector('.tablewrap table'), c = $('thead').querySelector('th[data-c="comm"]'), r0 = $('thead').rows[0];
+    if (c) t.style.setProperty('--c1w', c.getBoundingClientRect().width + 'px');
+    if (r0) t.style.setProperty('--h1', r0.getBoundingClientRect().height + 'px');
+  };
+  window.addEventListener('resize', pinOffset);
+  const bringGrid = () => {
+    const w1 = $('thead').querySelector('th.wk'), st = $('thead').querySelector('th[data-c="start"]'), c = $('thead').querySelector('th[data-c="comm"]'), wrap = document.querySelector('.tablewrap');
+    if (w1 && st && c) wrap.scrollTo({ left: Math.max(0, w1.offsetLeft - c.offsetWidth - st.offsetWidth - 4), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+
+  function render() {
+    const base = baseRows(), c = calc(base, cap), sw = scopeWs();
+    const shown = sw ? base.filter(e => sw.some(w => covers(e, w))) : base;
+    renderStrip(c, base); renderTable(c, shown, sw); renderPanel();
+  }
+
+  /* ---------- Filter panel: fields ---------- */
+  const uniq = k => [...new Set(ROWS.map(e => e[k]))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const selHtml = (key, label, opts) => `<label class="flabel" for="f_${key}">${label}</label><div class="sel"><select class="field empty" id="f_${key}" data-k="${key}"><option value="">--- Select a Value ---</option>${opts.map(o => `<option>${esc(o)}</option>`).join('')}</select><button class="clear-x" type="button" data-clr="${key}" aria-label="Clear ${label}" hidden>✕</button><span class="caret">▼</span></div>`;
+  $('fieldYear').innerHTML = selHtml('year', 'Year', [YEAR - 1, YEAR, YEAR + 1].map(String));
+  $('fieldRest').innerHTML = [['dept', 'Department', uniq('dept')], ['comm', 'Commodity', uniq('comm')], ['type', 'Type', uniq('type')], ['cm', 'Category Manager', uniq('cm')],
+    ['pm', 'Process Manager', uniq('pm')], ['div', 'Division', DIVS], ['status', 'Status', ['Added', 'Modified']]].map(x => selHtml(...x)).join('');
+
+  const trigger = $('trigger'), popover = $('popover'), pgrid = $('pgrid'), clearX = $('clearX'), clearAllBtn = $('clearAll');
+  const pk = { s: null, e: null, h: null };   // in-progress range while picking
+  for (let p = 1; p <= P; p++) {
+    const row = document.createElement('div'); row.className = 'pk-row';
+    row.innerHTML = `<div class="pk-plabel" data-p="${p}">${p}</div><div class="pk-div"></div>`;
+    for (let w = 1; w <= 4; w++) {
+      const b = document.createElement('button'); b.className = 'pk-week'; b.type = 'button'; b.dataset.i = idx(p, w);
+      b.innerHTML = `<span>${w}</span>`; b.setAttribute('aria-label', `Period ${p} week ${w}`); row.appendChild(b);
+    }
+    pgrid.appendChild(row);
+  }
+  const weekEls = [...pgrid.querySelectorAll('.pk-week')], plabels = [...pgrid.querySelectorAll('.pk-plabel')];
+  const pkBounds = () => {
+    if (draft.mode !== 'range' || pk.s === null) return null;
+    const o = pk.e !== null ? pk.e : (pk.h !== null ? pk.h : pk.s);
+    return [Math.min(pk.s, o), Math.max(pk.s, o)];
+  };
+  function renderPicker() {
+    const b = pkBounds(), picking = pk.s !== null && pk.e === null, single = draft.mode === 'single';
+    weekEls.forEach(el => {
+      const i = +el.dataset.i, on = draft.singles.includes(i);
+      el.setAttribute('aria-pressed', single ? on : 'false');
+      if (single) { el.classList.toggle('edge', on); el.classList.remove('inrange', 'preview'); return; }
+      const edge = b && (i === b[0] || i === b[1]), inside = b && i > b[0] && i < b[1];
+      el.classList.toggle('edge', !!edge); el.classList.toggle('inrange', !!inside && !picking); el.classList.toggle('preview', !!inside && picking);
+    });
+    plabels.forEach(el => {
+      const p = +el.dataset.p;
+      const on = single ? draft.singles.some(i => pOf(i) === p) : !!b && (pOf(b[0]) === p || pOf(b[1]) === p);
+      el.classList.toggle('edge', on); el.classList.toggle('clickable', !single);
+      if (!single) { el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', `Select all of period ${p}`); }
+      else { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label'); }
+    });
+    $('modeRange').setAttribute('aria-pressed', !single); $('modeSingle').setAttribute('aria-pressed', single);
+    $('pkHint').textContent = single ? (draft.singles.length ? `${draft.singles.length} selected. Click a selected week to remove it.` : 'Click weeks to select them individually.')
+      : pk.s === null ? 'Click a week to start your range.' : pk.e === null ? 'Now click an end week.' : '';
+    const has = hasDate(draft), label = has ? dateLabel(draft) : '--- Select a Value ---';
+    $('triggerLabel').textContent = label; trigger.title = has ? label : ''; trigger.classList.toggle('placeholder', !has); clearX.hidden = !has;
+  }
+  function renderPanel() {
+    ['year', ...FKEYS].forEach(k => {
+      const s = $('f_' + k); s.value = draft[k]; s.classList.toggle('empty', !draft[k]);
+      document.querySelector(`[data-clr="${k}"]`).hidden = !draft[k];
+    });
+    renderPicker();
+    const n = activeKeys(applied).length;
+    $('badge').hidden = !n; $('badge').textContent = n;
+    clearAllBtn.disabled = !activeKeys(draft).length && !n;
+  }
+  const syncPicker = () => { pk.s = draft.start; pk.e = draft.end; pk.h = null; };
+  function setOpen(open) {
+    if (open === !popover.hidden) return;
+    syncPicker(); popover.hidden = !open; trigger.setAttribute('aria-expanded', open); renderPicker();
+  }
+  function pick(i) {
+    if (draft.mode === 'single') {
+      const k = draft.singles.indexOf(i); k >= 0 ? draft.singles.splice(k, 1) : draft.singles.push(i);
+      if (draft.singles.length && !draft.year) draft.year = String(YEAR);
+    } else if (pk.s === null || pk.e !== null) { pk.s = i; pk.e = null; pk.h = null; }
+    else { pk.e = i; draft.start = pk.s; draft.end = pk.e; if (!draft.year) draft.year = String(YEAR); }
+    renderPanel();
+  }
+  function pickPeriod(p) {
+    if (draft.mode !== 'range') return;
+    pk.s = idx(p, 1); pk.e = idx(p, 4); pk.h = null; draft.start = pk.s; draft.end = pk.e;
+    if (!draft.year) draft.year = String(YEAR);
+    renderPanel();
+  }
+  pgrid.addEventListener('click', e => {
+    const pl = e.target.closest('.pk-plabel'); if (pl) return pickPeriod(+pl.dataset.p);
+    const b = e.target.closest('.pk-week'); if (b) pick(+b.dataset.i);
+  });
+  const hoverWeek = e => { const b = e.target.closest('.pk-week'); if (draft.mode === 'range' && b && pk.s !== null && pk.e === null) { pk.h = +b.dataset.i; renderPicker(); } };
+  pgrid.addEventListener('mouseover', hoverWeek); pgrid.addEventListener('focusin', hoverWeek);
+  pgrid.addEventListener('mouseleave', () => { if (pk.e === null && pk.h !== null) { pk.h = null; renderPicker(); } });
+  pgrid.addEventListener('keydown', e => { const pl = e.target.closest('.pk-plabel'); if (pl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPeriod(+pl.dataset.p); } });
+  trigger.addEventListener('click', e => { if (e.target === clearX) return; setOpen(true); });
+  trigger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } });
+  document.addEventListener('mousedown', e => { if (!$('dd').contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+  clearX.addEventListener('click', e => { e.stopPropagation(); clearDate(draft); syncPicker(); renderPanel(); });
+  const setMode = m => { if (m === draft.mode) return; draft.mode = m; clearDate(draft); syncPicker(); renderPanel(); };
+  $('modeRange').addEventListener('click', () => setMode('range')); $('modeSingle').addEventListener('click', () => setMode('single'));
+
+  function setField(k, v) { draft[k] = v; if (k === 'year' && !v) { clearDate(draft); syncPicker(); } renderPanel(); }   // clearing Year clears Date
+  $('panelBody').addEventListener('change', e => { const s = e.target.closest('select[data-k]'); if (s) setField(s.dataset.k, s.value); });
+  $('panelBody').addEventListener('click', e => { const x = e.target.closest('[data-clr]'); if (x) { setField(x.dataset.clr, ''); $('f_' + x.dataset.clr).focus(); } });
+
+  $('applyBtn').addEventListener('click', () => {
+    applied = clone(draft); setOpen(false); render();
+    const n = baseRows().length; toast(activeKeys(applied).length ? `Filters applied · ${n} ${n === 1 ? 'reset' : 'resets'} match` : 'No filters applied');
+  });
+  function clearEverything() { applied = blank(); draft = blank(); pk.s = pk.e = pk.h = null; setOpen(false); render(); }
+  clearAllBtn.addEventListener('click', clearEverything);
+
+  /* Period tiles and tags change the applied filters directly */
+  function clearScope() { for (const f of [applied, draft]) clearDate(f); syncPicker(); render(); }
+  function togglePeriod(p) {
+    const cur = new Set(dateList(applied) || []), ws = pWeeks(p), full = ws.every(w => cur.has(w));
+    ws.forEach(w => full ? cur.delete(w) : cur.add(w));
+    const list = [...cur].sort((a, b) => a - b), run = list.every((w, k) => !k || w === list[k - 1] + 1);
+    for (const f of [applied, draft]) {
+      clearDate(f);
+      if (!list.length) continue;
+      if (run) { f.mode = 'range'; f.start = list[0]; f.end = list[list.length - 1]; } else { f.mode = 'single'; f.singles = list.slice(); }
+      if (!f.year) f.year = String(YEAR);
+    }
+    syncPicker(); render();
+    $('strip').querySelector(`[data-tile="${p}"]`)?.focus();
+  }
+
+  /* Panel open / close — selections are kept while collapsed */
+  const panel = $('panel'), body = $('panelBody'), collapseBtn = $('collapseBtn'), expandBtn = $('expandBtn');
+  function setPanel(open) {
+    if (!open) setOpen(false);
+    panel.classList.add('animating'); setTimeout(() => panel.classList.remove('animating'), 300);
+    panel.classList.toggle('collapsed', !open); body.inert = !open; expandBtn.tabIndex = open ? -1 : 0;
+    collapseBtn.setAttribute('aria-expanded', open); expandBtn.setAttribute('aria-expanded', open);
+    (open ? collapseBtn : expandBtn).focus();
+  }
+  collapseBtn.addEventListener('click', () => setPanel(false)); expandBtn.addEventListener('click', () => setPanel(true));
+
+  /* ---------- Events ---------- */
+  document.addEventListener('click', e => {
+    const so = e.target.closest('[data-sort]');
+    if (so) { const k = so.dataset.sort; if (sortKey !== k) { sortKey = k; sortDir = 'asc'; } else if (sortDir === 'asc') sortDir = 'desc'; else sortKey = null;
+      if (sortKey) applySort(); else rowOrder = null;
+      render(); $('thead').querySelector(`[data-sort="${k}"]`)?.focus(); toast(sortKey ? `Sorted by ${FSORT[k]}, ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort cleared. Back to the default order, with changed resets first.'); return; }
+    if (e.target.closest('#ovToggle')) { const c = $('ov').classList.toggle('collapsed'); $('ovToggle').setAttribute('aria-expanded', !c); $('ovBody').inert = c; $('ovSum').hidden = !c; return; }
+    const gtg = e.target.closest('[data-gridtog]'); if (gtg) { gridOn = !gridOn; render(); $('gridbar').querySelector('[data-gridtog]')?.focus(); if (gridOn) bringGrid(); return; }
+    const sx = e.target.closest('[data-startx]'); if (sx) { startOpen = !startOpen; render(); $('thead').querySelector('[data-startx]')?.focus(); if (startOpen) bringGrid(); return; }
+    const tl = e.target.closest('[data-tile]'); if (tl) { tl.dataset.tile ? togglePeriod(+tl.dataset.tile) : clearScope(); return; }
+    if (e.target.closest('[data-clearall]')) { clearEverything(); return; }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
