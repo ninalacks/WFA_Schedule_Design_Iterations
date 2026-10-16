@@ -18,13 +18,14 @@
 
   .topbar { flex: none; background: var(--navy); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
   .brand { color: #fff; font-weight: 700; font-size: 18px; border: 1px solid #fff8; border-radius: 4px; padding: 8px 14px; }
+  .vgroup { display: flex; align-items: center; gap: 14px; }
   .vsw { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,.1); border-radius: 999px; padding: 4px; }
   .vlabel { color: #b9c6e0; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 0 8px 0 10px; }
   .vopt { border: 0; background: transparent; color: #fff; font: inherit; font-size: 14px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
   .vopt:hover { background: rgba(255,255,255,.14); }
   .vopt[aria-pressed="true"] { background: #fff; color: var(--navy); }
   .vopt:focus-visible { outline: 2px solid #8fb4ff; outline-offset: 2px; }
-  @media (max-width: 760px) { .vlabel { display: none; } .vopt { padding: 7px 10px; font-size: 13px; } }
+  @media (max-width: 1150px) { .vlabel { display: none; } .vopt { padding: 7px 10px; font-size: 13px; } }
   .topbar a { color: #8fb4ff; font-weight: 700; font-size: 18px; text-decoration: underline; text-underline-offset: 6px; }
   .app { padding: 18px 16px 12px; margin: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; }
   #main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -175,16 +176,69 @@
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; max-width: 90vw; }
   .toast.show { opacity: 1; }
+
+  /* Creator */
+  .titlerow, .toolbar, .banner { flex: none; }
+  .titleright { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .tools { display: flex; gap: 8px; }
+  .sq { width: 36px; height: 36px; border: 1px solid var(--border); background: #fff; border-radius: 4px; display: grid; place-items: center; cursor: pointer; color: var(--text); padding: 0; }
+  .sq:hover:not(:disabled) { background: #eef2fa; }
+  .sq:disabled { color: #c3c8d0; cursor: not-allowed; background: #f4f5f7; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+  .tbtns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .tb { height: 38px; padding: 0 14px; border: 1px solid var(--border); background: #fff; border-radius: 4px; font-size: 16px; cursor: pointer; }
+  .tb:hover:not(:disabled) { background: #f4f6fa; }
+  .tb:disabled { cursor: not-allowed; }
+  .tb.pub { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .tb.pub:hover:not(:disabled) { background: #1b3560; }
+  .tb.pub:disabled { background: #707c8d; border-color: #707c8d; opacity: .8; }
+  .viewsw { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--muted); }
+  .viewsw .on { color: var(--text); font-weight: 700; }
+  .banner { background: var(--warn-bg); color: var(--warn-text); border-radius: 4px; padding: 12px 16px; font-size: 16px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  th.actc, td.act { width: 60px; min-width: 60px; text-align: center; padding-left: 4px; padding-right: 4px; }
+  td.act input[type="checkbox"], th.actc input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--navy); cursor: pointer; vertical-align: middle; }
+  td.act input[type="checkbox"]:disabled, th.actc input[type="checkbox"]:disabled { cursor: not-allowed; opacity: .4; }
+  .ib { width: 36px; height: 36px; border: 1px solid var(--border); background: #fff; border-radius: 4px; cursor: pointer; display: inline-grid; place-items: center; color: #1c2430; padding: 0; }
+  .ib:hover:not([aria-disabled="true"]) { background: #eef2fa; }
+  .ib[aria-disabled="true"] { color: #c3c8d0; cursor: not-allowed; background: #f4f5f7; }
+  .switch:disabled { opacity: .4; cursor: not-allowed; }
+  tr.rm td { background: #fbe9e9; }
+  .st.Removed { background: #151a22; color: #fff; display: inline-flex; align-items: center; gap: 6px; }
+  .scrim { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 50; display: grid; place-items: center; padding: 16px; }
+  .dlg { background: #fff; border-radius: 12px; width: min(680px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+  .dlg header { display: flex; justify-content: space-between; align-items: center; padding: 16px 22px; border-bottom: 1px solid #e3e6ea; }
+  .dlg h2 { margin: 0; font-size: 20px; }
+  .xclose { border: 0; background: none; font-size: 20px; width: 36px; height: 36px; cursor: pointer; border-radius: 6px; color: var(--muted); }
+  .xclose:hover { background: #f1f2f4; }
+  .egrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; padding: 18px 22px; overflow: auto; }
+  .fg { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .fg.wide { grid-column: 1 / -1; }
+  .fg label, .fg .lbl { font-weight: 600; font-size: 14px; color: var(--muted); }
+  .fin { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font: inherit; font-size: 15px; background: #fff; color: var(--text); }
+  textarea.fin { height: auto; padding: 8px 10px; resize: vertical; min-height: 72px; }
+  .fin:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .fin[aria-invalid="true"] { border-color: #b42318; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ferr { color: #b42318; font-size: 13px; }
+  .dlg footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid #e3e6ea; }
+  @media (max-width: 560px) { .egrid { grid-template-columns: 1fr; } }
   @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 </style>
 </head>
 <body>
 <div class="topbar">
   <span class="brand">Kroger | Reset Planner</span>
-  <div class="vsw" role="group" aria-label="Weekly hours layout">
-    <span class="vlabel">Layout</span>
-    <button type="button" class="vopt" data-variant="toggle" aria-pressed="true">A · Toggle</button>
-    <button type="button" class="vopt" data-variant="start" aria-pressed="false">B · Expand from Start</button>
+  <div class="vgroup">
+    <div class="vsw" role="group" aria-label="View as">
+      <span class="vlabel">View as</span>
+      <button type="button" class="vopt" data-role="viewer" aria-pressed="true">Viewer</button>
+      <button type="button" class="vopt" data-role="creator" aria-pressed="false">Creator</button>
+    </div>
+    <div class="vsw" role="group" aria-label="Weekly hours layout">
+      <span class="vlabel">Layout</span>
+      <button type="button" class="vopt" data-variant="toggle" aria-pressed="true">A · Toggle</button>
+      <button type="button" class="vopt" data-variant="start" aria-pressed="false">B · Expand from Start</button>
+    </div>
   </div>
   <a href="#" onclick="return false">Resets</a>
 </div>
@@ -194,8 +248,30 @@
   <main id="main">
     <div class="titlerow">
       <h1>KOMPASS Schedule</h1>
-      <div class="meta">2026 Resets<br>Version: 2026.02<br>Updated on: 10/9/2026 3:28PM</div>
+      <div class="titleright">
+        <div class="tools" id="tools" hidden>
+          <button type="button" class="sq" data-stub aria-label="Download"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
+          <button type="button" class="sq" data-stub aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4l2-2zM10 21h4"/></svg></button>
+          <button type="button" class="sq" disabled aria-label="Refresh (nothing new)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button>
+        </div>
+        <div class="meta" id="meta"></div>
+      </div>
     </div>
+
+    <div class="toolbar" id="toolbar" hidden>
+      <div class="tbtns">
+        <button type="button" class="tb" id="newBtn">New Entry</button>
+        <button type="button" class="tb" data-stub>Create New Draft</button>
+        <button type="button" class="tb pub" id="publishBtn" disabled>Publish Change</button>
+        <button type="button" class="tb pub" id="readyBtn" disabled>Ready to Publish →</button>
+      </div>
+      <div class="viewsw">
+        <span id="lblDraft" class="on">✎ Draft View</span>
+        <button type="button" class="switch" id="viewSwitch" role="switch" aria-checked="false" aria-label="Show published view"></button>
+        <span id="lblPub">✔ Published View</span>
+      </div>
+    </div>
+    <div class="banner" id="banner" role="status" hidden></div>
 
     <div class="results" id="results">
     <div class="gridbar" id="gridbar"></div>
@@ -244,6 +320,25 @@
     </div>
   </main>
 </div>
+<div class="scrim" id="eScrim" hidden>
+  <form class="dlg" id="eForm" role="dialog" aria-modal="true" aria-labelledby="eTitle" novalidate>
+    <header><h2 id="eTitle">Edit reset</h2><button type="button" class="xclose" id="eClose" aria-label="Close">✕</button></header>
+    <div class="egrid">
+      <div class="fg"><label for="e_type">Type</label><select class="fin" id="e_type"></select></div>
+      <div class="fg"><label for="e_dept">Department</label><select class="fin" id="e_dept"></select></div>
+      <div class="fg wide"><label for="e_comm">Commodity</label><input class="fin" id="e_comm" type="text" maxlength="60" placeholder="e.g. 130 - Greek Yogurt" aria-describedby="e_comm_err"><div class="ferr" id="e_comm_err" role="alert" hidden></div></div>
+      <div class="fg"><label for="e_cm">Category Manager</label><input class="fin" id="e_cm" type="text" list="dl_cm" aria-describedby="e_cm_err"><datalist id="dl_cm"></datalist><div class="ferr" id="e_cm_err" role="alert" hidden></div></div>
+      <div class="fg"><label for="e_pm">Process Manager</label><input class="fin" id="e_pm" type="text" list="dl_pm" aria-describedby="e_pm_err"><datalist id="dl_pm"></datalist><div class="ferr" id="e_pm_err" role="alert" hidden></div></div>
+      <div class="fg"><label for="e_size">Core Size</label><input class="fin" id="e_size" type="number" min="1" max="99" step="1" aria-describedby="e_size_err"><div class="ferr" id="e_size_err" role="alert" hidden></div></div>
+      <div class="fg"><span class="lbl" id="e_start_l">Start</span><div class="two" role="group" aria-labelledby="e_start_l"><select class="fin" id="e_period" aria-label="Start period"></select><select class="fin" id="e_week" aria-label="Start week"></select></div></div>
+      <div class="fg"><label for="e_dur">Duration (weeks)</label><input class="fin" id="e_dur" type="number" min="1" max="8" step="1" aria-describedby="e_dur_err"><div class="ferr" id="e_dur_err" role="alert" hidden></div></div>
+      <div class="fg"><label for="e_hours">Hours per week</label><input class="fin" id="e_hours" type="number" min="1" max="40" step="1" aria-describedby="e_hours_err"><div class="ferr" id="e_hours_err" role="alert" hidden></div></div>
+      <div class="fg"><label for="e_divs">Nr of Divisions</label><select class="fin" id="e_divs"></select></div>
+      <div class="fg wide"><label for="e_comments">Comments</label><textarea class="fin" id="e_comments" rows="3"></textarea></div>
+    </div>
+    <footer><button type="button" class="tb" id="eCancel">Cancel</button><button type="submit" class="tb pub" id="eSave">Save</button></footer>
+  </form>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -251,12 +346,18 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2800); };
+  const ICON = {
+    edit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/></svg>',
+    trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>',
+    restore: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg>',
+    minus: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>',
+  };
   const WARN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></svg>';
 
   /*DATA-START*/
   /* Demo data (invented). hours = hours of work in EACH week the reset runs. */
   const T = (type, dept, comm, cm, pm, size, start, dur, hours, divs, comments) => ({ type, dept, comm, cm, pm, size, start, dur, hours, divs, comments });
-  const ROWS = [
+  const PUBROWS = [
     T('Update','01 - Grocery','017 - Flour & Meal','Monica White','Kelly Jacob',12,'P1 W1',1,12,'All','Reset postponed due to inventory delays at the regional distribution center'),
     T('Update','43 - Liquor','012 - Mixers','Alexander Nguyen','Isabella Garcia',16,'P1 W1',1,3,'All','ALIGN WITH 003 - Can Beans'),
     T('NII','01 - Grocery','221 - Granola','Tom Alvarez','Ana Petrova',8,'P1 W2',1,6,6,''),
@@ -527,11 +628,12 @@
 
   const DATA_YEAR = 2026;
   const DIVS = ['Atlanta', 'Central', 'Cincinnati', 'Dallas', 'Delta', 'Houston', 'Louisville', 'Michigan', 'Mid-Atlantic', 'Nashville', 'Pacific', 'Mountain'];
-  ROWS.forEach((e, i) => {
+  PUBROWS.forEach((e, i) => {
     e.year = DATA_YEAR;
     const n = e.divs === 'All' ? DIVS.length : +e.divs;
     e.divList = Array.from({ length: n }, (_, k) => DIVS[(i + k) % DIVS.length]);
     e.status = i === 0 || i === 14 || i === 27 ? 'Added' : i === 18 || i === 8 || i === 31 ? 'Modified' : '';
+    e.chg = e.status === 'Modified' ? ['dur', 'hours'] : []; e.by = ''; e.pub = false;
   });
 
   /* Loads per week. cap = comfortable hours per week. */
@@ -541,6 +643,47 @@
     return { load };
   }
   /*DATA-END*/
+
+  /* ---------- Creator: draft vs published ----------
+     PUBROWS = the published calendar (what Viewers see). DRAFTROWS = the Creator's working copy with unpublished changes.
+     Per draft row: status 'Added' | 'Modified' | 'Removed' ('' = unchanged), chg = fields edited, by = who changed it,
+     pub = marked ready to publish, orig = values at the last publish (to detect edits that are undone). */
+  const USER = 'John Doe';
+  const FIELDS = ['type', 'dept', 'comm', 'cm', 'pm', 'size', 'start', 'dur', 'hours', 'divs', 'comments'];
+  const snap = e => Object.fromEntries(FIELDS.map(k => [k, e[k]]));
+  const divListFor = (id, divs) => Array.from({ length: divs === 'All' ? DIVS.length : +divs }, (_, k) => DIVS[(id + k) % DIVS.length]);
+  const DRAFTROWS = PUBROWS.map(r => ({ ...r, divList: [...r.divList], status: '', chg: [], by: '', pub: false }));
+  (() => {
+    const find = (c, st) => { const e = DRAFTROWS.find(x => x.comm === c && x.start === st); if (!e) throw new Error('demo row missing: ' + c); return e; };
+    const edit = (c, st, vals, by) => { const e = find(c, st); e.orig = snap(e); Object.assign(e, vals); e.divList = divListFor(e.id, e.divs); e.status = 'Modified'; e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k])); e.by = by; };
+    const drop = (c, st, by) => { const e = find(c, st); e.status = 'Removed'; e.by = by; };
+    const add = vals => { const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1; DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: 'John Doe', pub: false }); };
+    edit('677 - NF Baking Mixes', 'P9 W1', { dur: 2, hours: 5 }, 'Jane Doe');
+    edit('071 - Cheese', 'P2 W1', { hours: 10 }, 'Jane Doe');
+    edit('102 - Coffee', 'P4 W1', { start: 'P4 W3' }, 'John Doe');
+    drop('290 - NF Yogurt', 'P4 W2', 'John Doe');
+    drop('410 - NF Cereal', 'P1 W3', 'Jane Doe');
+    add({ type: 'NII', dept: '02 - Dairy', comm: '130 - Greek Yogurt', cm: 'William Turner', pm: 'Zoe Henderson', size: 12, start: 'P6 W2', dur: 1, hours: 6, divs: 'All', comments: 'New vendor listing' });
+    add({ type: 'Update', dept: '01 - Grocery', comm: '235 - Curry Sauces', cm: 'Laura Kim', pm: 'Omar Reyes', size: 16, start: 'P3 W2', dur: 1, hours: 5, divs: 'All', comments: '' });
+    add({ type: 'NII', dept: '17 - Natural Foods', comm: '560 - NF Protein Bars', cm: 'David Chen', pm: 'Emma Wilson', size: 8, start: 'P11 W3', dur: 1, hours: 4, divs: 6, comments: 'Test in 6 divisions first' });
+  })();
+  let ROWS = PUBROWS;
+  let role = new URLSearchParams(location.search).get('role') === 'creator' ? 'creator' : 'viewer', draftView = true;
+  let version = 2, updatedAt = '10/9/2026 3:28PM';
+  const sel = new Set();
+  let tableRows = [];
+  const inDraft = () => role === 'creator' && draftView;
+  const nowStr = () => { const d = new Date(); return d.toLocaleDateString('en-US') + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); };
+  function useData() {                      // which data set the page shows
+    ROWS = inDraft() ? DRAFTROWS : PUBROWS;
+    rowOrder = null; if (sortKey === 'mod' && !inDraft()) sortKey = null; if (sortKey) applySort();
+    sel.clear(); buildFilters();
+  }
+  function resetOrder() {                   // after rows are added/removed/edited: keep the user's sort, put new rows on top
+    if (!sortKey) { rowOrder = null; return; }
+    ensureOrder(); const ids = new Set(ROWS.map(e => e.id)); rowOrder = rowOrder.filter(id => ids.has(id));
+    const have = new Set(rowOrder); ROWS.forEach(e => { if (!have.has(e.id)) rowOrder.unshift(e.id); });
+  }
 
   /* ---------- Filter state ----------
      draft = what the panel shows; applied = what the page uses (changes on Apply).
@@ -585,7 +728,7 @@
      then everything else, each group by start week. */
   const dflt = (a, b) => (a.status ? 0 : 1) - (b.status ? 0 : 1) || wkIdx(a.start) - wkIdx(b.start) || a.id - b.id;
   const SORTV = { status: e => e.status, type: e => e.type, dept: e => e.dept, comm: e => e.comm, cm: e => e.cm, pm: e => e.pm, size: e => e.size,
-    start: e => wkIdx(e.start), dur: e => e.dur, hours: e => e.hours, divs: e => e.divList.length, comments: e => e.comments };
+    start: e => wkIdx(e.start), dur: e => e.dur, hours: e => e.hours, divs: e => e.divList.length, comments: e => e.comments, mod: e => e.by };
   let rowOrder = null;
   const ensureOrder = () => { if (!rowOrder) rowOrder = ROWS.slice().sort(dflt).map(e => e.id); };
   function applySort() {
@@ -597,14 +740,15 @@
       return sg * (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true, sensitivity: 'base' }));
     }).map(e => e.id);
   }
-  const FSORT = { status: 'Status', type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
+  const FSORT = { mod: 'Modified By', status: 'Status', type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
   function renderTable(c, shown, sw) {
     const showGrid = VARIANT === 'toggle' ? gridOn : startOpen;
     const gw = showGrid ? (sw || [...Array(WEEKS).keys()]) : [], cmp = gw.length > MAXGRID, two = gw.length > 0;
     ensureOrder();
     const pos = new Map(rowOrder.map((id, i) => [id, i]));
     const rows = shown.slice().sort((a, b) => pos.get(a.id) - pos.get(b.id));
-    const pre = [['status', 'Status'], ['type', 'Type'], ['dept', 'Department'], ['comm', 'Commodity'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['size', 'Core Size'], ['start', 'Start']];
+    const lead = inDraft() ? [['sel', ''], ['edit', 'Edit'], ['remove', 'Remove'], ['pub', 'Publish'], ['mod', 'Modified By']] : [];
+    const pre = [...lead, ['status', 'Status'], ['type', 'Type'], ['dept', 'Department'], ['comm', 'Commodity'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['size', 'Core Size'], ['start', 'Start']];
     const post = [['dur', 'Duration'], ['hours', 'Hours'], ['divs', 'Nr of Divisions'], ['comments', 'Comments']];
     const rs = two ? ' rowspan="2"' : '';
     const stk = k => k === 'comm' ? 'stk stk1' : k === 'start' ? 'stk stk2' : '';
@@ -613,24 +757,43 @@
     const xbtn = VARIANT === 'start' ? `<button type="button" class="xbtn" data-startx aria-expanded="${startOpen}" aria-label="${startOpen ? 'Hide' : 'Show'} weekly hours next to Start" title="${startOpen ? 'Hide' : 'Show'} weekly hours">${startOpen ? CH('M15 5l-7 7 7 7') : CH('M9 5l7 7-7 7')}</button>` : '';
     const ARR = { asc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor"/><path d="M5 11L1 6h8z" fill="currentColor" opacity=".25"/></svg>', desc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor" opacity=".25"/><path d="M5 11L1 6h8z" fill="currentColor"/></svg>', none: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1zM5 11L1 6h8z" fill="currentColor"/></svg>' };
     const sortBtn = (k, l) => { const on = sortKey === k; return `<button type="button" class="sorth${on ? ' on' : ''}" data-sort="${k}" title="Sort by ${l}"><span>${l}</span><i class="sa">${on ? ARR[sortDir] : ARR.none}</i></button>`; };
-    const th = ([k, l]) => `<th scope="col"${rs}${cl(k)} data-c="${k}"${sortKey === k ? ` aria-sort="${sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${k === 'start' && xbtn ? `<span class="hwrap">${sortBtn(k, l)}${xbtn}</span>` : sortBtn(k, l)}</th>`;
+    const NOSORT = { sel: 1, edit: 1, remove: 1, pub: 1 };
+    const th = ([k, l]) => {
+      const aria = sortKey === k ? ` aria-sort="${sortDir === 'asc' ? 'ascending' : 'descending'}"` : '';
+      const inner = k === 'sel' ? '<input type="checkbox" id="selAll" aria-label="Select all changed resets">' : NOSORT[k] ? esc(l)
+        : k === 'start' && xbtn ? `<span class="hwrap">${sortBtn(k, l)}${xbtn}</span>` : sortBtn(k, l);
+      return `<th scope="col"${rs}${cl(k, NOSORT[k] ? 'actc' : '')} data-c="${k}"${aria}>${inner}</th>`;
+    };
     $('thead').parentElement.classList.toggle('cmp', cmp);
     queueMicrotask(pinOffset);
     $('thead').innerHTML = '<tr>' + pre.map(th).join('') + groups.map(g => `<th scope="colgroup" colspan="${g.n}" class="wk pg ps">P${g.p}</th>`).join('') + post.map(th).join('') + '</tr>' +
       (two ? '<tr>' + gw.map(w => `<th scope="col" class="wk w${w % 4 === 0 ? ' ps' : ''}" aria-label="${wkLbl(w)}">W${w % 4 + 1}</th>`).join('') + '</tr>' : '');
+    const ck = (k, e, extra = '') => cl(k, ((e.chg && e.chg.includes(k)) ? 'chg ' : '') + extra);
     const cellHtml = (k, e) => {
-      if (k === 'dur') return `<td${e.status === 'Modified' ? ' class="chg"' : ''}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
-      if (k === 'comments') return `<td class="com">${esc(e.comments)}</td>`;
-      if (k === 'status') return `<td>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;
-      if (k === 'divs') return `<td title="${esc(e.divList.join(', '))}">${esc(e.divs)}</td>`;
-      return `<td${cl(k, k === 'hours' && e.status === 'Modified' ? 'chg' : '')}>${esc(e[k])}</td>`;
+      switch (k) {
+        case 'sel': return `<td class="act"><input type="checkbox" data-sel="${e.id}" ${sel.has(e.id) ? 'checked' : ''} ${e.status ? '' : 'disabled'} aria-label="Select ${esc(e.comm)}"></td>`;
+        case 'edit': return `<td class="act"><button type="button" class="ib" data-edit="${e.id}" ${e.status === 'Removed' ? 'aria-disabled="true"' : ''} aria-label="Edit ${esc(e.comm)}">${ICON.edit}</button></td>`;
+        case 'remove': return e.status === 'Removed'
+          ? `<td class="act"><button type="button" class="ib" data-restore="${e.id}" aria-label="Restore ${esc(e.comm)}">${ICON.restore}</button></td>`
+          : `<td class="act"><button type="button" class="ib" data-remove="${e.id}" aria-label="Remove ${esc(e.comm)}">${ICON.trash}</button></td>`;
+        case 'pub': return `<td class="act"><button type="button" class="switch" data-pubtog="${e.id}" role="switch" aria-checked="${!!e.pub}" ${e.status ? '' : 'disabled'} aria-label="Ready to publish ${esc(e.comm)}"></button></td>`;
+        case 'mod': return `<td>${esc(e.by)}</td>`;
+        case 'dur': return `<td${ck(k, e)}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
+        case 'comments': return `<td${ck(k, e, 'com')}>${esc(e.comments)}</td>`;
+        case 'status': return `<td>${e.status ? `<span class="st ${e.status}">${e.status === 'Removed' ? ICON.minus : ''}${e.status}</span>` : ''}</td>`;
+        case 'divs': return `<td${ck(k, e)} title="${esc(e.divList.join(', '))}">${esc(e.divs)}</td>`;
+        default: return `<td${ck(k, e)}>${esc(e[k])}</td>`;
+      }
     };
     const ps = w => w % 4 === 0 ? ' ps' : '';
     const filtered = activeKeys(applied).length > 0, ncol = pre.length + gw.length + post.length;
-    $('tbody').innerHTML = rows.length ? rows.map(e => `<tr data-id="${e.id}" class="${e.status === 'Added' ? 'add' : ''}">` + pre.map(([k]) => cellHtml(k, e)).join('') +
+    $('tbody').innerHTML = rows.length ? rows.map(e => `<tr data-id="${e.id}" class="${e.status === 'Added' ? 'add' : e.status === 'Removed' ? 'rm' : ''}">` + pre.map(([k]) => cellHtml(k, e)).join('') +
       gw.map(w => covers(e, w) ? `<td class="wk on${c.load[w] > cap ? ' over' : ''}${ps(w)}">${e.hours}</td>` : `<td class="wk${ps(w)}"></td>`).join('') +
       post.map(([k]) => cellHtml(k, e)).join('') + '</tr>').join('')
       : `<tr><td class="emp" colspan="${ncol}">No resets match these filters.${filtered ? ' <button class="link-btn" data-clearall>Clear all filters</button>' : ''}</td></tr>`;
+    tableRows = rows;
+    const selAll = $('selAll');
+    if (selAll) { const ch = rows.filter(e => e.status); selAll.disabled = !ch.length; selAll.checked = ch.length > 0 && ch.every(e => sel.has(e.id)); selAll.indeterminate = !selAll.checked && ch.some(e => sel.has(e.id)); }
     $('tfoot').innerHTML = two && rows.length ? `<tr>` + pre.map(([k]) => `<td${cl(k)}>${k === 'comm' ? 'Total hours per week' : ''}</td>`).join('') +
       gw.map(w => { const v = c.load[w], o = v > cap; return `<td class="wk${o ? ' over' : ''}${ps(w)}"${o ? ` title="${wkLbl(w)}: ${v - cap} over capacity"` : ''}>${cmp ? v : (o ? WARN + ' ' : '') + v}</td>`; }).join('') +
       `<td colspan="${post.length}"></td></tr>` : '';
@@ -648,18 +811,37 @@
     if (w1 && st && c) wrap.scrollTo({ left: Math.max(0, w1.offsetLeft - c.offsetWidth - st.offsetWidth - 4), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
 
+  function renderChrome() {
+    const cr = role === 'creator';
+    $('toolbar').hidden = !cr; $('tools').hidden = !cr; $('banner').hidden = !inDraft();
+    $('meta').innerHTML = `2026 Resets<br>Version: 2026.0${version}<br>Updated on: ${esc(updatedAt)}`;
+    if (cr) {
+      const n = DRAFTROWS.filter(e => e.status).length;
+      $('banner').innerHTML = n ? `${WARN} ${n} unpublished ${n === 1 ? 'change' : 'changes'} in 2026 schedule.` : '✔ No unpublished changes in 2026 schedule.';
+      $('viewSwitch').setAttribute('aria-checked', !draftView); $('lblDraft').className = draftView ? 'on' : ''; $('lblPub').className = draftView ? '' : 'on';
+      $('newBtn').disabled = !draftView;
+      $('publishBtn').disabled = !(inDraft() && DRAFTROWS.some(e => e.status && e.pub));
+      $('readyBtn').disabled = !(inDraft() && sel.size);
+    }
+    document.querySelectorAll('[data-role]').forEach(b => b.setAttribute('aria-pressed', b.dataset.role === role));
+  }
   function render() {
-    const base = baseRows(), c = calc(base, cap), sw = scopeWs();
+    [...sel].forEach(id => { const e = ROWS.find(x => x.id === id); if (!e || !e.status) sel.delete(id); });
+    const base = baseRows(), c = calc(base.filter(e => e.status !== 'Removed'), cap), sw = scopeWs();
     const shown = sw ? base.filter(e => sw.some(w => covers(e, w))) : base;
-    renderTable(c, shown, sw); renderPanel();
+    renderChrome(); renderTable(c, shown, sw); renderPanel();
   }
 
   /* ---------- Filter panel: fields ---------- */
   const uniq = k => [...new Set(ROWS.map(e => e[k]))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const selHtml = (key, label, opts) => `<label class="flabel" for="f_${key}">${label}</label><div class="sel"><select class="field empty" id="f_${key}" data-k="${key}"><option value="">--- Select a Value ---</option>${opts.map(o => `<option>${esc(o)}</option>`).join('')}</select><button class="clear-x" type="button" data-clr="${key}" aria-label="Clear ${label}" hidden>✕</button><span class="caret">▼</span></div>`;
   $('fieldYear').innerHTML = selHtml('year', 'Year', [YEAR - 1, YEAR, YEAR + 1].map(String));
-  $('fieldRest').innerHTML = [['dept', 'Department', uniq('dept')], ['comm', 'Commodity', uniq('comm')], ['type', 'Type', uniq('type')], ['cm', 'Category Manager', uniq('cm')],
-    ['pm', 'Process Manager', uniq('pm')], ['div', 'Division', DIVS], ['status', 'Status', ['Added', 'Modified']]].map(x => selHtml(...x)).join('');
+  function buildFilters() {
+    const opts = { dept: uniq('dept'), comm: uniq('comm'), type: uniq('type'), cm: uniq('cm'), pm: uniq('pm'), div: DIVS, status: inDraft() ? ['Added', 'Modified', 'Removed'] : ['Added', 'Modified'] };
+    const labels = [['dept', 'Department'], ['comm', 'Commodity'], ['type', 'Type'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['div', 'Division'], ['status', 'Status']];
+    $('fieldRest').innerHTML = labels.map(([k, l]) => selHtml(k, l, opts[k])).join('');
+    for (const f of [applied, draft]) for (const k of Object.keys(opts)) if (f[k] && !opts[k].includes(f[k])) f[k] = '';   // drop filters that no longer exist
+  }
 
   const trigger = $('trigger'), popover = $('popover'), pgrid = $('pgrid'), clearX = $('clearX'), clearAllBtn = $('clearAll');
   const pk = { s: null, e: null, h: null };   // in-progress range while picking
@@ -756,6 +938,126 @@
   function clearEverything() { applied = blank(); draft = blank(); pk.s = pk.e = pk.h = null; setOpen(false); render(); }
   clearAllBtn.addEventListener('click', clearEverything);
 
+  /* ---------- Creator actions ---------- */
+  const rowById = id => DRAFTROWS.find(x => x.id === id);
+  const focusAfter = (selector) => { const el = document.querySelector(selector); if (el) el.focus(); };
+  function setRole(r) {
+    if (r === role) return;
+    role = r; draftView = true; useData();
+    try { const u = new URL(location.href); r === 'creator' ? u.searchParams.set('role', 'creator') : u.searchParams.delete('role'); history.replaceState(null, '', u); } catch (e) {}
+    render();
+    toast(r === 'creator' ? 'Creator view: you can edit the draft and publish changes' : 'Viewer view: the published calendar');
+  }
+  function removeRow(id) {
+    const e = rowById(id); if (!e) return;
+    if (e.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); resetOrder(); render(); toast('Discarded the new entry'); return; }
+    e.prev = { status: e.status, chg: e.chg, by: e.by }; e.status = 'Removed'; e.chg = []; e.by = USER; e.pub = false;
+    resetOrder(); render(); focusAfter(`[data-restore="${id}"]`); toast('Marked for removal. It stays in the draft until you publish.');
+  }
+  function restoreRow(id) {
+    const e = rowById(id); if (!e) return;
+    const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; e.prev = null;
+    resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.');
+  }
+  function togglePub(id) { const e = rowById(id); if (!e || !e.status) return; e.pub = !e.pub; render(); focusAfter(`[data-pubtog="${id}"]`); }
+  function markReady() {
+    const rows = DRAFTROWS.filter(e => sel.has(e.id) && e.status); if (!rows.length) return;
+    rows.forEach(e => { e.pub = true; }); sel.clear(); render();
+    toast(`${rows.length} ${rows.length === 1 ? 'change' : 'changes'} marked ready to publish`);
+  }
+  function publish() {
+    const ready = DRAFTROWS.filter(e => e.status && e.pub); if (!ready.length) return;
+    PUBROWS.forEach(r => { r.status = ''; r.chg = []; });                       // a new version: older change flags no longer apply
+    ready.forEach(e => {
+      if (e.status === 'Added') { PUBROWS.push({ ...e, divList: [...e.divList], status: 'Added', chg: [], by: '', pub: false }); }
+      else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg] }); }
+      else if (e.status === 'Removed') { PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1); }
+    });
+    ready.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.pub = false; e.orig = null; } });
+    version++; updatedAt = nowStr(); sel.clear(); resetOrder(); render();
+    toast(`Published ${ready.length} ${ready.length === 1 ? 'change' : 'changes'} as version 2026.0${version}.`);
+  }
+
+  /* ---------- New entry / edit dialog ---------- */
+  const TYPES = ['Update', 'NII', 'Maintenance'], DEPTS = ['01 - Grocery', '02 - Dairy', '17 - Natural Foods', '43 - Liquor'];
+  const fill = (id, arr, fmt) => { $(id).innerHTML = arr.map(v => `<option value="${esc(v)}">${esc(fmt ? fmt(v) : v)}</option>`).join(''); };
+  fill('e_type', TYPES); fill('e_dept', DEPTS);
+  fill('e_period', Array.from({ length: P }, (_, i) => i + 1), v => 'Period ' + v); fill('e_week', [1, 2, 3, 4], v => 'Week ' + v);
+  fill('e_divs', ['All', ...Array.from({ length: DIVS.length }, (_, i) => i + 1)]);
+  const people = k => [...new Set(PUBROWS.map(e => e[k]))].sort();
+  $('dl_cm').innerHTML = people('cm').map(v => `<option value="${esc(v)}">`).join(''); $('dl_pm').innerHTML = people('pm').map(v => `<option value="${esc(v)}">`).join('');
+  const FIELD_IDS = ['comm', 'cm', 'pm', 'size', 'dur', 'hours'];
+  let editId = null, opener = null;
+  function showErrors(errs) {
+    FIELD_IDS.forEach(k => { const el = $('e_' + k), er = $('e_' + k + '_err'); const m = errs[k]; er.hidden = !m; er.textContent = m || ''; m ? el.setAttribute('aria-invalid', 'true') : el.removeAttribute('aria-invalid'); });
+  }
+  function openEntry(id, from) {
+    editId = id; opener = from || null;
+    const e = id == null ? { type: 'Update', dept: DEPTS[0], comm: '', cm: '', pm: '', size: 12, start: 'P1 W1', dur: 1, hours: 4, divs: 'All', comments: '' } : rowById(id);
+    if (!e) return;
+    const m = /P(\d+) W(\d+)/.exec(e.start);
+    $('eTitle').textContent = id == null ? 'New Entry' : `Edit reset · ${e.comm}`; $('eSave').textContent = id == null ? 'Add to draft' : 'Save changes';
+    $('e_type').value = e.type; $('e_dept').value = e.dept; $('e_comm').value = e.comm; $('e_cm').value = e.cm; $('e_pm').value = e.pm; $('e_size').value = e.size;
+    $('e_period').value = m[1]; $('e_week').value = m[2]; $('e_dur').value = e.dur; $('e_hours').value = e.hours; $('e_divs').value = String(e.divs); $('e_comments').value = e.comments || '';
+    showErrors({});
+    document.querySelector('.topbar').inert = true; document.querySelector('.app').inert = true;
+    $('eScrim').hidden = false; $(id == null ? 'e_comm' : 'e_type').focus();
+  }
+  function closeEntry() {
+    $('eScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
+    if (opener && opener.isConnected) opener.focus(); opener = null; editId = null;
+  }
+  function readForm() {
+    const n = id => $(id).value.trim();
+    return { type: n('e_type'), dept: n('e_dept'), comm: n('e_comm'), cm: n('e_cm'), pm: n('e_pm'), size: n('e_size'), start: `P${n('e_period')} W${n('e_week')}`,
+      dur: n('e_dur'), hours: n('e_hours'), divs: n('e_divs') === 'All' ? 'All' : +n('e_divs'), comments: n('e_comments') };
+  }
+  function validate(v) {
+    const errs = {}, int = x => /^\d+$/.test(String(x));
+    if (!v.comm) errs.comm = 'Enter a commodity.';
+    if (!v.cm) errs.cm = 'Enter a category manager.';
+    if (!v.pm) errs.pm = 'Enter a process manager.';
+    if (!int(v.size) || +v.size < 1 || +v.size > 99) errs.size = 'Enter a whole number from 1 to 99.';
+    if (!int(v.hours) || +v.hours < 1 || +v.hours > 40) errs.hours = 'Enter a whole number from 1 to 40.';
+    if (!int(v.dur) || +v.dur < 1 || +v.dur > 8) errs.dur = 'Enter a whole number from 1 to 8.';
+    else if (wkIdx(v.start) + +v.dur > WEEKS) errs.dur = 'This would run past P13 W4.';
+    return errs;
+  }
+  $('eForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const v = readForm(), errs = validate(v); showErrors(errs);
+    const bad = FIELD_IDS.find(k => errs[k]); if (bad) { $('e_' + bad).focus(); return; }
+    const vals = { ...v, size: +v.size, dur: +v.dur, hours: +v.hours };
+    let msg;
+    if (editId == null) {
+      const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1;
+      DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: USER, pub: false });
+      msg = 'Added to the draft. It stays there until you publish.';
+    } else {
+      const e = rowById(editId);
+      if (!e.orig && e.status !== 'Added') e.orig = snap(e);
+      Object.assign(e, vals); e.divList = divListFor(e.id, e.divs); e.pub = false;
+      if (e.status === 'Added') e.by = USER;
+      else { e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k])); e.status = e.chg.length ? 'Modified' : ''; e.by = e.chg.length ? USER : ''; }
+      msg = e.status === 'Modified' ? 'Saved. The edited fields are highlighted until you publish.' : e.status === 'Added' ? 'Saved changes to the new entry.' : 'No changes from the published version.';
+    }
+    const keep = opener; closeEntry(); resetOrder(); render(); opener = keep; toast(msg);
+  });
+  $('eCancel').addEventListener('click', closeEntry); $('eClose').addEventListener('click', closeEntry);
+  $('eScrim').addEventListener('keydown', ev => {                          // keep Tab inside the dialog
+    if (ev.key !== 'Tab') return;
+    const f = [...$('eForm').querySelectorAll('input, select, textarea, button')].filter(x => !x.disabled && x.offsetParent !== null);
+    const first = f[0], last = f[f.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('eScrim').hidden) closeEntry(); });
+  document.addEventListener('change', ev => {
+    const cb = ev.target.closest && ev.target.closest('[data-sel]');
+    if (cb) { const id = +cb.dataset.sel; cb.checked ? sel.add(id) : sel.delete(id); render(); focusAfter(`[data-sel="${id}"]`); return; }
+    if (ev.target.id === 'selAll') { const ch = tableRows.filter(e => e.status); ev.target.checked ? ch.forEach(e => sel.add(e.id)) : ch.forEach(e => sel.delete(e.id)); render(); focusAfter('#selAll'); }
+  });
+
   /* Layout switch (A: toggle above the table, B: expand from Start). The open/closed grid state carries over. */
   function setVariant(v) {
     if (v === VARIANT) return;
@@ -787,6 +1089,16 @@
     if (so) { const k = so.dataset.sort; if (sortKey !== k) { sortKey = k; sortDir = 'asc'; } else if (sortDir === 'asc') sortDir = 'desc'; else sortKey = null;
       if (sortKey) applySort(); else rowOrder = null;
       render(); $('thead').querySelector(`[data-sort="${k}"]`)?.focus(); toast(sortKey ? `Sorted by ${FSORT[k]}, ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort cleared. Back to the default order, with changed resets first.'); return; }
+    if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
+    const rl = e.target.closest('[data-role]'); if (rl) { setRole(rl.dataset.role); return; }
+    if (e.target.closest('#viewSwitch')) { draftView = !draftView; useData(); render(); return; }
+    if (e.target.closest('#newBtn')) { openEntry(null, e.target.closest('#newBtn')); return; }
+    const ed = e.target.closest('[data-edit]'); if (ed) { if (ed.getAttribute('aria-disabled') !== 'true') openEntry(+ed.dataset.edit, ed); return; }
+    const rmv = e.target.closest('[data-remove]'); if (rmv) { removeRow(+rmv.dataset.remove); return; }
+    const rst = e.target.closest('[data-restore]'); if (rst) { restoreRow(+rst.dataset.restore); return; }
+    const pt = e.target.closest('[data-pubtog]'); if (pt) { togglePub(+pt.dataset.pubtog); return; }
+    if (e.target.closest('#readyBtn')) { markReady(); return; }
+    if (e.target.closest('#publishBtn')) { publish(); return; }
     const vb = e.target.closest('[data-variant]');
     if (vb) { setVariant(vb.dataset.variant); return; }
     const gtg = e.target.closest('[data-gridtog]'); if (gtg) { gridOn = !gridOn; render(); $('gridbar').querySelector('[data-gridtog]')?.focus(); if (gridOn) bringGrid(); return; }
@@ -794,7 +1106,7 @@
     if (e.target.closest('[data-clearall]')) { clearEverything(); return; }
   });
 
-  render(); syncVariantUI();
+  useData(); render(); syncVariantUI();
 })();
 </script>
 </body>
