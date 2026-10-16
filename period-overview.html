@@ -180,6 +180,18 @@
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; max-width: 90vw; }
   .toast.show { opacity: 1; }
 
+  /* Division list modal */
+  .divbtn { border: 0; background: none; font: inherit; color: var(--blue); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 6px; margin: -2px -6px; border-radius: 4px; }
+  .divbtn:hover { background: #e8eef9; }
+  .divbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  #dDlg { width: min(460px, 100%); }
+  .dsub { padding: 14px 22px 10px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+  .dhead, .dpl li { display: grid; grid-template-columns: 96px 1fr; gap: 12px; padding: 8px 22px; font-size: 14px; }
+  .dhead { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #e3e6ea; padding-top: 10px; padding-bottom: 8px; }
+  .dpl { list-style: none; margin: 0; padding: 0 0 6px; max-height: 50vh; overflow: auto; }
+  .dpl li + li { border-top: 1px solid #f1f2f4; }
+  .dpl .dn { color: var(--muted); font-variant-numeric: tabular-nums; }
+
   /* Global toasts: top right, stacked, below the top bar */
   .toasts { position: fixed; top: 76px; right: 16px; z-index: 90; width: min(380px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
   .gtoast { pointer-events: auto; display: grid; grid-template-columns: 22px 1fr 22px; column-gap: 12px; row-gap: 4px; align-items: start; padding: 14px 14px 14px 16px; border-radius: 6px; color: #000; box-shadow: 0 6px 20px rgba(15,31,61,.18); animation: gtIn .18s ease-out; }
@@ -405,6 +417,15 @@
     </div>
     <footer><button type="button" class="tb" id="pCancel">Cancel</button><button type="submit" class="tb pub" id="pGo">Schedule</button></footer>
   </form>
+</div>
+<div class="scrim" id="dScrim" hidden>
+  <div class="dlg" id="dDlg" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <header><h2 id="dTitle"></h2><button type="button" class="xclose" id="dClose" aria-label="Close">✕</button></header>
+    <div class="dsub" id="dSub"></div>
+    <div class="dhead" aria-hidden="true"><span>Division #</span><span>Division name</span></div>
+    <ul class="dpl" id="dList" aria-label="Included divisions"></ul>
+    <footer><button type="button" class="tb" id="dDone">Close</button></footer>
+  </div>
 </div>
 <div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -703,8 +724,10 @@
 
   const DATA_YEAR = 2026;
   const DIVS = ['Atlanta', 'Central', 'Cincinnati', 'Dallas', 'Delta', 'Houston', 'Louisville', 'Michigan', 'Mid-Atlantic', 'Nashville', 'Pacific', 'Mountain'];
+  const DIVNO = { 'Atlanta': '011', 'Central': '014', 'Cincinnati': '015', 'Dallas': '019', 'Delta': '020', 'Houston': '023', 'Louisville': '025', 'Michigan': '028', 'Mid-Atlantic': '031', 'Nashville': '034', 'Pacific': '037', 'Mountain': '040' };   // demo numbers
   PUBROWS.forEach((e, i) => {
     e.year = DATA_YEAR;
+    if (+e.divs === DIVS.length) e.divs = 'All';
     const n = e.divs === 'All' ? DIVS.length : +e.divs;
     e.divList = Array.from({ length: n }, (_, k) => DIVS[(i + k) % DIVS.length]);
     e.status = i === 0 || i === 14 || i === 27 ? 'Added' : i === 18 || i === 8 || i === 31 ? 'Modified' : '';
@@ -867,7 +890,8 @@
         case 'dur': return `<td${ck(k, e)}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
         case 'comments': return `<td${ck(k, e, 'com')}>${esc(e.comments)}</td>`;
         case 'status': return `<td>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;
-        case 'divs': return `<td${ck(k, e)} title="${esc(e.divList.join(', '))}">${esc(e.divs)}</td>`;
+        case 'divs': return e.divs === 'All' ? `<td${ck(k, e)}>All</td>`
+          : `<td${ck(k, e)}><button type="button" class="divbtn" data-divs="${e.id}" aria-haspopup="dialog" aria-label="${e.divs} ${e.divs === 1 ? 'division' : 'divisions'}, view list for ${esc(e.comm)}">${e.divs}</button></td>`;
         default: return `<td${ck(k, e)}>${esc(e[k])}</td>`;
       }
     };
@@ -1052,6 +1076,25 @@
   }
   const refocusAfterPublish = () => { const a = $('selAll'), t = a && !a.disabled ? a : $('newBtn'); if (t && !t.disabled) t.focus(); };
 
+  /* ---------- Division list modal ---------- */
+  let divOpener = null;
+  function openDivs(id, trig) {
+    const e = ROWS.find(x => x.id === id); if (!e || e.divs === 'All') return;
+    const list = e.divList.map(n => ({ no: DIVNO[n] || '', name: n })).sort((a, b) => a.no.localeCompare(b.no, undefined, { numeric: true }));
+    $('dTitle').textContent = `${list.length} ${list.length === 1 ? 'division' : 'divisions'}`;
+    $('dSub').textContent = [e.type, e.comm, e.start, `${e.hours} ${e.hours === 1 ? 'Hour' : 'Hours'}`].join(' · ');
+    $('dList').innerHTML = list.map(d => `<li><span class="dn">${esc(d.no)}</span><span>${esc(d.name)}</span></li>`).join('');
+    divOpener = trig || null; lockPage(true); $('dScrim').hidden = false; $('dClose').focus();
+  }
+  function closeDivs() {
+    if ($('dScrim').hidden) return;
+    $('dScrim').hidden = true; lockPage(false);
+    if (divOpener && divOpener.isConnected) divOpener.focus(); divOpener = null;
+  }
+  $('dClose').addEventListener('click', closeDivs); $('dDone').addEventListener('click', closeDivs);
+  $('dScrim').addEventListener('keydown', ev => trapTab(ev, $('dDlg')));
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('dScrim').hidden) closeDivs(); });
+
   /* ---------- Creator actions ---------- */
   const rowById = id => DRAFTROWS.find(x => x.id === id);
   const focusAfter = (selector) => { const el = document.querySelector(selector); if (el) el.focus(); };
@@ -1172,7 +1215,7 @@
   const fill = (id, arr, fmt) => { $(id).innerHTML = arr.map(v => `<option value="${esc(v)}">${esc(fmt ? fmt(v) : v)}</option>`).join(''); };
   fill('e_type', TYPES); fill('e_dept', DEPTS);
   fill('e_period', Array.from({ length: P }, (_, i) => i + 1), v => 'Period ' + v); fill('e_week', [1, 2, 3, 4], v => 'Week ' + v);
-  fill('e_divs', ['All', ...Array.from({ length: DIVS.length }, (_, i) => i + 1)]);
+  fill('e_divs', ['All', ...Array.from({ length: DIVS.length - 1 }, (_, i) => i + 1)]);
   const people = k => [...new Set(PUBROWS.map(e => e[k]))].sort();
   $('dl_cm').innerHTML = people('cm').map(v => `<option value="${esc(v)}">`).join(''); $('dl_pm').innerHTML = people('pm').map(v => `<option value="${esc(v)}">`).join('');
   const FIELD_IDS = ['comm', 'cm', 'pm', 'size', 'dur', 'hours'];
@@ -1199,7 +1242,7 @@
   function readForm() {
     const n = id => $(id).value.trim();
     return { type: n('e_type'), dept: n('e_dept'), comm: n('e_comm'), cm: n('e_cm'), pm: n('e_pm'), size: n('e_size'), start: `P${n('e_period')} W${n('e_week')}`,
-      dur: n('e_dur'), hours: n('e_hours'), divs: n('e_divs') === 'All' ? 'All' : +n('e_divs'), comments: n('e_comments') };
+      dur: n('e_dur'), hours: n('e_hours'), divs: n('e_divs') === 'All' || +n('e_divs') === DIVS.length ? 'All' : +n('e_divs'), comments: n('e_comments') };
   }
   function validate(v) {
     const errs = {}, int = x => /^\d+$/.test(String(x));
@@ -1262,6 +1305,7 @@
 
   /* ---------- Events ---------- */
   document.addEventListener('click', e => {
+    const dv = e.target.closest('[data-divs]'); if (dv) { openDivs(+dv.dataset.divs, dv); return; }
     const so = e.target.closest('[data-sort]');
     if (so) { const k = so.dataset.sort; if (sortKey !== k) { sortKey = k; sortDir = 'asc'; } else if (sortDir === 'asc') sortDir = 'desc'; else sortKey = null;
       if (sortKey) applySort(); else rowOrder = null;
