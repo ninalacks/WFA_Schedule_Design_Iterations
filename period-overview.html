@@ -7,26 +7,26 @@
 <style>
   :root {
     --navy: #0f1f3d; --blue: #1f4e9c; --text: #1c2430; --muted: #5b6573; --border: #d5d9df; --focus: #2563eb; --bg: #f3f4f6;
-    --warn-bg: #fdf3c8; --warn-text: #5c4300; --over: #b45309; --over-bg: #fde7c8;
+    --over: #b45309; --over-bg: #fde7c8;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px;
          height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
   button { font: inherit; color: inherit; }
   button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
   .topbar { flex: none; background: var(--navy); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
-  .brand { color: #fff; font-weight: 700; font-size: 18px; border: 1px solid #fff8; border-radius: 4px; padding: 8px 14px; }
+  .brand { color: #fff; font-weight: 700; font-size: 17px; border: 1px solid #fff8; border-radius: 4px; padding: 8px 14px; }
   .vgroup { display: flex; align-items: center; gap: 14px; }
   .vsw { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,.1); border-radius: 999px; padding: 4px; }
-  .vlabel { color: #b9c6e0; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 0 8px 0 10px; }
-  .vopt { border: 0; background: transparent; color: #fff; font: inherit; font-size: 14px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .vlabel { color: #b9c6e0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 0 8px 0 10px; }
+  .vopt { border: 0; background: transparent; color: #fff; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
   .vopt:hover { background: rgba(255,255,255,.14); }
   .vopt[aria-pressed="true"] { background: #fff; color: var(--navy); }
   .vopt:focus-visible { outline: 2px solid #8fb4ff; outline-offset: 2px; }
-  @media (max-width: 1150px) { .vlabel { display: none; } .vopt { padding: 7px 10px; font-size: 13px; } }
-  .topbar a { color: #8fb4ff; font-weight: 700; font-size: 18px; text-decoration: underline; text-underline-offset: 6px; }
+  @media (max-width: 1150px) { .vlabel { display: none; } .vopt { padding: 7px 10px; font-size: 12px; } }
+  .topbar a { color: #8fb4ff; font-weight: 700; font-size: 17px; text-decoration: underline; text-underline-offset: 6px; }
   .app { padding: 18px 16px 12px; margin: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; }
   #main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .results { flex: 1; min-height: 320px; display: flex; flex-direction: column; }
@@ -38,16 +38,16 @@
 
 
   .titlerow { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 14.7px; flex: none; }
-  h1 { font-size: 30px; margin: 0; }
-  .meta { text-align: right; font-size: 15px; color: #333; line-height: 1.35; }
+  h1 { font-size: 26px; margin: 0; }
+  .meta { font-size: 14px; color: #333; line-height: 1.35; margin-top: 2px; }
 
   /* Overview strip */
 
   /* Scope summary */
-  .btn2 { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+  .btn2 { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
   .btn2[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
 
-  .gridbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; margin-bottom: 8px; font-size: 15px; color: var(--muted); }
+  .gridbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; margin-bottom: 8px; font-size: 14px; color: var(--muted); }
   .tags { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 
   /* Filter rail + panel (pattern from date-filter-v6) */
@@ -58,19 +58,19 @@
   .panel-body { width: 320px; padding: 20px 18px 0; position: relative; transition: opacity .15s ease; }
   .panel.collapsed .panel-body { opacity: 0; pointer-events: none; position: absolute; top: 0; left: 0; height: 0; overflow: hidden; }
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 6px; }
-  .panel-head h2 { font-size: 26px; margin: 0; }
+  .panel-head h2 { font-size: 23px; margin: 0; }
   .icon-btn { width: 40px; height: 40px; border: 0; background: transparent; border-radius: 8px; color: var(--blue); cursor: pointer; display: grid; place-items: center; position: relative; }
   .icon-btn:hover { background: #eef2fa; }
   .prail { position: absolute; top: 0; left: 0; width: 56px; padding-top: 14px; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .15s ease .1s; }
   .panel.collapsed .prail { opacity: 1; pointer-events: auto; }
-  .badge { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; border-radius: 9px; background: var(--navy); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; }
+  .badge { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; border-radius: 9px; background: var(--navy); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; }
   @media (prefers-reduced-motion: reduce) { .panel, .panel-body, .prail { transition: none; } }
-  .flabel { display: block; font-weight: 600; font-size: 14px; color: var(--muted); margin: 16px 0 6px; }
-  .field { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; background: #fff; display: flex; align-items: center; padding: 0 10px; gap: 8px; font-size: 15px; color: var(--text); cursor: pointer; text-align: left; }
+  .flabel { display: block; font-weight: 600; font-size: 13px; color: var(--muted); margin: 16px 0 6px; }
+  .field { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; background: #fff; display: flex; align-items: center; padding: 0 10px; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer; text-align: left; }
   .field.placeholder, .sel select.field.empty { color: #666; }
   .field[aria-expanded="true"], .field:focus-visible { border: 2px solid var(--focus); outline: none; padding: 0 9px; }
   .field .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .clear-x { border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; padding: 0 4px; }
+  .clear-x { border: 0; background: none; font-size: 17px; color: var(--muted); cursor: pointer; padding: 0 4px; }
   .clear-x:hover { color: var(--text); }
   .clear-x:focus-visible { outline: 2px solid var(--focus); border-radius: 4px; }
   .caret { font-size: 10px; color: var(--muted); }
@@ -82,31 +82,31 @@
   .popover { position: absolute; top: 44px; left: 0; width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px 10px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 10; }
   .popover[hidden] { display: none; }
   .pk-head, .pk-row { display: grid; grid-template-columns: 52px repeat(4, 1fr); align-items: center; }
-  .pk-head { color: var(--muted); font-size: 14px; margin-bottom: 6px; padding-left: 4px; }
+  .pk-head { color: var(--muted); font-size: 13px; margin-bottom: 6px; padding-left: 4px; }
   .pk-scroll { max-height: 280px; overflow-y: auto; }
   .pk-row { height: 44px; position: relative; }
-  .pk-plabel { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; margin-left: 4px; }
+  .pk-plabel { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; margin-left: 4px; }
   .pk-plabel.clickable { cursor: pointer; }
   .pk-plabel.clickable:not(.edge):hover { background: #dbe8fe; }
   .pk-plabel:focus-visible { outline: 2px solid var(--focus); }
   .pk-plabel.edge { background: var(--navy); color: #fff; }
-  .pk-week { height: 36px; border: 0; background: transparent; font-size: 15px; color: var(--text); cursor: pointer; display: grid; place-items: center; margin: 4px 0; position: relative; }
+  .pk-week { height: 36px; border: 0; background: transparent; font-size: 14px; color: var(--text); cursor: pointer; display: grid; place-items: center; margin: 4px 0; position: relative; }
   .pk-week.inrange, .pk-week.preview { background: #dbe8fe; }
   .pk-week.edge::before { content: ""; position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); z-index: 0; }
   .pk-week.edge span { position: relative; z-index: 1; color: #fff; }
   .pk-week:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
   .pk-div { border-left: 1px solid #e3e6ea; position: absolute; left: 52px; top: 4px; bottom: 4px; }
   .pk-seg { display: grid; grid-template-columns: 1fr 1fr; background: #eceef1; border-radius: 999px; padding: 3px; margin: 0 4px 12px; }
-  .pk-seg button { border: 0; background: transparent; height: 30px; border-radius: 999px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .pk-seg button { border: 0; background: transparent; height: 30px; border-radius: 999px; font-size: 13px; color: var(--muted); cursor: pointer; }
   .pk-seg button[aria-pressed="true"] { background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
   .pk-seg button:focus-visible { outline: 2px solid var(--focus); }
-  .pk-hint { font-size: 13px; color: var(--muted); margin: 10px 4px 0; min-height: 18px; }
+  .pk-hint { font-size: 12px; color: var(--muted); margin: 10px 4px 0; min-height: 18px; }
   .clear-row { display: flex; justify-content: flex-end; margin: 0; }
-  .link-btn { border: 0; background: none; padding: 4px 2px; font-size: 16px; color: var(--blue); text-decoration: underline; cursor: pointer; }
+  .link-btn { border: 0; background: none; padding: 4px 2px; font-size: 15px; color: var(--blue); text-decoration: underline; cursor: pointer; }
   .link-btn:focus-visible { outline: 2px solid var(--focus); border-radius: 2px; }
   .link-btn:disabled { color: #9aa3b0; cursor: default; }
   .pfoot { position: sticky; bottom: 0; background: #fff; padding: 12px 0 16px; margin-top: 12px; }
-  .pbtn { width: 100%; height: 44px; border-radius: 6px; font-size: 17px; border: 1px solid var(--navy); background: var(--navy); color: #fff; font-weight: 600; cursor: pointer; }
+  .pbtn { width: 100%; height: 44px; border-radius: 6px; font-size: 16px; border: 1px solid var(--navy); background: var(--navy); color: #fff; font-weight: 600; cursor: pointer; }
 
   /* Table */
   .tablewrap { background: #fff; border: 1px solid #e3e6ea; overflow: scroll; flex: 1; min-height: 0; }
@@ -116,28 +116,28 @@
   .tablewrap::-webkit-scrollbar-thumb:hover { background: #8d97a6; }
   .tablewrap::-webkit-scrollbar-corner { background: #f1f2f4; }
   @supports not selector(::-webkit-scrollbar) { .tablewrap { scrollbar-color: #b3bcc9 #f1f2f4; } }
-  table { border-collapse: collapse; width: 100%; min-width: 1500px; font-size: 15px; }
-  th { background: #f1f2f4; text-align: left; font-weight: 700; padding: 12px 10px; border-bottom: 2px solid #dde0e5; font-size: 15px; white-space: nowrap; }
+  table { border-collapse: collapse; width: 100%; min-width: 1500px; font-size: 14px; }
+  th { background: #f1f2f4; text-align: left; font-weight: 700; padding: 12px 10px; border-bottom: 2px solid #dde0e5; font-size: 14px; white-space: nowrap; }
   td { padding: 12px 10px; border-bottom: 1px solid #eceef1; vertical-align: middle; }
   td { white-space: nowrap; }
   td.com { min-width: 280px; max-width: 340px; white-space: normal; }
   th.wk, td.wk { text-align: center; width: 76px; padding-left: 4px; padding-right: 4px; }
   th.wk { border-left: 1px solid #dde0e5; }
-  th.wk small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+  th.wk small { display: block; font-weight: 400; font-size: 10px; color: var(--muted); }
   td.wk { border-left: 1px solid #f1f2f4; }
   td.wk.on { font-weight: 700; }
   td.wk.over { color: var(--over); }
   tfoot td { position: sticky; bottom: 0; z-index: 2; background: #f8f9fb; font-weight: 700; border: 0 !important; box-shadow: inset 0 2px 0 #dde0e5, inset -1px 0 0 #e3e6ea; }
   tfoot td.wk { vertical-align: top; }
   tfoot td.wk.over { color: var(--over); }
-  .st { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
-  .st { padding: 2px 12px; } .st.Added { background: #d7efdd; color: #17653a; } .st.Modified { background: #e1eafb; color: #1f4e9c; }
+  .st { display: inline-block; box-sizing: border-box; width: 84px; padding: 2px 0; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 15px; text-align: center; white-space: nowrap; }
+  .st.Added { background: #d7efdd; color: #17653a; } .st.Modified { background: #e1eafb; color: #1f4e9c; }
   tr.add td { background: #e9f6ec; } td.chg { background: #dbe8fe !important; }
-  th.wk.pg { font-size: 13px; padding: 6px 2px; }
-  th.wk.w { font-size: 12px; padding: 4px 2px; font-weight: 600; color: var(--muted); }
+  th.wk.pg { font-size: 12px; padding: 6px 2px; }
+  th.wk.w { font-size: 11px; padding: 4px 2px; font-weight: 600; color: var(--muted); }
   th.wk.ps { border-left: 2px solid #cfd5de; }
   td.wk.ps { border-left: 1px solid #cfd5de; } 
-  table.cmp th.wk, table.cmp td.wk { width: 34px; min-width: 34px; padding-left: 0; padding-right: 0; font-size: 13px; }
+  table.cmp th.wk, table.cmp td.wk { width: 34px; min-width: 34px; padding-left: 0; padding-right: 0; font-size: 12px; }
   .stk { position: sticky; z-index: 1; background: #fff; }
   th.stk { background: #f1f2f4; z-index: 3; }
   .stk1 { left: 0; }
@@ -166,7 +166,6 @@
   .xbtn { width: 26px; height: 26px; border: 1px solid #b9c2d0; background: #fff; border-radius: 6px; cursor: pointer; display: inline-grid; place-items: center; color: var(--blue); padding: 0; }
   .xbtn:hover { background: #eef2fa; }
   .xbtn[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
-  .gt { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text); font-weight: 600; }
   .switch { width: 38px; height: 22px; border-radius: 999px; background: #c3c9d2; border: 0; position: relative; cursor: pointer; padding: 0; }
   .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: left .15s; }
   .switch[aria-checked="true"] { background: var(--navy); }
@@ -174,27 +173,49 @@
   @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
   .emp { text-align: center; color: var(--muted); padding: 32px; }
 
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; max-width: 90vw; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; max-width: 90vw; }
   .toast.show { opacity: 1; }
+
+  /* Global toasts: top right, stacked, below the top bar */
+  .toasts { position: fixed; top: 76px; right: 16px; z-index: 90; width: min(380px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+  .gtoast { pointer-events: auto; display: grid; grid-template-columns: 22px 1fr 22px; column-gap: 12px; row-gap: 4px; align-items: start; padding: 14px 14px 14px 16px; border-radius: 6px; color: #000; box-shadow: 0 6px 20px rgba(15,31,61,.18); animation: gtIn .18s ease-out; }
+  .gtoast.success { background: #c3f1d6; --tc: #17653a; }
+  .gtoast.info { background: #d2eafa; --tc: #1e5ca7; }
+  .gtoast.error { background: #fcdbdb; --tc: #a9001f; }
+  .gtoast.warn { background: #fdea9d; --tc: #983301; }
+  .gtoast .gti { grid-column: 1; grid-row: 1; display: flex; padding-top: 1px; }
+  .gtoast .gtt { grid-column: 2; grid-row: 1; font-weight: 700; font-size: 15px; line-height: 22px; }
+  .gtoast .gtx { grid-column: 3; grid-row: 1; border: 0; background: none; color: var(--tc); width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
+  .gtoast .gtx:hover { background: rgba(0,0,0,.08); }
+  .gtoast .gtb { grid-column: 2 / 4; grid-row: 2; font-size: 14px; line-height: 1.4; }
+  .gtoast .gtl { grid-column: 2 / 4; grid-row: 3; margin-top: 4px; }
+  .gtoast .tlink { border: 0; background: none; padding: 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--tc); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; border-radius: 2px; }
+  .gtoast :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @keyframes gtIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .gtoast { animation: none; } }
 
   /* Creator */
   .titlerow, .toolbar, .banner { flex: none; }
-  .titleright { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
   .tools { display: flex; gap: 8px; }
   .sq { width: 36px; height: 36px; border: 1px solid var(--border); background: #fff; border-radius: 4px; display: grid; place-items: center; cursor: pointer; color: var(--text); padding: 0; }
   .sq:hover:not(:disabled) { background: #eef2fa; }
   .sq:disabled { color: #c3c8d0; cursor: not-allowed; background: #f4f5f7; }
   .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
   .tbtns { display: flex; gap: 10px; flex-wrap: wrap; }
-  .tb { height: 38px; padding: 0 14px; border: 1px solid var(--border); background: #fff; border-radius: 4px; font-size: 16px; cursor: pointer; }
+  .tb { height: 38px; padding: 0 14px; border: 1px solid var(--border); background: #fff; border-radius: 4px; font-size: 15px; cursor: pointer; }
   .tb:hover:not(:disabled) { background: #f4f6fa; }
   .tb:disabled { cursor: not-allowed; }
   .tb.pub { background: var(--navy); border-color: var(--navy); color: #fff; }
   .tb.pub:hover:not(:disabled) { background: #1b3560; }
   .tb.pub:disabled { background: #707c8d; border-color: #707c8d; opacity: .8; }
-  .viewsw { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--muted); }
+  .viewsw { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); }
   .viewsw .on { color: var(--text); font-weight: 700; }
-  .banner { background: var(--warn-bg); color: var(--warn-text); border-radius: 4px; padding: 12px 16px; font-size: 16px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  .banner { color: #000; border-radius: 6px; padding: 10px 14px; font-size: 15px; margin: 0 0 12px; display: flex; align-items: center; gap: 12px; }
+  .banner.info { background: #d2eafa; }
+  .banner.success { background: #c3f1d6; }
+  .banner.error { background: #fcdbdb; }
+  .banner.warn { background: #fdea9d; }
+  .banner > svg { flex: none; }
   th.actc, td.act { width: 60px; min-width: 60px; text-align: center; padding-left: 4px; padding-right: 4px; }
   td.act input[type="checkbox"], th.actc input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--navy); cursor: pointer; vertical-align: middle; }
   td.act input[type="checkbox"]:disabled, th.actc input[type="checkbox"]:disabled { cursor: not-allowed; opacity: .4; }
@@ -203,25 +224,53 @@
   .ib[aria-disabled="true"] { color: #c3c8d0; cursor: not-allowed; background: #f4f5f7; }
   .switch:disabled { opacity: .4; cursor: not-allowed; }
   tr.rm td { background: #fbe9e9; }
-  .st.Removed { background: #151a22; color: #fff; display: inline-flex; align-items: center; gap: 6px; }
+  .st.Removed { background: #151a22; color: #fff; }
   .scrim { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 50; display: grid; place-items: center; padding: 16px; }
   .dlg { background: #fff; border-radius: 12px; width: min(680px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
   .dlg header { display: flex; justify-content: space-between; align-items: center; padding: 16px 22px; border-bottom: 1px solid #e3e6ea; }
-  .dlg h2 { margin: 0; font-size: 20px; }
-  .xclose { border: 0; background: none; font-size: 20px; width: 36px; height: 36px; cursor: pointer; border-radius: 6px; color: var(--muted); }
+  .dlg h2 { margin: 0; font-size: 18px; }
+  .xclose { border: 0; background: none; font-size: 18px; width: 36px; height: 36px; cursor: pointer; border-radius: 6px; color: var(--muted); }
   .xclose:hover { background: #f1f2f4; }
   .egrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; padding: 18px 22px; overflow: auto; }
   .fg { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .fg.wide { grid-column: 1 / -1; }
-  .fg label, .fg .lbl { font-weight: 600; font-size: 14px; color: var(--muted); }
-  .fin { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font: inherit; font-size: 15px; background: #fff; color: var(--text); }
+  .fg label, .fg .lbl { font-weight: 600; font-size: 13px; color: var(--muted); }
+  .fin { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font: inherit; font-size: 14px; background: #fff; color: var(--text); }
   textarea.fin { height: auto; padding: 8px 10px; resize: vertical; min-height: 72px; }
   .fin:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
   .fin[aria-invalid="true"] { border-color: #b42318; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .ferr { color: #b42318; font-size: 13px; }
+  .ferr { color: #b42318; font-size: 12px; }
   .dlg footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid #e3e6ea; }
   @media (max-width: 560px) { .egrid { grid-template-columns: 1fr; } }
+
+  /* Publishing workflow */
+  .tbtns { align-items: center; }
+  .tright { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .blink { border: 0; background: none; font: inherit; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; padding: 0 2px; border-radius: 3px; }
+  .blink[aria-pressed="true"] { background: rgba(0,0,0,.1); }
+  .blink:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  th.pubc, td.pubc { min-width: 150px; white-space: nowrap; }
+  .pchip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #8d9ab3; background: transparent; border-radius: 999px; padding: 1px 3px 1px 10px; font-size: 12px; font-weight: 600; color: var(--navy); }
+  .pchip svg { flex: none; }
+  .pun { border: 0; background: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; color: var(--muted); font-size: 11px; padding: 0; }
+  .pun:hover { background: rgba(15,31,61,.12); color: var(--text); }
+  .pnot { color: var(--muted); font-size: 12px; }
+  #pForm { width: min(600px, 100%); }
+  .pbody { padding: 18px 22px 6px; overflow: auto; display: flex; flex-direction: column; gap: 18px; }
+  .pcounts { margin: 0; display: flex; align-items: baseline; gap: 10px; color: var(--muted); font-size: 14px; }
+  .pcounts .link-btn { font-size: 14px; padding: 0 2px; }
+  .plist { list-style: none; margin: -8px 0 0; padding: 0; max-height: 180px; overflow: auto; border-top: 1px solid #eceef1; }
+  .plist li { display: flex; gap: 10px; align-items: center; padding: 7px 2px; border-bottom: 1px solid #f1f2f4; font-size: 14px; }
+  .plist li .st { flex: none; }
+  .pchoice { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
+  .pchoice legend { font-weight: 700; margin-bottom: 8px; padding: 0; font-size: 15px; }
+  .opt { display: flex; gap: 12px; align-items: flex-start; border-radius: 8px; padding: 10px 12px; margin: 0 -12px; cursor: pointer; }
+  .opt:hover { background: #f4f6fa; }
+  .opt:has(input:checked) { background: #eef2fa; }
+  .opt input { margin: 3px 0 0; accent-color: var(--navy); width: 16px; height: 16px; flex: none; }
+  .opt b { font-size: 15px; }
+  .opt small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
   @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 </style>
 </head>
@@ -234,11 +283,6 @@
       <button type="button" class="vopt" data-role="viewer" aria-pressed="true">Viewer</button>
       <button type="button" class="vopt" data-role="creator" aria-pressed="false">Creator</button>
     </div>
-    <div class="vsw" role="group" aria-label="Weekly hours layout">
-      <span class="vlabel">Layout</span>
-      <button type="button" class="vopt" data-variant="toggle" aria-pressed="true">A · Toggle</button>
-      <button type="button" class="vopt" data-variant="start" aria-pressed="false">B · Expand from Start</button>
-    </div>
   </div>
   <a href="#" onclick="return false">Resets</a>
 </div>
@@ -247,14 +291,14 @@
 
   <main id="main">
     <div class="titlerow">
-      <h1>KOMPASS Schedule</h1>
-      <div class="titleright">
-        <div class="tools" id="tools" hidden>
-          <button type="button" class="sq" data-stub aria-label="Download"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
-          <button type="button" class="sq" data-stub aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4l2-2zM10 21h4"/></svg></button>
-          <button type="button" class="sq" disabled aria-label="Refresh (nothing new)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button>
-        </div>
+      <div class="titleleft">
+        <h1><span id="titleYear"></span> KOMPASS Schedule</h1>
         <div class="meta" id="meta"></div>
+      </div>
+      <div class="tools" id="tools" hidden>
+        <button type="button" class="sq" data-stub aria-label="Download"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
+        <button type="button" class="sq" data-stub aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4l2-2zM10 21h4"/></svg></button>
+        <button type="button" class="sq" disabled aria-label="Refresh (nothing new)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button>
       </div>
     </div>
 
@@ -262,13 +306,14 @@
       <div class="tbtns">
         <button type="button" class="tb" id="newBtn">New Entry</button>
         <button type="button" class="tb" data-stub>Create New Draft</button>
-        <button type="button" class="tb pub" id="publishBtn" disabled>Publish Change</button>
-        <button type="button" class="tb pub" id="readyBtn" disabled>Ready to Publish →</button>
+        <button type="button" class="tb pub" id="publishBtn" disabled>Publish</button>
       </div>
-      <div class="viewsw">
-        <span id="lblDraft" class="on">✎ Draft View</span>
-        <button type="button" class="switch" id="viewSwitch" role="switch" aria-checked="false" aria-label="Show published view"></button>
-        <span id="lblPub">✔ Published View</span>
+      <div class="tright">
+        <div class="viewsw">
+          <span id="lblDraft" class="on">✎ Draft View</span>
+          <button type="button" class="switch" id="viewSwitch" role="switch" aria-checked="false" aria-label="Show published view"></button>
+          <span id="lblPub">✔ Published View</span>
+        </div>
       </div>
     </div>
     <div class="banner" id="banner" role="status" hidden></div>
@@ -339,18 +384,41 @@
     <footer><button type="button" class="tb" id="eCancel">Cancel</button><button type="submit" class="tb pub" id="eSave">Save</button></footer>
   </form>
 </div>
+<div class="scrim" id="pScrim" hidden>
+  <form class="dlg" id="pForm" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+    <header><h2 id="pTitle">Publish changes</h2><button type="button" class="xclose" id="pClose" aria-label="Close">✕</button></header>
+    <div class="pbody">
+      <p class="pcounts"><span id="pCounts"></span><button type="button" class="link-btn" id="pReview" aria-expanded="false" aria-controls="pList">Review</button></p>
+      <ul class="plist" id="pList" aria-label="Selected changes" hidden></ul>
+      <fieldset class="pchoice">
+        <legend>When should these go live?</legend>
+        <label class="opt"><input type="radio" name="pmode" value="weekly" checked><span><b>Add to weekly publish</b><small id="pWeeklyTxt"></small></span></label>
+        <label class="opt"><input type="radio" name="pmode" value="now"><span><b>Publish now</b><small id="pNowTxt"></small></span></label>
+      </fieldset>
+    </div>
+    <footer><button type="button" class="tb" id="pCancel">Cancel</button><button type="submit" class="tb pub" id="pGo">Schedule</button></footer>
+  </form>
+</div>
+<div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2800); };
+  const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), Math.max(2800, Math.min(7000, m.length * 60))); };
   const ICON = {
     edit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/></svg>',
     trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>',
     restore: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg>',
-    minus: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>',
+  };
+  const CLOCK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  const bsvg = p => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const BICON = {
+    info: bsvg('<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".7" fill="currentColor"/>'),
+    success: bsvg('<circle cx="12" cy="12" r="9.5"/><path d="M7.6 12.4l3 3 5.8-6.4"/>'),
+    error: bsvg('<circle cx="12" cy="12" r="9.5"/><path d="M12 7v6"/><circle cx="12" cy="16.6" r=".7" fill="currentColor"/>'),
+    warn: bsvg('<path d="M12 3.2L22 20.5H2z"/><path d="M12 10v4.8"/><circle cx="12" cy="17.6" r=".7" fill="currentColor"/>'),
   };
   const WARN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></svg>';
 
@@ -633,7 +701,7 @@
     const n = e.divs === 'All' ? DIVS.length : +e.divs;
     e.divList = Array.from({ length: n }, (_, k) => DIVS[(i + k) % DIVS.length]);
     e.status = i === 0 || i === 14 || i === 27 ? 'Added' : i === 18 || i === 8 || i === 31 ? 'Modified' : '';
-    e.chg = e.status === 'Modified' ? ['dur', 'hours'] : []; e.by = ''; e.pub = false;
+    e.chg = e.status === 'Modified' ? ['dur', 'hours'] : []; e.by = '';
   });
 
   /* Loads per week. cap = comfortable hours per week. */
@@ -649,15 +717,23 @@
      Per draft row: status 'Added' | 'Modified' | 'Removed' ('' = unchanged), chg = fields edited, by = who changed it,
      pub = marked ready to publish, orig = values at the last publish (to detect edits that are undone). */
   const USER = 'John Doe';
+  const nowStr = () => { const d = new Date(); return d.toLocaleDateString('en-US') + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); };
   const FIELDS = ['type', 'dept', 'comm', 'cm', 'pm', 'size', 'start', 'dur', 'hours', 'divs', 'comments'];
   const snap = e => Object.fromEntries(FIELDS.map(k => [k, e[k]]));
   const divListFor = (id, divs) => Array.from({ length: divs === 'All' ? DIVS.length : +divs }, (_, k) => DIVS[(id + k) % DIVS.length]);
-  const DRAFTROWS = PUBROWS.map(r => ({ ...r, divList: [...r.divList], status: '', chg: [], by: '', pub: false }));
+  const FLABEL = { type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
+  /* Weekly publish: every Thursday at 1:00 PM. That is also the cutoff for changes to go out in it. */
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], FULLDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const nextPublish = () => { const n = new Date(), d = new Date(n); d.setHours(13, 0, 0, 0); d.setDate(n.getDate() + ((4 - n.getDay() + 7) % 7)); if (d <= n) d.setDate(d.getDate() + 7); return d; };
+  const shortDate = d => `${DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
+  const longDate = d => `${FULLDAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()} at 1:00 PM`;
+  const cutoffTxt = d => `${shortDate(d)}, 1:00 PM`;
+  const DRAFTROWS = PUBROWS.map(r => ({ ...r, divList: [...r.divList], status: '', chg: [], by: '', sched: null }));
   (() => {
     const find = (c, st) => { const e = DRAFTROWS.find(x => x.comm === c && x.start === st); if (!e) throw new Error('demo row missing: ' + c); return e; };
     const edit = (c, st, vals, by) => { const e = find(c, st); e.orig = snap(e); Object.assign(e, vals); e.divList = divListFor(e.id, e.divs); e.status = 'Modified'; e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k])); e.by = by; };
     const drop = (c, st, by) => { const e = find(c, st); e.status = 'Removed'; e.by = by; };
-    const add = vals => { const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1; DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: 'John Doe', pub: false }); };
+    const add = vals => { const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1; DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: 'John Doe', sched: null }); };
     edit('677 - NF Baking Mixes', 'P9 W1', { dur: 2, hours: 5 }, 'Jane Doe');
     edit('071 - Cheese', 'P2 W1', { hours: 10 }, 'Jane Doe');
     edit('102 - Coffee', 'P4 W1', { start: 'P4 W3' }, 'John Doe');
@@ -666,6 +742,8 @@
     add({ type: 'NII', dept: '02 - Dairy', comm: '130 - Greek Yogurt', cm: 'William Turner', pm: 'Zoe Henderson', size: 12, start: 'P6 W2', dur: 1, hours: 6, divs: 'All', comments: 'New vendor listing' });
     add({ type: 'Update', dept: '01 - Grocery', comm: '235 - Curry Sauces', cm: 'Laura Kim', pm: 'Omar Reyes', size: 16, start: 'P3 W2', dur: 1, hours: 5, divs: 'All', comments: '' });
     add({ type: 'NII', dept: '17 - Natural Foods', comm: '560 - NF Protein Bars', cm: 'David Chen', pm: 'Emma Wilson', size: 8, start: 'P11 W3', dur: 1, hours: 4, divs: 6, comments: 'Test in 6 divisions first' });
+    const nx0 = nextPublish();               // a few changes are already in the queue, from different Creators
+    [['071 - Cheese', 'Jane Doe'], ['677 - NF Baking Mixes', 'Jane Doe'], ['235 - Curry Sauces', 'John Doe']].forEach(([c, by]) => { const e = DRAFTROWS.find(x => x.comm === c && x.status); e.sched = { label: shortDate(nx0), at: nx0.toISOString(), by }; });
   })();
   let ROWS = PUBROWS;
   let role = new URLSearchParams(location.search).get('role') === 'creator' ? 'creator' : 'viewer', draftView = true;
@@ -673,10 +751,9 @@
   const sel = new Set();
   let tableRows = [];
   const inDraft = () => role === 'creator' && draftView;
-  const nowStr = () => { const d = new Date(); return d.toLocaleDateString('en-US') + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); };
   function useData() {                      // which data set the page shows
     ROWS = inDraft() ? DRAFTROWS : PUBROWS;
-    rowOrder = null; if (sortKey === 'mod' && !inDraft()) sortKey = null; if (sortKey) applySort();
+    rowOrder = null; if ((sortKey === 'mod' || sortKey === 'pub') && !inDraft()) sortKey = null; if (sortKey) applySort();
     sel.clear(); buildFilters();
   }
   function resetOrder() {                   // after rows are added/removed/edited: keep the user's sort, put new rows on top
@@ -690,13 +767,12 @@
      The Date filter is a "zoom", not a data filter: it narrows the table and numbers,
      but the year strip keeps showing every period so you can move around. */
   const YEAR = DATA_YEAR;
-  const FKEYS = ['dept', 'comm', 'type', 'cm', 'pm', 'div', 'status'];
-  const blank = () => ({ year: '', mode: 'range', start: null, end: null, singles: [], dept: '', comm: '', type: '', cm: '', pm: '', div: '', status: '' });
+  const FKEYS = ['dept', 'comm', 'type', 'cm', 'pm', 'div', 'status', 'pstate'];
+  const blank = () => ({ year: '', mode: 'range', start: null, end: null, singles: [], dept: '', comm: '', type: '', cm: '', pm: '', div: '', status: '', pstate: '' });
   const clone = f => ({ ...f, singles: [...f.singles] });
   let applied = blank(), draft = blank();
-  let VARIANT = (new URLSearchParams(location.search).get('layout') || 'a').toLowerCase() === 'b' ? 'start' : 'toggle';   // 'toggle' = A, 'start' = B
   const cap = 40;   // weekly capacity, fixed for now
-  let gridOn = false, startOpen = false;
+  let startOpen = false;                    // weekly-hours grid: opened with the button in the Start header
   let sortKey = null, sortDir = 'asc';   // null = default order (changed rows first, then start week)
   const MAXGRID = 8;
 
@@ -717,7 +793,8 @@
   const activeKeys = f => [f.year && 'year', hasDate(f) && 'date', ...FKEYS.filter(k => f[k])].filter(Boolean);
   const clearDate = f => { f.start = null; f.end = null; f.singles = []; };
   const baseRows = () => ROWS.filter(e => (!applied.year || +applied.year === e.year) &&
-    ['dept', 'comm', 'type', 'cm', 'pm', 'status'].every(k => !applied[k] || e[k] === applied[k]) && (!applied.div || e.divList.includes(applied.div)));
+    ['dept', 'comm', 'type', 'cm', 'pm', 'status'].every(k => !applied[k] || e[k] === applied[k]) && (!applied.div || e.divList.includes(applied.div)) &&
+    (!applied.pstate || (e.status && (applied.pstate === 'Scheduled' ? !!e.sched : !e.sched))));
   const scopeWs = () => dateList(applied);
 
 
@@ -728,7 +805,7 @@
      then everything else, each group by start week. */
   const dflt = (a, b) => (a.status ? 0 : 1) - (b.status ? 0 : 1) || wkIdx(a.start) - wkIdx(b.start) || a.id - b.id;
   const SORTV = { status: e => e.status, type: e => e.type, dept: e => e.dept, comm: e => e.comm, cm: e => e.cm, pm: e => e.pm, size: e => e.size,
-    start: e => wkIdx(e.start), dur: e => e.dur, hours: e => e.hours, divs: e => e.divList.length, comments: e => e.comments, mod: e => e.by };
+    start: e => wkIdx(e.start), dur: e => e.dur, hours: e => e.hours, divs: e => e.divList.length, comments: e => e.comments, mod: e => e.by, pub: e => e.status ? (e.sched ? 'Scheduled' : 'Not scheduled') : '' };
   let rowOrder = null;
   const ensureOrder = () => { if (!rowOrder) rowOrder = ROWS.slice().sort(dflt).map(e => e.id); };
   function applySort() {
@@ -740,9 +817,9 @@
       return sg * (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true, sensitivity: 'base' }));
     }).map(e => e.id);
   }
-  const FSORT = { mod: 'Modified By', status: 'Status', type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
+  const FSORT = { mod: 'Modified By', pub: 'Publish', status: 'Status', type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
   function renderTable(c, shown, sw) {
-    const showGrid = VARIANT === 'toggle' ? gridOn : startOpen;
+    const showGrid = startOpen;
     const gw = showGrid ? (sw || [...Array(WEEKS).keys()]) : [], cmp = gw.length > MAXGRID, two = gw.length > 0;
     ensureOrder();
     const pos = new Map(rowOrder.map((id, i) => [id, i]));
@@ -754,15 +831,15 @@
     const stk = k => k === 'comm' ? 'stk stk1' : k === 'start' ? 'stk stk2' : '';
     const cl = (k, x = '') => { const v = (x + ' ' + stk(k)).trim(); return v ? ` class="${v}"` : ''; };
     const groups = []; gw.forEach(w => { const g = groups[groups.length - 1]; g && g.p === pOf(w) ? g.n++ : groups.push({ p: pOf(w), n: 1 }); });
-    const xbtn = VARIANT === 'start' ? `<button type="button" class="xbtn" data-startx aria-expanded="${startOpen}" aria-label="${startOpen ? 'Hide' : 'Show'} weekly hours next to Start" title="${startOpen ? 'Hide' : 'Show'} weekly hours">${startOpen ? CH('M15 5l-7 7 7 7') : CH('M9 5l7 7-7 7')}</button>` : '';
+    const xbtn = `<button type="button" class="xbtn" data-startx aria-expanded="${startOpen}" aria-label="${startOpen ? 'Hide' : 'Show'} weekly hours next to Start" title="${startOpen ? 'Hide' : 'Show'} weekly hours">${startOpen ? CH('M15 5l-7 7 7 7') : CH('M9 5l7 7-7 7')}</button>`;
     const ARR = { asc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor"/><path d="M5 11L1 6h8z" fill="currentColor" opacity=".25"/></svg>', desc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor" opacity=".25"/><path d="M5 11L1 6h8z" fill="currentColor"/></svg>', none: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1zM5 11L1 6h8z" fill="currentColor"/></svg>' };
     const sortBtn = (k, l) => { const on = sortKey === k; return `<button type="button" class="sorth${on ? ' on' : ''}" data-sort="${k}" title="Sort by ${l}"><span>${l}</span><i class="sa">${on ? ARR[sortDir] : ARR.none}</i></button>`; };
-    const NOSORT = { sel: 1, edit: 1, remove: 1, pub: 1 };
+    const NOSORT = { sel: 1, edit: 1, remove: 1 };
     const th = ([k, l]) => {
       const aria = sortKey === k ? ` aria-sort="${sortDir === 'asc' ? 'ascending' : 'descending'}"` : '';
       const inner = k === 'sel' ? '<input type="checkbox" id="selAll" aria-label="Select all changed resets">' : NOSORT[k] ? esc(l)
         : k === 'start' && xbtn ? `<span class="hwrap">${sortBtn(k, l)}${xbtn}</span>` : sortBtn(k, l);
-      return `<th scope="col"${rs}${cl(k, NOSORT[k] ? 'actc' : '')} data-c="${k}"${aria}>${inner}</th>`;
+      return `<th scope="col"${rs}${cl(k, k === 'pub' ? 'pubc' : NOSORT[k] ? 'actc' : '')} data-c="${k}"${aria}>${inner}</th>`;
     };
     $('thead').parentElement.classList.toggle('cmp', cmp);
     queueMicrotask(pinOffset);
@@ -776,11 +853,13 @@
         case 'remove': return e.status === 'Removed'
           ? `<td class="act"><button type="button" class="ib" data-restore="${e.id}" aria-label="Restore ${esc(e.comm)}">${ICON.restore}</button></td>`
           : `<td class="act"><button type="button" class="ib" data-remove="${e.id}" aria-label="Remove ${esc(e.comm)}">${ICON.trash}</button></td>`;
-        case 'pub': return `<td class="act"><button type="button" class="switch" data-pubtog="${e.id}" role="switch" aria-checked="${!!e.pub}" ${e.status ? '' : 'disabled'} aria-label="Ready to publish ${esc(e.comm)}"></button></td>`;
+        case 'pub': return !e.status ? '<td class="pubc"></td>' : e.sched
+          ? `<td class="pubc"><span class="pchip" title="Scheduled by ${esc(e.sched.by)}">${CLOCK}${esc(e.sched.label)}<button type="button" class="pun" data-unsched="${e.id}" aria-label="Unschedule ${esc(e.comm)} from the ${esc(e.sched.label)} publish">✕</button></span></td>`
+          : '<td class="pubc"><span class="pnot">Not scheduled</span></td>';
         case 'mod': return `<td>${esc(e.by)}</td>`;
         case 'dur': return `<td${ck(k, e)}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
         case 'comments': return `<td${ck(k, e, 'com')}>${esc(e.comments)}</td>`;
-        case 'status': return `<td>${e.status ? `<span class="st ${e.status}">${e.status === 'Removed' ? ICON.minus : ''}${e.status}</span>` : ''}</td>`;
+        case 'status': return `<td>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;
         case 'divs': return `<td${ck(k, e)} title="${esc(e.divList.join(', '))}">${esc(e.divs)}</td>`;
         default: return `<td${ck(k, e)}>${esc(e[k])}</td>`;
       }
@@ -797,8 +876,7 @@
     $('tfoot').innerHTML = two && rows.length ? `<tr>` + pre.map(([k]) => `<td${cl(k)}>${k === 'comm' ? 'Total hours per week' : ''}</td>`).join('') +
       gw.map(w => { const v = c.load[w], o = v > cap; return `<td class="wk${o ? ' over' : ''}${ps(w)}"${o ? ` title="${wkLbl(w)}: ${v - cap} over capacity"` : ''}>${cmp ? v : (o ? WARN + ' ' : '') + v}</td>`; }).join('') +
       `<td colspan="${post.length}"></td></tr>` : '';
-    const gt = VARIANT === 'toggle' ? `<span class="gt"><span id="gtl">Weekly hours</span><button type="button" class="switch" data-gridtog role="switch" aria-checked="${gridOn}" aria-labelledby="gtl"></button></span>` : '';
-    $('gridbar').innerHTML = `<span>Showing ${rows.length} of ${ROWS.length} resets</span><span class="tags">${gt}</span>`;
+    $('gridbar').innerHTML = `<span>Showing ${rows.length} of ${ROWS.length} resets</span>`;
   }
   const pinOffset = () => {
     const t = document.querySelector('.tablewrap table'), c = $('thead').querySelector('th[data-c="comm"]'), r0 = $('thead').rows[0];
@@ -814,14 +892,18 @@
   function renderChrome() {
     const cr = role === 'creator';
     $('toolbar').hidden = !cr; $('tools').hidden = !cr; $('banner').hidden = !inDraft();
-    $('meta').innerHTML = `2026 Resets<br>Version: 2026.0${version}<br>Updated on: ${esc(updatedAt)}`;
+    $('titleYear').textContent = applied.year || YEAR;
+    $('meta').textContent = `Updated on: ${updatedAt}`;
     if (cr) {
-      const n = DRAFTROWS.filter(e => e.status).length;
-      $('banner').innerHTML = n ? `${WARN} ${n} unpublished ${n === 1 ? 'change' : 'changes'} in 2026 schedule.` : '✔ No unpublished changes in 2026 schedule.';
+      const yr = +(applied.year || YEAR), ch = DRAFTROWS.filter(e => e.status && e.year === yr), sc = ch.filter(e => e.sched).length, ns = ch.length - sc, nx = nextPublish();
+      const pfb = (v, txt) => `<button type="button" class="blink" data-pf="${v}" aria-pressed="${applied.pstate === v}">${txt}</button>`;
+      const w = ch.length === 1 ? 'change' : 'changes', bn = $('banner');
+      if (!ch.length) { bn.className = 'banner info'; bn.innerHTML = `${BICON.info}<span>No unpublished changes in ${yr} schedule.</span>`; }
+      else if (!ns) { bn.className = 'banner success'; bn.innerHTML = `${BICON.success}<span>${ch.length === 1 ? 'The' : 'All'} ${ch.length} unpublished ${w} in ${yr} schedule ${ch.length === 1 ? 'is' : 'are'} scheduled for ${shortDate(nx)}.</span>`; }
+      else { bn.className = 'banner warn'; bn.innerHTML = `${BICON.warn}<span>${ch.length} unpublished ${w} in ${yr} schedule: ${sc ? pfb('Scheduled', `${sc} scheduled for ${shortDate(nx)}`) + ' · ' : ''}${pfb('Not scheduled', `${ns} not scheduled`)}</span>`; }
       $('viewSwitch').setAttribute('aria-checked', !draftView); $('lblDraft').className = draftView ? 'on' : ''; $('lblPub').className = draftView ? '' : 'on';
       $('newBtn').disabled = !draftView;
-      $('publishBtn').disabled = !(inDraft() && DRAFTROWS.some(e => e.status && e.pub));
-      $('readyBtn').disabled = !(inDraft() && sel.size);
+      $('publishBtn').disabled = !(inDraft() && sel.size);
     }
     document.querySelectorAll('[data-role]').forEach(b => b.setAttribute('aria-pressed', b.dataset.role === role));
   }
@@ -837,10 +919,10 @@
   const selHtml = (key, label, opts) => `<label class="flabel" for="f_${key}">${label}</label><div class="sel"><select class="field empty" id="f_${key}" data-k="${key}"><option value="">--- Select a Value ---</option>${opts.map(o => `<option>${esc(o)}</option>`).join('')}</select><button class="clear-x" type="button" data-clr="${key}" aria-label="Clear ${label}" hidden>✕</button><span class="caret">▼</span></div>`;
   $('fieldYear').innerHTML = selHtml('year', 'Year', [YEAR - 1, YEAR, YEAR + 1].map(String));
   function buildFilters() {
-    const opts = { dept: uniq('dept'), comm: uniq('comm'), type: uniq('type'), cm: uniq('cm'), pm: uniq('pm'), div: DIVS, status: inDraft() ? ['Added', 'Modified', 'Removed'] : ['Added', 'Modified'] };
-    const labels = [['dept', 'Department'], ['comm', 'Commodity'], ['type', 'Type'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['div', 'Division'], ['status', 'Status']];
+    const opts = { dept: uniq('dept'), comm: uniq('comm'), type: uniq('type'), cm: uniq('cm'), pm: uniq('pm'), div: DIVS, status: inDraft() ? ['Added', 'Modified', 'Removed'] : ['Added', 'Modified'], pstate: inDraft() ? ['Scheduled', 'Not scheduled'] : [] };
+    const labels = [['dept', 'Department'], ['comm', 'Commodity'], ['type', 'Type'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['div', 'Division'], ['status', 'Status'], ...(inDraft() ? [['pstate', 'Publish state']] : [])];
     $('fieldRest').innerHTML = labels.map(([k, l]) => selHtml(k, l, opts[k])).join('');
-    for (const f of [applied, draft]) for (const k of Object.keys(opts)) if (f[k] && !opts[k].includes(f[k])) f[k] = '';   // drop filters that no longer exist
+    for (const f of [applied, draft]) for (const k of FKEYS) if (f[k] && !(opts[k] || []).includes(f[k])) f[k] = '';   // drop filters that no longer exist
   }
 
   const trigger = $('trigger'), popover = $('popover'), pgrid = $('pgrid'), clearX = $('clearX'), clearAllBtn = $('clearAll');
@@ -884,7 +966,8 @@
   }
   function renderPanel() {
     ['year', ...FKEYS].forEach(k => {
-      const s = $('f_' + k); s.value = draft[k]; s.classList.toggle('empty', !draft[k]);
+      const s = $('f_' + k); if (!s) return;                      // 'Publish state' only exists in the Creator's draft view
+      s.value = draft[k]; s.classList.toggle('empty', !draft[k]);
       document.querySelector(`[data-clr="${k}"]`).hidden = !draft[k];
     });
     renderPicker();
@@ -938,45 +1021,134 @@
   function clearEverything() { applied = blank(); draft = blank(); pk.s = pk.e = pk.h = null; setOpen(false); render(); }
   clearAllBtn.addEventListener('click', clearEverything);
 
+  /* ---------- Global toasts ---------- */
+  const TOAST_MS = 10000, TOAST_MAX = 3;
+  function closeToast(el) { if (!el) return; clearTimeout(el._t); el.remove(); }
+  function clearToasts() { document.querySelectorAll('.gtoast').forEach(closeToast); }
+  function pushToast({ kind = 'success', title, body = '', link = null }) {
+    const el = document.createElement('div'); el.className = 'gtoast ' + kind;
+    el.innerHTML = `<span class="gti">${BICON[kind]}</span><div class="gtt">${esc(title)}</div><button type="button" class="gtx" data-tclose aria-label="Dismiss">✕</button>` +
+      (body ? `<div class="gtb">${esc(body)}</div>` : '') + (link ? `<div class="gtl"><button type="button" class="tlink" data-tlink="${link.act}">${esc(link.label)}</button></div>` : '');
+    const box = $('toasts'); box.appendChild(el);
+    while (box.children.length > TOAST_MAX) closeToast(box.firstElementChild);
+    let left = TOAST_MS, t0 = 0;                                  // auto-dismiss, paused while the pointer or keyboard focus is on it
+    const run = () => { t0 = Date.now(); el._t = setTimeout(() => closeToast(el), left); };
+    const hold = () => { if (el._t) { clearTimeout(el._t); el._t = 0; left -= Date.now() - t0; } };
+    const go = () => { if (!el._t && !el.matches(':hover') && !el.matches(':focus-within')) run(); };
+    el.addEventListener('mouseenter', hold); el.addEventListener('focusin', hold); el.addEventListener('mouseleave', go); el.addEventListener('focusout', () => setTimeout(go, 0));
+    run(); return el;
+  }
+  const refocusAfterPublish = () => { const a = $('selAll'), t = a && !a.disabled ? a : $('newBtn'); if (t && !t.disabled) t.focus(); };
+
   /* ---------- Creator actions ---------- */
   const rowById = id => DRAFTROWS.find(x => x.id === id);
   const focusAfter = (selector) => { const el = document.querySelector(selector); if (el) el.focus(); };
   function setRole(r) {
     if (r === role) return;
-    role = r; draftView = true; useData();
+    role = r; draftView = true; clearToasts(); useData();
     try { const u = new URL(location.href); r === 'creator' ? u.searchParams.set('role', 'creator') : u.searchParams.delete('role'); history.replaceState(null, '', u); } catch (e) {}
     render();
     toast(r === 'creator' ? 'Creator view: you can edit the draft and publish changes' : 'Viewer view: the published calendar');
   }
+  const unsched = (e, why) => { const was = e.sched; e.sched = null; return was; };
+  const reschedNote = was => ` Removed from the ${was.label} publish because it changed. Schedule it again when you're ready.`;
   function removeRow(id) {
     const e = rowById(id); if (!e) return;
     if (e.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); resetOrder(); render(); toast('Discarded the new entry'); return; }
-    e.prev = { status: e.status, chg: e.chg, by: e.by }; e.status = 'Removed'; e.chg = []; e.by = USER; e.pub = false;
-    resetOrder(); render(); focusAfter(`[data-restore="${id}"]`); toast('Marked for removal. It stays in the draft until you publish.');
+    const was = unsched(e); e.prev = { status: e.status, chg: e.chg, by: e.by }; e.status = 'Removed'; e.chg = []; e.by = USER;
+    resetOrder(); render(); focusAfter(`[data-restore="${id}"]`); toast('Marked for removal. It stays in the draft until you publish.' + (was ? reschedNote(was) : ''));
   }
   function restoreRow(id) {
     const e = rowById(id); if (!e) return;
-    const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; e.prev = null;
-    resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.');
+    const was = unsched(e); const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; e.prev = null;
+    resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.' + (was ? reschedNote(was) : ''));
   }
-  function togglePub(id) { const e = rowById(id); if (!e || !e.status) return; e.pub = !e.pub; render(); focusAfter(`[data-pubtog="${id}"]`); }
-  function markReady() {
-    const rows = DRAFTROWS.filter(e => sel.has(e.id) && e.status); if (!rows.length) return;
-    rows.forEach(e => { e.pub = true; }); sel.clear(); render();
-    toast(`${rows.length} ${rows.length === 1 ? 'change' : 'changes'} marked ready to publish`);
+  const selectedRows = () => DRAFTROWS.filter(e => sel.has(e.id) && e.status);
+  function applyPstate(v) {
+    const nv = applied.pstate === v ? '' : v;
+    for (const f of [applied, draft]) f.pstate = nv;
+    render(); toast(nv ? `Showing ${nv.toLowerCase()} changes only. Select the banner link again to show everything.` : 'Showing all resets');
   }
-  function publish() {
-    const ready = DRAFTROWS.filter(e => e.status && e.pub); if (!ready.length) return;
+  function unschedule(id) {
+    const e = rowById(id); if (!e || !e.sched) return;
+    const was = e.sched; e.sched = null;
+    render(); focusAfter(`[data-edit="${id}"]`); toast(`Removed from the ${was.label} publish. It is not scheduled anymore.`);
+  }
+  function scheduleRows(rows) {
+    const nx = nextPublish(), lbl = shortDate(nx), fresh = rows.filter(e => !e.sched);
+    fresh.forEach(e => { e.sched = { label: lbl, at: nx.toISOString(), by: USER }; });
+    sel.clear();
+    const n = fresh.length;
+    render();
+    pushToast({ kind: 'success', title: `${n} ${n === 1 ? 'change' : 'changes'} scheduled`, body: `${n === 1 ? "It'll" : "They'll"} go live ${longDate(nx)}. You can unschedule ${n === 1 ? 'it' : 'them'} until then.` });
+    refocusAfterPublish();
+  }
+  function publishNow(rows) {
+    const rem = rows.filter(e => e.status === 'Removed').length;
     PUBROWS.forEach(r => { r.status = ''; r.chg = []; });                       // a new version: older change flags no longer apply
-    ready.forEach(e => {
-      if (e.status === 'Added') { PUBROWS.push({ ...e, divList: [...e.divList], status: 'Added', chg: [], by: '', pub: false }); }
+    rows.forEach(e => {
+      if (e.status === 'Added') PUBROWS.push({ ...e, divList: [...e.divList], status: 'Added', chg: [], by: '', sched: null });
       else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg] }); }
-      else if (e.status === 'Removed') { PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1); }
+      else if (e.status === 'Removed') PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1);
     });
-    ready.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.pub = false; e.orig = null; } });
-    version++; updatedAt = nowStr(); sel.clear(); resetOrder(); render();
-    toast(`Published ${ready.length} ${ready.length === 1 ? 'change' : 'changes'} as version 2026.0${version}.`);
+    rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; } });
+    version++; updatedAt = nowStr(); sel.clear(); resetOrder();
+    const n = rows.length;
+    render();
+    pushToast({ kind: 'success', title: `${n} ${n === 1 ? 'change' : 'changes'} published`, body: `Published as version 2026.0${version}.` + (rem ? ` ${rem} removed ${rem === 1 ? 'reset no longer appears' : 'resets no longer appear'} in the Published view.` : ''), link: { label: 'View in Published', act: 'viewPub' } });
+    refocusAfterPublish();
   }
+  function goPublished() {
+    draftView = false; useData(); render();
+    const w = document.querySelector('.tablewrap'); if (w) w.scrollTop = 0; $('viewSwitch').focus();
+    toast(`Showing the published calendar (version 2026.0${version}). The rows from this publish are highlighted.`);
+  }
+
+  /* ---------- Publish dialog ---------- */
+  let pOpener = null;
+  const lockPage = on => { document.querySelector('.topbar').inert = on; document.querySelector('.app').inert = on; };
+  const modeNow = () => document.querySelector('input[name="pmode"]:checked').value;
+  function syncPublishMode() {
+    const rows = selectedRows(), n = rows.length, fresh = rows.filter(e => !e.sched).length, pl = c => c === 1 ? 'change' : 'changes';
+    if (modeNow() === 'weekly') { $('pGo').textContent = fresh ? `Schedule ${fresh} ${pl(fresh)}` : 'Schedule'; $('pGo').disabled = !fresh; }
+    else { $('pGo').textContent = `Publish ${n} ${pl(n)} now`; $('pGo').disabled = false; }
+  }
+  function openPublish(from) {
+    const rows = selectedRows(); if (!rows.length) return;
+    pOpener = from || null;
+    const n = rows.length, already = rows.filter(e => e.sched).length, nx = nextPublish();
+    const cnt = st => rows.filter(e => e.status === st).length;
+    $('pTitle').textContent = `Publish ${n} ${n === 1 ? 'change' : 'changes'}`;
+    $('pCounts').textContent = [['Added', 'added'], ['Modified', 'modified'], ['Removed', 'removed']].filter(([st]) => cnt(st)).map(([st, w]) => `${cnt(st)} ${w}`).join(' · ');
+    $('pList').innerHTML = rows.map(e => `<li><span class="st ${e.status}">${e.status}</span><span>${esc(e.comm)}</span></li>`).join('');
+    $('pList').hidden = true; $('pReview').setAttribute('aria-expanded', 'false'); $('pReview').textContent = 'Review';
+    $('pWeeklyTxt').textContent = already === n ? (n === 1 ? `Already scheduled for ${shortDate(nx)}` : `All ${n} are already scheduled for ${shortDate(nx)}`)
+      : `Goes live ${shortDate(nx)} at 1:00 PM EST · Add ${n - already} ${n - already === 1 ? 'change' : 'changes'}` + (already ? ` · ${already} already scheduled` : '');
+    $('pNowTxt').textContent = 'Goes live right away' + (already ? ` · ${already} already scheduled will go live now instead` : '');
+    document.querySelector('input[name="pmode"][value="weekly"]').checked = true;
+    syncPublishMode(); lockPage(true); $('pScrim').hidden = false;
+    (document.querySelector('input[name="pmode"]:checked')).focus();
+  }
+  $('pReview').addEventListener('click', () => { const open = $('pList').hidden; $('pList').hidden = !open; $('pReview').setAttribute('aria-expanded', open); $('pReview').textContent = open ? 'Hide' : 'Review'; });
+  function closePublish() { $('pScrim').hidden = true; lockPage(false); if (pOpener && pOpener.isConnected && !pOpener.disabled) pOpener.focus(); pOpener = null; }
+  $('pForm').addEventListener('change', ev => { if (ev.target.name === 'pmode') syncPublishMode(); });
+  $('pForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const rows = selectedRows(), mode = modeNow(); if (!rows.length) { closePublish(); return; }
+    pOpener = null; closePublish();
+    mode === 'now' ? publishNow(rows) : scheduleRows(rows);
+  });
+  $('pCancel').addEventListener('click', closePublish); $('pClose').addEventListener('click', closePublish);
+
+  const trapTab = (ev, box) => {                                            // keep Tab inside an open dialog
+    if (ev.key !== 'Tab') return;
+    const f = [...box.querySelectorAll('input, select, textarea, button')].filter(x => !x.disabled && x.offsetParent !== null), first = f[0], last = f[f.length - 1];
+    if (!f.length) return;
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  };
+  $('pScrim').addEventListener('keydown', ev => trapTab(ev, $('pForm')));
+  document.addEventListener('keydown', ev => { if (ev.key !== 'Escape') return; if (!$('pScrim').hidden) closePublish(); });
 
   /* ---------- New entry / edit dialog ---------- */
   const TYPES = ['Update', 'NII', 'Maintenance'], DEPTS = ['01 - Grocery', '02 - Dairy', '17 - Natural Foods', '43 - Liquor'];
@@ -1031,15 +1203,17 @@
     let msg;
     if (editId == null) {
       const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1;
-      DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: USER, pub: false });
+      DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: USER, sched: null });
       msg = 'Added to the draft. It stays there until you publish.';
     } else {
       const e = rowById(editId);
       if (!e.orig && e.status !== 'Added') e.orig = snap(e);
-      Object.assign(e, vals); e.divList = divListFor(e.id, e.divs); e.pub = false;
+      const wasSched = e.sched; e.sched = null;
+      Object.assign(e, vals); e.divList = divListFor(e.id, e.divs);
       if (e.status === 'Added') e.by = USER;
       else { e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k])); e.status = e.chg.length ? 'Modified' : ''; e.by = e.chg.length ? USER : ''; }
       msg = e.status === 'Modified' ? 'Saved. The edited fields are highlighted until you publish.' : e.status === 'Added' ? 'Saved changes to the new entry.' : 'No changes from the published version.';
+      if (wasSched) msg += reschedNote(wasSched);
     }
     const keep = opener; closeEntry(); resetOrder(); render(); opener = keep; toast(msg);
   });
@@ -1057,20 +1231,6 @@
     if (cb) { const id = +cb.dataset.sel; cb.checked ? sel.add(id) : sel.delete(id); render(); focusAfter(`[data-sel="${id}"]`); return; }
     if (ev.target.id === 'selAll') { const ch = tableRows.filter(e => e.status); ev.target.checked ? ch.forEach(e => sel.add(e.id)) : ch.forEach(e => sel.delete(e.id)); render(); focusAfter('#selAll'); }
   });
-
-  /* Layout switch (A: toggle above the table, B: expand from Start). The open/closed grid state carries over. */
-  function setVariant(v) {
-    if (v === VARIANT) return;
-    const open = VARIANT === 'toggle' ? gridOn : startOpen;
-    VARIANT = v; gridOn = startOpen = open;
-    try { const u = new URL(location.href); u.searchParams.set('layout', v === 'start' ? 'b' : 'a'); history.replaceState(null, '', u); } catch (e) {}
-    render(); syncVariantUI();
-    toast(v === 'start' ? 'Layout B: expand the weekly hours from the Start column' : 'Layout A: weekly hours switch above the table');
-  }
-  function syncVariantUI() {
-    document.querySelectorAll('[data-variant]').forEach(b => b.setAttribute('aria-pressed', b.dataset.variant === VARIANT));
-    document.title = 'Period Overview · Layout ' + (VARIANT === 'start' ? 'B' : 'A');
-  }
 
   /* Panel open / close — selections are kept while collapsed */
   const panel = $('panel'), body = $('panelBody'), collapseBtn = $('collapseBtn'), expandBtn = $('expandBtn');
@@ -1091,22 +1251,22 @@
       render(); $('thead').querySelector(`[data-sort="${k}"]`)?.focus(); toast(sortKey ? `Sorted by ${FSORT[k]}, ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort cleared. Back to the default order, with changed resets first.'); return; }
     if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
     const rl = e.target.closest('[data-role]'); if (rl) { setRole(rl.dataset.role); return; }
-    if (e.target.closest('#viewSwitch')) { draftView = !draftView; useData(); render(); return; }
+    if (e.target.closest('#viewSwitch')) { draftView = !draftView; clearToasts(); useData(); render(); return; }
     if (e.target.closest('#newBtn')) { openEntry(null, e.target.closest('#newBtn')); return; }
     const ed = e.target.closest('[data-edit]'); if (ed) { if (ed.getAttribute('aria-disabled') !== 'true') openEntry(+ed.dataset.edit, ed); return; }
     const rmv = e.target.closest('[data-remove]'); if (rmv) { removeRow(+rmv.dataset.remove); return; }
     const rst = e.target.closest('[data-restore]'); if (rst) { restoreRow(+rst.dataset.restore); return; }
-    const pt = e.target.closest('[data-pubtog]'); if (pt) { togglePub(+pt.dataset.pubtog); return; }
-    if (e.target.closest('#readyBtn')) { markReady(); return; }
-    if (e.target.closest('#publishBtn')) { publish(); return; }
-    const vb = e.target.closest('[data-variant]');
-    if (vb) { setVariant(vb.dataset.variant); return; }
-    const gtg = e.target.closest('[data-gridtog]'); if (gtg) { gridOn = !gridOn; render(); $('gridbar').querySelector('[data-gridtog]')?.focus(); if (gridOn) bringGrid(); return; }
+    const us = e.target.closest('[data-unsched]'); if (us) { unschedule(+us.dataset.unsched); return; }
+    const pf = e.target.closest('[data-pf]'); if (pf) { applyPstate(pf.dataset.pf); return; }
+    const pb = e.target.closest('#publishBtn'); if (pb) { openPublish(pb); return; }
+    const tc = e.target.closest('[data-tclose]'); if (tc) { closeToast(tc.closest('.gtoast')); return; }
+    const tl2 = e.target.closest('[data-tlink]'); if (tl2) { const t = tl2.closest('.gtoast'); if (tl2.dataset.tlink === 'viewPub') { closeToast(t); goPublished(); } return; }
     const sx = e.target.closest('[data-startx]'); if (sx) { startOpen = !startOpen; render(); $('thead').querySelector('[data-startx]')?.focus(); if (startOpen) bringGrid(); return; }
     if (e.target.closest('[data-clearall]')) { clearEverything(); return; }
   });
 
-  useData(); render(); syncVariantUI();
+  document.title = 'Period Overview';
+  useData(); render();
 })();
 </script>
 </body>
