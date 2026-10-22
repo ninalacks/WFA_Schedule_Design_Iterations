@@ -852,7 +852,7 @@
   Object.entries(XSETS).forEach(([k, list]) => list.forEach(([c, st]) => {
     const e = PUBROWS.find(x => x.comm === c && x.start === st); if (!e) throw new Error('cross-commodity row missing: ' + c); e.xset = k; e.start = XSTART[k];   // all resets in a set share one start date
   }));
-  Object.keys(XSETS).forEach(k => { const g = PUBROWS.filter(x => x.xset === k), f = g[0]; g.forEach(x => { x.type = f.type; x.divs = f.divs; x.divList = [...f.divList]; }); });   // ...and the same Type and Division
+  Object.keys(XSETS).forEach(k => { const g = PUBROWS.filter(x => x.xset === k), f = g[0]; g.forEach(x => { x.type = f.type; x.divs = f.divs; x.divList = [...f.divList]; x.dur = f.dur; }); });   // ...and the same Type, Division and Duration
 
   /* Loads per week. cap = comfortable hours per week. */
   function calc(rows, cap) {
@@ -884,7 +884,7 @@
     const edit = (c, st, vals, by) => { const e = find(c, st); e.orig = snap(e); Object.assign(e, vals); e.divList = divListFor(e.id, e.divs); e.status = 'Modified'; e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k])); e.by = by; };
     const drop = (c, st, by) => { const e = find(c, st); e.status = 'Removed'; e.by = by; };
     const add = vals => { const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1; DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: 'John Doe', sched: null }); };
-    edit('677 - NF Baking Mixes', 'P1 W3', { dur: 2, hours: 5 }, 'Jane Doe');
+    edit('677 - NF Baking Mixes', 'P1 W3', { hours: 5 }, 'Jane Doe');
     edit('071 - Cheese', 'P2 W1', { hours: 10 }, 'Jane Doe');
     edit('102 - Coffee', 'P4 W1', { start: 'P4 W3' }, 'John Doe');
     drop('290 - NF Yogurt', 'P4 W2', 'John Doe');
