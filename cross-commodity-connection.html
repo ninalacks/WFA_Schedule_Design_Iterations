@@ -1,0 +1,1693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Period Overview</title>
+<style>
+  :root {
+    --navy: #0f1f3d; --blue: #1f4e9c; --text: #1c2430; --muted: #5b6573; --border: #d5d9df; --focus: #2563eb; --bg: #f3f4f6;
+    --over: #b45309; --over-bg: #fde7c8;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px;
+         height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+  button { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .topbar { flex: none; background: var(--navy); height: 64px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 24px; }
+  .topbar .brand { justify-self: start; }
+  .topright { justify-self: end; display: flex; align-items: center; gap: 20px; }
+  .who { display: inline-flex; align-items: center; gap: 8px; color: #fff; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.18); display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+  .brand { color: #fff; font-weight: 700; font-size: 17px; border: 1px solid #fff8; border-radius: 4px; padding: 8px 14px; }
+  .vgroup { display: flex; align-items: center; gap: 14px; }
+  .vsw { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,.1); border-radius: 999px; padding: 4px; }
+  .vlabel { color: #b9c6e0; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 0 8px 0 10px; }
+  .vopt { border: 0; background: transparent; color: #fff; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .vopt:hover { background: rgba(255,255,255,.14); }
+  .vopt[aria-pressed="true"] { background: #fff; color: var(--navy); }
+  .vopt:focus-visible { outline: 2px solid #8fb4ff; outline-offset: 2px; }
+  @media (max-width: 1150px) { .who #whoName { display: none; } .vlabel { display: none; } .vopt { padding: 7px 10px; font-size: 12px; } }
+  .topbar a { color: #8fb4ff; font-weight: 700; font-size: 17px; text-decoration: underline; text-underline-offset: 6px; }
+  .app { padding: 18px 16px 12px; margin: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  #main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .results { flex: 1; min-height: 320px; display: flex; flex-direction: column; }
+  .results .gridbar { flex: none; }
+  .layout { display: flex; gap: 16px; align-items: stretch; flex: 1; min-height: 0; }
+  .tblarea { display: flex; flex-direction: column; min-height: 0; }
+  .layout > .tblarea { flex: 1; min-width: 0; }
+  @media (max-width: 900px) { body { height: auto; display: block; } .app, #main { display: block; } .results { display: block; } .layout { flex-direction: column; } .layout > .tblarea { width: 100%; } .tablewrap { max-height: 75vh; } .panel { min-height: 68px; } }
+
+
+  .titlerow { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 14.7px; flex: none; }
+  h1 { font-size: 26px; margin: 0; }
+  .meta { font-size: 14px; color: #333; line-height: 1.35; margin-top: 2px; }
+
+  /* Overview strip */
+
+  /* Scope summary */
+  .btn2 { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+  .btn2[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  .gridbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 34px; margin-bottom: 8px; font-size: 14px; color: var(--muted); }
+  .tags { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+  /* Filter rail + panel (pattern from date-filter-v6) */
+  .panel { width: 320px; flex: none; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.12); position: relative; transition: width .25s ease; }
+  .panel:not(.collapsed):not(.animating) { overflow-y: auto; }
+  .panel.collapsed { width: 56px; }
+  .panel.collapsed, .panel.animating { overflow: hidden; }
+  .panel-body { width: 320px; padding: 20px 18px 0; position: relative; transition: opacity .15s ease; }
+  .panel.collapsed .panel-body { opacity: 0; pointer-events: none; position: absolute; top: 0; left: 0; height: 0; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 6px; }
+  .panel-head h2 { font-size: 23px; margin: 0; }
+  .icon-btn { width: 40px; height: 40px; border: 0; background: transparent; border-radius: 8px; color: var(--blue); cursor: pointer; display: grid; place-items: center; position: relative; }
+  .icon-btn:hover { background: #eef2fa; }
+  .prail { position: absolute; top: 0; left: 0; width: 56px; padding-top: 14px; display: flex; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .15s ease .1s; }
+  .panel.collapsed .prail { opacity: 1; pointer-events: auto; }
+  .badge { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; border-radius: 9px; background: var(--navy); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; }
+  @media (prefers-reduced-motion: reduce) { .panel, .panel-body, .prail { transition: none; } }
+  .flabel { display: block; font-weight: 600; font-size: 13px; color: var(--muted); margin: 16px 0 6px; }
+  .field { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; background: #fff; display: flex; align-items: center; padding: 0 10px; gap: 8px; font-size: 14px; color: var(--text); cursor: pointer; text-align: left; }
+  .field.placeholder, .sel select.field.empty { color: #666; }
+  .field[aria-expanded="true"], .field:focus-visible { border: 2px solid var(--focus); outline: none; padding: 0 9px; }
+  .field .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .clear-x { border: 0; background: none; font-size: 17px; color: var(--muted); cursor: pointer; padding: 0 4px; }
+  .clear-x:hover { color: var(--text); }
+  .clear-x:focus-visible { outline: 2px solid var(--focus); border-radius: 4px; }
+  .caret { font-size: 10px; color: var(--muted); }
+  .sel { position: relative; }
+  .sel select.field { padding-right: 62px; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; }
+  .sel .caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .sel .clear-x { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); }
+  .dropdown { position: relative; }
+  .popover { position: absolute; top: 44px; left: 0; width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px 10px; box-shadow: 0 6px 20px rgba(0,0,0,.18); z-index: 10; }
+  .popover[hidden] { display: none; }
+  .pk-head, .pk-row { display: grid; grid-template-columns: 52px repeat(4, 1fr); align-items: center; }
+  .pk-head { color: var(--muted); font-size: 13px; margin-bottom: 6px; padding-left: 4px; }
+  .pk-scroll { max-height: 280px; overflow-y: auto; }
+  .pk-row { height: 44px; position: relative; }
+  .pk-plabel { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; margin-left: 4px; }
+  .pk-plabel.clickable { cursor: pointer; }
+  .pk-plabel.clickable:not(.edge):hover { background: #dbe8fe; }
+  .pk-plabel:focus-visible { outline: 2px solid var(--focus); }
+  .pk-plabel.edge { background: var(--navy); color: #fff; }
+  .pk-week { height: 36px; border: 0; background: transparent; font-size: 14px; color: var(--text); cursor: pointer; display: grid; place-items: center; margin: 4px 0; position: relative; }
+  .pk-week.inrange, .pk-week.preview { background: #dbe8fe; }
+  .pk-week.edge::before { content: ""; position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); z-index: 0; }
+  .pk-week.edge span { position: relative; z-index: 1; color: #fff; }
+  .pk-week:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .pk-div { border-left: 1px solid #e3e6ea; position: absolute; left: 52px; top: 4px; bottom: 4px; }
+  .pk-seg { display: grid; grid-template-columns: 1fr 1fr; background: #eceef1; border-radius: 999px; padding: 3px; margin: 0 4px 12px; }
+  .pk-seg button { border: 0; background: transparent; height: 30px; border-radius: 999px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .pk-seg button[aria-pressed="true"] { background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .pk-seg button:focus-visible { outline: 2px solid var(--focus); }
+  .pk-hint { font-size: 12px; color: var(--muted); margin: 10px 4px 0; min-height: 18px; }
+  .clear-row { display: flex; justify-content: flex-end; margin: 0; }
+  .link-btn { border: 0; background: none; padding: 4px 2px; font-size: 15px; color: var(--blue); text-decoration: underline; cursor: pointer; }
+  .link-btn:focus-visible { outline: 2px solid var(--focus); border-radius: 2px; }
+  .link-btn:disabled { color: #9aa3b0; cursor: default; }
+  .pfoot { position: sticky; bottom: 0; background: #fff; padding: 12px 0 16px; margin-top: 12px; }
+  .pbtn { width: 100%; height: 44px; border-radius: 6px; font-size: 16px; border: 1px solid var(--navy); background: var(--navy); color: #fff; font-weight: 600; cursor: pointer; }
+
+  /* Table */
+  .tablewrap { background: #fff; border: 1px solid #e3e6ea; overflow: scroll; flex: 1; min-height: 0; }
+  .tablewrap::-webkit-scrollbar { width: 14px; height: 14px; }
+  .tablewrap::-webkit-scrollbar-track { background: #f1f2f4; }
+  .tablewrap::-webkit-scrollbar-thumb { background: #b3bcc9; border-radius: 8px; border: 3px solid #f1f2f4; }
+  .tablewrap::-webkit-scrollbar-thumb:hover { background: #8d97a6; }
+  .tablewrap::-webkit-scrollbar-corner { background: #f1f2f4; }
+  @supports not selector(::-webkit-scrollbar) { .tablewrap { scrollbar-color: #b3bcc9 #f1f2f4; } }
+  table { border-collapse: collapse; width: 100%; min-width: 1500px; font-size: 14px; }
+  th { background: #f1f2f4; text-align: left; font-weight: 700; padding: 12px 10px; border-bottom: 2px solid #dde0e5; font-size: 14px; white-space: nowrap; }
+  td { padding: 12px 10px; border-bottom: 1px solid #eceef1; vertical-align: middle; }
+  td { white-space: nowrap; }
+  td.com { width: 240px; min-width: 240px; max-width: 240px; }
+  td.com .cwrap { display: flex; align-items: baseline; gap: 6px; }
+  td.com .ctext { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.com .cmore { flex: none; border: 0; background: none; padding: 0 2px; margin: 0; font: inherit; font-size: 13px; color: var(--blue); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; border-radius: 3px; white-space: nowrap; }
+  td.com .cmore:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  td.com .cmore[hidden] { display: none; }
+  /* expanded: the full comment, wrapped like before */
+  td.com.open { min-width: 280px; max-width: 340px; white-space: normal; }
+  td.com.open .cwrap { display: block; }
+  td.com.open .ctext { overflow: visible; white-space: normal; text-overflow: clip; }
+  td.com.open .cmore { margin-left: 4px; }
+  th.wk, td.wk { text-align: center; width: 76px; padding-left: 4px; padding-right: 4px; }
+  th.wk { border-left: 1px solid #dde0e5; }
+  th.wk small { display: block; font-weight: 400; font-size: 10px; color: var(--muted); }
+  td.wk { border-left: 1px solid #f1f2f4; }
+  td.wk.on { font-weight: 700; }
+  td.wk.over { color: var(--over); }
+  tfoot td { position: sticky; bottom: 0; z-index: 2; background: #f8f9fb; font-weight: 700; border: 0 !important; box-shadow: inset 0 2px 0 #dde0e5, inset -1px 0 0 #e3e6ea; }
+  tfoot td.wk { vertical-align: top; }
+  tfoot td.wk.over { color: var(--over); }
+  .st { display: inline-block; box-sizing: border-box; width: 84px; padding: 2px 0; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 15px; text-align: center; white-space: nowrap; }
+  .st.Added { background: #d7efdd; color: #17653a; } .st.Modified { background: #e1eafb; color: #1f4e9c; }
+  tr.add td { background: #e9f6ec; } td.chg { background: #dbe8fe !important; }
+  th.wk.pg { font-size: 12px; padding: 6px 2px; }
+  th.wk.w { font-size: 11px; padding: 4px 2px; font-weight: 600; color: var(--muted); }
+  th.wk.ps { border-left: 2px solid #cfd5de; }
+  td.wk.ps { border-left: 1px solid #cfd5de; } 
+  table.cmp th.wk, table.cmp td.wk { width: 34px; min-width: 34px; padding-left: 0; padding-right: 0; font-size: 12px; }
+  .stk { position: sticky; z-index: 1; background: #fff; }
+  th.stk { background: #f1f2f4; z-index: 3; }
+  .stk1 { left: 0; }
+  .stk1, .stk2 { border-right: 0 !important; box-shadow: inset -1px 0 0 #dde0e5; }
+  .stk2 { left: var(--c1w, 180px); box-shadow: inset -1px 0 0 #dde0e5, 6px 0 6px -6px rgba(15,31,61,.25); }
+  th, td { border-right: 1px solid #e3e6ea; }
+  thead th { position: sticky; top: 0; z-index: 2; border: 0 !important; box-shadow: inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5; }
+  thead th.wk.ps { box-shadow: inset 2px 0 0 #cfd5de, inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5; }
+  thead th.wk.w { top: var(--h1, 40px); }
+  thead th.wk { z-index: 2; }
+  thead th.stk1 { box-shadow: inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5; }
+  thead th.stk2 { box-shadow: inset -1px 0 0 #dde0e5, inset 0 -2px 0 #dde0e5, 6px 0 6px -6px rgba(15,31,61,.25); }
+  th { border-right-color: #dde0e5; line-height: 1.15; }
+  tfoot td.stk { background: #f8f9fb; z-index: 3; }
+  tfoot td.wk.ps { box-shadow: inset 0 2px 0 #dde0e5, inset 1px 0 0 #cfd5de, inset -1px 0 0 #e3e6ea; }
+  tfoot td.stk1 { box-shadow: inset 0 2px 0 #dde0e5, inset -1px 0 0 #dde0e5; }
+  tfoot td.stk2 { box-shadow: inset 0 2px 0 #dde0e5, inset -1px 0 0 #dde0e5, 6px 0 6px -6px rgba(15,31,61,.25); }
+  .hwrap { display: inline-flex; align-items: center; gap: 8px; }
+  .sorth { border: 0; background: none; font: inherit; font-weight: 700; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; margin: 0; text-align: left; line-height: 1.15; white-space: nowrap; border-radius: 4px; }
+  .sorth .sa { display: inline-flex; color: #8a94a3; opacity: 0; transition: opacity .1s; }
+  .sorth:hover .sa, .sorth:focus-visible .sa { opacity: 1; }
+  .sorth.on .sa { opacity: 1; color: var(--navy); }
+  .sorth:hover { color: var(--blue); }
+  th[aria-sort] { background: #e6eaf1; }
+  @media (prefers-reduced-motion: reduce) { .sorth .sa { transition: none; } }
+  .xbtn { width: 26px; height: 26px; border: 1px solid #b9c2d0; background: #fff; border-radius: 6px; cursor: pointer; display: inline-grid; place-items: center; color: var(--blue); padding: 0; }
+  .xbtn:hover { background: #eef2fa; }
+  .xbtn[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .switch { width: 38px; height: 22px; border-radius: 999px; background: #c3c9d2; border: 0; position: relative; cursor: pointer; padding: 0; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: left .15s; }
+  .switch[aria-checked="true"] { background: var(--navy); }
+  .switch[aria-checked="true"]::after { left: 18px; }
+  @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+  .emp { text-align: center; color: var(--muted); padding: 32px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1c2430; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 80; max-width: 90vw; }
+  .toast.show { opacity: 1; }
+
+  /* Division list modal */
+  .divbtn { border: 0; background: none; font: inherit; color: var(--blue); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 6px; margin: -2px -6px; border-radius: 4px; }
+  .divbtn:hover { background: #e8eef9; }
+  .divbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  #dDlg { width: min(460px, 100%); }
+  .dsub { padding: 14px 22px 10px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+  .dhead, .dpl li { display: grid; grid-template-columns: 96px 1fr; gap: 12px; padding: 8px 22px; font-size: 14px; }
+  .dhead { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #e3e6ea; padding-top: 10px; padding-bottom: 8px; }
+  .dpl { list-style: none; margin: 0; padding: 0 0 6px; max-height: 50vh; overflow: auto; }
+  .dpl li + li { border-top: 1px solid #f1f2f4; }
+  .dpl .dn { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Global toasts: top right, stacked, below the top bar */
+  .toasts { position: fixed; top: 76px; right: 16px; z-index: 90; width: min(380px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+  .gtoast { pointer-events: auto; display: grid; grid-template-columns: 22px 1fr 22px; column-gap: 12px; row-gap: 4px; align-items: start; padding: 14px 14px 14px 16px; border-radius: 6px; color: #000; box-shadow: 0 6px 20px rgba(15,31,61,.18); animation: gtIn .18s ease-out; }
+  .gtoast.success { background: #c3f1d6; --tc: #17653a; }
+  .gtoast.info { background: #d2eafa; --tc: #1e5ca7; }
+  .gtoast.error { background: #fcdbdb; --tc: #a9001f; }
+  .gtoast.warn { background: #fff4cc; box-shadow: inset 0 0 0 1px #f1dc8f, 0 6px 20px rgba(15,31,61,.18); --tc: #983301; }
+  .gtoast .gti { grid-column: 1; grid-row: 1; display: flex; padding-top: 1px; }
+  .gtoast .gtt { grid-column: 2; grid-row: 1; font-weight: 700; font-size: 15px; line-height: 22px; }
+  .gtoast .gtx { grid-column: 3; grid-row: 1; border: 0; background: none; color: var(--tc); width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
+  .gtoast .gtx:hover { background: rgba(0,0,0,.08); }
+  .gtoast .gtb { grid-column: 2 / 4; grid-row: 2; font-size: 14px; line-height: 1.4; }
+  .gtoast .gtl { grid-column: 2 / 4; grid-row: 3; margin-top: 4px; }
+  .gtoast .tlink { border: 0; background: none; padding: 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--tc); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; border-radius: 2px; }
+  .gtoast :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @keyframes gtIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .gtoast { animation: none; } }
+
+  /* Creator */
+  .titlerow, .toolbar, .banner { flex: none; }
+  .tools { display: flex; gap: 8px; }
+  .sq { width: 36px; height: 36px; border: 1px solid var(--border); background: #fff; border-radius: 4px; display: grid; place-items: center; cursor: pointer; color: var(--text); padding: 0; }
+  .sq:hover:not(:disabled) { background: #eef2fa; }
+  .sq:disabled { color: #c3c8d0; cursor: not-allowed; background: #f4f5f7; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+  .tbtns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .tb { height: 38px; padding: 0 14px; border: 1px solid var(--border); background: #fff; border-radius: 4px; font-size: 15px; cursor: pointer; }
+  .tb:hover:not(:disabled) { background: #f4f6fa; }
+  .tb:disabled { cursor: not-allowed; }
+  .tb.pub { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .tb.pub:hover:not(:disabled) { background: #1b3560; }
+  .tb.pub:disabled { background: #707c8d; border-color: #707c8d; opacity: .8; }
+  .viewsw { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); }
+  .viewsw .on { color: var(--text); font-weight: 700; }
+  .banner { color: #000; border-radius: 6px; padding: 10px 14px; font-size: 15px; margin: 0 0 12px; display: flex; align-items: center; gap: 12px; }
+  .banner.info { background: #d2eafa; }
+  .banner.success { background: #c3f1d6; }
+  .banner.error { background: #fcdbdb; }
+  .banner.warn { background: #fff4cc; box-shadow: inset 0 0 0 1px #f1dc8f; }
+  .banner > svg { flex: none; }
+  th.actc, td.act { width: 60px; min-width: 60px; text-align: center; padding-left: 4px; padding-right: 4px; }
+  td.act input[type="checkbox"], th.actc input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--navy); cursor: pointer; vertical-align: middle; }
+  td.act input[type="checkbox"]:disabled, th.actc input[type="checkbox"]:disabled { cursor: not-allowed; opacity: .4; }
+  .ib { width: 36px; height: 36px; border: 1px solid var(--border); background: #fff; border-radius: 4px; cursor: pointer; display: inline-grid; place-items: center; color: #1c2430; padding: 0; }
+  .ib:hover:not([aria-disabled="true"]) { background: #eef2fa; }
+  .ib[aria-disabled="true"] { color: #c3c8d0; cursor: not-allowed; background: #f4f5f7; }
+  .switch:disabled { opacity: .4; cursor: not-allowed; }
+  tr.rm td { background: #fbe9e9; }
+  .st.Removed { background: #ffdbdb; color: #000; }
+  .scrim { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 50; display: grid; place-items: center; padding: 16px; }
+  .dlg { background: #fff; border-radius: 12px; width: min(680px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+  .dlg header { display: flex; justify-content: space-between; align-items: center; padding: 16px 22px; border-bottom: 1px solid #e3e6ea; }
+  .dlg h2 { margin: 0; font-size: 18px; }
+  .xclose { border: 0; background: none; font-size: 18px; width: 36px; height: 36px; cursor: pointer; border-radius: 6px; color: var(--muted); }
+  .xclose:hover { background: #f1f2f4; }
+  .egrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; padding: 18px 22px; overflow: auto; }
+  .fg { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .fg.wide { grid-column: 1 / -1; }
+  .fg label, .fg .lbl { font-weight: 600; font-size: 13px; color: var(--muted); }
+  .fin { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font: inherit; font-size: 14px; background: #fff; color: var(--text); }
+  textarea.fin { height: auto; padding: 8px 10px; resize: vertical; min-height: 72px; }
+  .fin:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .fin[aria-invalid="true"] { border-color: #b42318; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ferr { color: #b42318; font-size: 12px; }
+  .dlg footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid #e3e6ea; }
+  /* New entry / edit dialog (wider, 12-column) */
+  #eForm { width: min(900px, 100%); }
+  #eForm header { padding: 18px 26px 12px; }
+  #eForm h2 { font-size: 22px; }
+  .ebody { padding: 16px 26px 8px; overflow: auto; display: flex; flex-direction: column; gap: 16px; }
+  .g12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px 20px; }
+  .s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s6 { grid-column: span 6; } .s12 { grid-column: 1 / -1; }
+  #eForm .fg label, #eForm .fg .lbl { color: var(--text); font-weight: 600; font-size: 13px; }
+  #eForm .fg label .sub { font-weight: 400; color: var(--muted); }
+  #eForm .fin { height: 34px; font-size: 13px; border-radius: 4px; border-color: #b8bec8; }
+  #eForm select.fin:required:invalid { color: #6b7280; }
+  #eForm select.fin option { color: var(--text); }
+  #eForm select.fin:disabled { background: #eef0f3; cursor: not-allowed; }
+  #eForm .fin.ro { background: #eef0f3; color: #5b6573; border-color: #d5d9df; }
+  #eForm textarea.fin { height: auto; min-height: 48px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+  #eForm .fin[aria-invalid="true"] { border-color: #b42318; }
+  .chk { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .chk input { width: 18px; height: 18px; accent-color: var(--navy); cursor: pointer; margin: 0; }
+  #entries { display: flex; flex-direction: column; gap: 14px; }
+  .entry { display: flex; flex-direction: column; gap: 14px; }
+  .entry.x { border: 1px solid #d5d9df; border-radius: 8px; padding: 12px 14px 14px; background: #fafbfc; }
+  .ehead { display: flex; justify-content: space-between; align-items: center; }
+  .etitle { font-weight: 700; font-size: 14px; }
+  .xsr2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .lrow { display: flex; align-items: center; gap: 6px; }
+  .infob { width: 18px; height: 18px; padding: 0; border: 1.5px solid var(--muted); border-radius: 50%; background: #fff; color: var(--muted); font: italic 700 11px/1 Georgia, 'Times New Roman', serif; display: inline-grid; place-items: center; cursor: help; flex: none; }
+  .infob:hover, .infob:focus-visible { border-color: var(--blue); color: var(--blue); }
+  .infob:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .infob[hidden] { display: none; }
+  .evsw { display: inline-flex; align-items: center; background: rgba(255,255,255,.12); border-radius: 999px; padding: 3px; }
+  .evopt { border: 0; background: transparent; color: #fff; font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .evopt[aria-pressed="true"] { background: #fff; color: var(--navy); }
+  .evopt:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  @media (max-width: 1450px) { .evsw .vlabel { display: none; } }
+  .ebar { display: flex; justify-content: flex-end; gap: 14px; margin-bottom: -6px; }
+  .ebar .link-btn { font-size: 13px; padding: 2px; }
+  .ehrow { display: flex; align-items: center; gap: 12px; }
+  .ehrow .erm { flex: none; font-size: 14px; padding: 2px 4px; }
+  .ehead.btn { flex: 1; min-width: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; padding: 0; gap: 10px; border-radius: 6px; }
+  .ehead.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .ehead .sum { color: var(--muted); font-size: 13px; font-weight: 400; margin-left: 10px; }
+  .ehead .tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #e1eafb; color: var(--blue); font-size: 11px; font-weight: 700; vertical-align: 1px; }
+  .ehead .tag.err { background: #fde7e7; color: #b42318; }
+  .ehead .chev { display: inline-grid; place-items: center; width: 24px; height: 24px; color: var(--muted); flex: none; transition: transform .15s; }
+  .entry.coll .ehead .chev { transform: rotate(-90deg); }
+  .entry.coll { padding-bottom: 12px; gap: 0; }
+  .ebodyx { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .ebodyx[hidden] { display: none; }
+  .entry.coll .ebodyx { display: none; }
+  .ehead .etl { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .xmem { display: flex; flex-direction: column; gap: 6px; }
+  .xmem .lbl { font-weight: 600; font-size: 13px; color: var(--text); }
+  .xmem ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .xmem li { display: block; }
+  .xmem .pill { border: 1px solid #c9d1de; background: #f4f7fb; border-radius: 999px; padding: 3px 12px; font: inherit; font-size: 13px; color: var(--text); display: inline-block; }
+  .xmem button.pill { cursor: pointer; }
+  .xmem button.pill:hover { background: #e8eef8; border-color: var(--blue); color: var(--blue); }
+  .xmem button.pill:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .xmem .pill small { color: var(--muted); margin-left: 6px; }
+  .xmem .pill.off { opacity: .65; }
+  .xmem .pill small.pe { background: #e1eafb; color: var(--blue); font-weight: 700; font-size: 11px; padding: 0 7px; border-radius: 999px; margin-left: 8px; }
+  #xcAdd { align-self: flex-start; padding: 4px 2px; font-size: 14px; text-decoration: none; font-weight: 600; }
+  #xcAdd:hover { text-decoration: underline; }
+  #eForm footer { justify-content: space-between; align-items: center; padding: 14px 26px 18px; }
+  .tbtext { border: 0; background: none; font: inherit; font-size: 15px; color: var(--text); cursor: pointer; padding: 8px 4px; border-radius: 4px; }
+  .tbtext:hover { text-decoration: underline; }
+  .tbtext:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (max-width: 760px) { .s3, .s4 { grid-column: span 6; } .s6 { grid-column: 1 / -1; } }
+  @media (max-width: 560px) { .egrid { grid-template-columns: 1fr; } }
+
+  /* Publishing workflow */
+  .tbtns { align-items: center; }
+  .tright { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .blink { border: 0; background: none; font: inherit; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; padding: 0 2px; border-radius: 3px; }
+  .blink[aria-pressed="true"] { background: rgba(0,0,0,.1); }
+  .blink:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  th.pubc, td.pubc { min-width: 150px; white-space: nowrap; }
+  .pchip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #8d9ab3; background: transparent; border-radius: 999px; padding: 1px 3px 1px 10px; font-size: 12px; font-weight: 600; color: var(--navy); }
+  .pchip svg { flex: none; }
+  .pun { border: 0; background: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; color: var(--muted); font-size: 11px; padding: 0; }
+  .pun:hover { background: rgba(15,31,61,.12); color: var(--text); }
+  .pnot { color: var(--muted); font-size: inherit; }
+  #pForm { width: min(600px, 100%); }
+  .pbody { padding: 18px 22px 6px; overflow: auto; display: flex; flex-direction: column; gap: 18px; }
+  .pcounts { margin: 0; display: flex; align-items: baseline; gap: 10px; color: var(--muted); font-size: 14px; }
+  .pcounts .link-btn { font-size: 14px; padding: 0 2px; }
+  .plist { list-style: none; margin: -8px 0 0; padding: 0; max-height: 180px; overflow: auto; border-top: 1px solid #eceef1; }
+  .plist li { display: flex; gap: 10px; align-items: center; padding: 7px 2px; border-bottom: 1px solid #f1f2f4; font-size: 14px; }
+  .plist li .st { flex: none; }
+  .pchoice { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
+  .pchoice legend { font-weight: 700; margin-bottom: 8px; padding: 0; font-size: 15px; }
+  .opt { display: flex; gap: 12px; align-items: flex-start; border-radius: 8px; padding: 10px 12px; margin: 0 -12px; cursor: pointer; }
+  .opt:hover { background: #f4f6fa; }
+  .opt:has(input:checked) { background: #eef2fa; }
+  .opt input { margin: 3px 0 0; accent-color: var(--navy); width: 16px; height: 16px; flex: none; }
+  .opt b { font-size: 15px; }
+  .opt small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  /* ---------- Cross-commodity sets: no letters, no parent/child, nothing in the other columns. The Set column alone carries the signal. ---------- */
+  /* Cross-commodity set: a line on the left edge of the first column, no extra column. */
+  tbody td:first-child { position: relative; }
+  .xsr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .xw { position: absolute; left: 0; top: 0; bottom: 0; width: 16px; z-index: 1; --xh: #0F52A2; }
+  .xw:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .xw i { position: absolute; display: block; background: var(--xh); left: 0; }
+  .xw i.l { width: 3px; }
+  .xw i.k { width: 10px; height: 3px; display: none; }
+  /* Line runs the full height of the set, top edge of the first row to bottom edge of the last; ticks only at those two edges.
+     A 2px gap at each end keeps two back-to-back sets from merging. */
+  .xw i.l { top: 0; bottom: 0; }
+  .xw i.k.a { top: 0; } .xw i.k.e { bottom: 0; }
+  .xw.t i.k.a, .xw.s i.k.a, .xw.b i.k.e, .xw.s i.k.e { display: block; }
+  .xw.t i.l, .xw.t i.k.a, .xw.s i.l, .xw.s i.k.a { top: 2px; } .xw.b i.l, .xw.b i.k.e, .xw.s i.l, .xw.s i.k.e { bottom: 2px; }
+  /* Tooltip on the bracket */
+  .xtip { position: fixed; z-index: 60; background: #1c2430; color: #fff; font-size: 13px; font-weight: 500; line-height: 1.3; padding: 6px 10px; border-radius: 6px; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 8px rgba(15,31,61,.25); }
+  .xtip[hidden] { display: none; }
+  tbody td:first-child:not(.act) { padding-left: 20px; } thead th:first-child:not(.actc) { padding-left: 20px; }
+  /* Hover or focus any member and every member of its set lights up, wherever they sit (also covers sets split apart by a sort). */
+  body.xhl tr.xhl td:not(.chg) { background-color: #e6ebf5 !important; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">Kroger | Reset Planner</span>
+  <div class="vgroup">
+    <div class="vsw" role="group" aria-label="View as">
+      <span class="vlabel">View as</span>
+      <button type="button" class="vopt" data-role="viewer" aria-pressed="true">Viewer</button>
+      <button type="button" class="vopt" data-role="creator" aria-pressed="false">Creator</button>
+    </div>
+  </div>
+  <div class="topright">
+    <div class="evsw" role="group" aria-label="Editing a cross-commodity set (prototype)">
+      <span class="vlabel">Editing a set</span>
+      <button type="button" class="evopt" data-ev="1" aria-pressed="true">Version 1: one reset</button>
+      <button type="button" class="evopt" data-ev="2" aria-pressed="false">Version 2: all resets</button>
+    </div>
+    <span class="who" id="who" hidden><span class="avatar" id="whoAv" aria-hidden="true"></span><span id="whoName"></span></span>
+    <a href="#" onclick="return false">Resets</a>
+  </div>
+</div>
+
+<div class="app">
+
+  <main id="main">
+    <div class="titlerow">
+      <div class="titleleft">
+        <h1><span id="titleYear"></span> KOMPASS Schedule</h1>
+        <div class="meta" id="meta"></div>
+      </div>
+      <div class="tools" id="tools" hidden>
+        <button type="button" class="sq" data-stub aria-label="Download"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
+        <button type="button" class="sq" data-stub aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4l2-2zM10 21h4"/></svg></button>
+        <button type="button" class="sq" disabled aria-label="Refresh (nothing new)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button>
+      </div>
+    </div>
+
+    <div class="toolbar" id="toolbar" hidden>
+      <div class="tbtns">
+        <button type="button" class="tb" id="newBtn">New Entry</button>
+        <button type="button" class="tb" data-stub>Create New Draft</button>
+        <button type="button" class="tb pub" id="publishBtn" disabled>Publish</button>
+      </div>
+      <div class="tright">
+        <div class="viewsw">
+          <span id="lblDraft" class="on">✎ Draft View</span>
+          <button type="button" class="switch" id="viewSwitch" role="switch" aria-checked="false" aria-label="Show published view"></button>
+          <span id="lblPub">✔ Published View</span>
+        </div>
+      </div>
+    </div>
+    <div class="banner" id="banner" role="status" hidden></div>
+
+    <div class="results" id="results">
+    <div class="gridbar" id="gridbar"></div>
+    <div class="layout" id="layout">
+  <aside class="panel collapsed" id="panel" aria-label="Filters">
+    <div class="panel-body" id="panelBody" inert>
+      <div class="panel-head">
+        <h2>Filters</h2>
+        <button class="icon-btn" id="collapseBtn" aria-label="Collapse filters" aria-controls="panelBody" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+      </div>
+      <div class="clear-row"><button class="link-btn" id="clearAll" disabled>Clear All</button></div>
+      <div id="fieldYear"></div>
+      <label class="flabel" id="dateLbl">Date</label>
+      <div class="dropdown" id="dd">
+        <div class="field placeholder" id="trigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-labelledby="dateLbl">
+          <span class="label" id="triggerLabel">--- Select a Value ---</span>
+          <button class="clear-x" id="clearX" aria-label="Clear date" hidden>✕</button>
+          <span class="caret">▼</span>
+        </div>
+        <div class="popover" id="popover" hidden>
+          <div class="pk-seg" role="group" aria-label="Selection mode">
+            <button type="button" id="modeRange" aria-pressed="true">Range</button>
+            <button type="button" id="modeSingle" aria-pressed="false">Individual weeks</button>
+          </div>
+          <div class="pk-head"><span>Period:</span><span style="grid-column:2 / span 4">Week:</span></div>
+          <div class="pk-scroll" id="pgrid"></div>
+          <div class="pk-hint" id="pkHint" aria-live="polite"></div>
+        </div>
+      </div>
+      <div id="fieldRest"></div>
+      <div class="pfoot"><button class="pbtn" id="applyBtn">Apply</button></div>
+    </div>
+    <div class="prail">
+      <button class="icon-btn" id="expandBtn" aria-label="Open filters" aria-controls="panelBody" aria-expanded="false">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true"><path d="M3 6h9M18 6h3M3 12h3M12 12h9M3 18h11M20 18h1"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg>
+        <span class="badge" id="badge" hidden></span>
+      </button>
+    </div>
+  </aside>
+    <div class="tblarea">
+      <div class="tablewrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody><tfoot id="tfoot"></tfoot></table></div>
+    </div>
+    </div>
+    </div>
+  </main>
+</div>
+<div class="scrim" id="eScrim" hidden>
+  <form class="dlg" id="eForm" role="dialog" aria-modal="true" aria-labelledby="eTitle" novalidate>
+    <header><h2 id="eTitle">Add New Entry</h2><button type="button" class="xclose" id="eClose" aria-label="Close">✕</button></header>
+    <div class="ebody">
+      <div class="g12">
+        <div class="fg s4"><div class="lrow"><label for="e_date">Date</label><button type="button" class="infob" id="e_date_info" data-infotip="" aria-label="" hidden>i</button></div><select class="fin" id="e_date" required aria-describedby="e_date_err"></select><div class="ferr" id="e_date_err" role="alert" hidden></div></div>
+        <div class="fg s4"><label for="e_type">Type</label><select class="fin" id="e_type" required aria-describedby="e_type_err"></select><div class="ferr" id="e_type_err" role="alert" hidden></div></div>
+        <div class="fg s4"><label for="e_divs">Division</label><select class="fin" id="e_divs" required aria-describedby="e_divs_err"></select><div class="ferr" id="e_divs_err" role="alert" hidden></div></div>
+      </div>
+      <div class="fg" id="xcRow"><label class="chk"><input type="checkbox" id="e_xc"> This is a cross-commodity reset</label></div>
+      <div class="xmem" id="xcMembers" hidden></div>
+      <div class="ebar" id="ebar" hidden><button type="button" class="link-btn" id="eAll">Expand all</button></div>
+      <div id="entries"></div>
+      <button type="button" class="link-btn" id="xcAdd" hidden>+ Add another commodity</button>
+      <div class="fg"><label for="e_notes">Internal Notes <span class="sub">(only visible in the history)</span></label><textarea class="fin" id="e_notes" rows="2" placeholder="Internal notes (ex. explaining why the change is happening)"></textarea></div>
+    </div>
+    <footer><button type="button" class="tbtext" id="eCancel">Cancel</button><button type="submit" class="tb pub" id="eSave">Submit</button></footer>
+  </form>
+</div>
+<div class="scrim" id="pScrim" hidden>
+  <form class="dlg" id="pForm" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+    <header><h2 id="pTitle">Publish changes</h2><button type="button" class="xclose" id="pClose" aria-label="Close">✕</button></header>
+    <div class="pbody">
+      <p class="pcounts"><span id="pCounts"></span><button type="button" class="link-btn" id="pReview" aria-expanded="false" aria-controls="pList">Review</button></p>
+      <ul class="plist" id="pList" aria-label="Selected changes" hidden></ul>
+      <fieldset class="pchoice">
+        <legend>When should these go live?</legend>
+        <label class="opt"><input type="radio" name="pmode" value="weekly" checked><span><b>Add to weekly publish</b><small id="pWeeklyTxt"></small></span></label>
+        <label class="opt"><input type="radio" name="pmode" value="now"><span><b>Publish now</b><small id="pNowTxt"></small></span></label>
+      </fieldset>
+    </div>
+    <footer><button type="button" class="tb" id="pCancel">Cancel</button><button type="submit" class="tb pub" id="pGo">Schedule</button></footer>
+  </form>
+</div>
+<div class="scrim" id="dScrim" hidden>
+  <div class="dlg" id="dDlg" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <header><h2 id="dTitle"></h2><button type="button" class="xclose" id="dClose" aria-label="Close">✕</button></header>
+    <div class="dsub" id="dSub"></div>
+    <div class="dhead" aria-hidden="true"><span>Division #</span><span>Division name</span></div>
+    <ul class="dpl" id="dList" aria-label="Included divisions"></ul>
+    <footer><button type="button" class="tb" id="dDone">Close</button></footer>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+<div class="xtip" id="xtip" role="tooltip" hidden>Part of a cross-commodity reset</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), Math.max(2800, Math.min(7000, m.length * 60))); };
+  const ICON = {
+    edit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/></svg>',
+    trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>',
+    restore: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg>',
+  };
+  const CLOCK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  const bsvg = p => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const BICON = {
+    info: bsvg('<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r=".7" fill="currentColor"/>'),
+    success: bsvg('<circle cx="12" cy="12" r="9.5"/><path d="M7.6 12.4l3 3 5.8-6.4"/>'),
+    error: bsvg('<circle cx="12" cy="12" r="9.5"/><path d="M12 7v6"/><circle cx="12" cy="16.6" r=".7" fill="currentColor"/>'),
+    warn: bsvg('<path d="M12 3.2L22 20.5H2z"/><path d="M12 10v4.8"/><circle cx="12" cy="17.6" r=".7" fill="currentColor"/>'),
+  };
+  const WARN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></svg>';
+
+  /*DATA-START*/
+  /* Demo data (invented). hours = hours of work in EACH week the reset runs. */
+  const T = (type, dept, comm, cm, pm, size, start, dur, hours, divs, comments) => ({ type, dept, comm, cm, pm, size, start, dur, hours, divs, comments });
+  const PUBROWS = [
+    T('Update','01 - Grocery','017 - Flour & Meal','Monica White','Kelly Jacob',12,'P1 W1',1,12,'All','Reset postponed due to inventory delays at the regional distribution center'),
+    T('Update','43 - Liquor','012 - Mixers','Alexander Nguyen','Isabella Garcia',16,'P1 W1',1,3,'All','ALIGN WITH 003 - Can Beans'),
+    T('NII','01 - Grocery','221 - Granola','Tom Alvarez','Ana Petrova',8,'P1 W2',1,6,6,''),
+    T('Maintenance','02 - Dairy','062 - Yogurt','Peter Grey','Ian Smith',16,'P1 W3',1,10,'All','Vendor confirmed new timeline. ALIGN WITH 007 - Shelf Stable Milk'),
+    T('NII','17 - Natural Foods','410 - NF Cereal','Sarah Johnson','Michael Lee',10,'P1 W3',1,8,'All',''),
+    T('Update','01 - Grocery','005 - Soup','Monica White','Kelly Jacob',12,'P1 W2',1,5,'All','Same crew as Flour & Meal'),
+    T('NII','01 - Grocery','007 - Shelf Stable Milk','Maria Carmen','Teresa Mayfly',12,'P2 W2',1,5,'All','ALIGN WITH 062 - Yogurt'),
+    T('Update','02 - Dairy','071 - Cheese','William Turner','Zoe Henderson',20,'P2 W1',1,8,'All',''),
+    T('Maintenance','01 - Grocery','030 - Snacks','Rachel Thompson','Christopher Brown',24,'P2 W2',1,12,'All',''),
+    T('NII','43 - Liquor','044 - Wine','Alexander Nguyen','Isabella Garcia',16,'P2 W2',1,6,9,''),
+    T('Update','17 - Natural Foods','680 - NF Snacks','David Chen','Emma Wilson',8,'P3 W1',1,10,'All',''),
+    T('NII','01 - Grocery','144 - Pasta Sauce','Laura Kim','Omar Reyes',12,'P3 W3',1,11,'All',''),
+    T('Update','02 - Dairy','065 - Butter','William Turner','Zoe Henderson',8,'P3 W4',2,7,'All',''),
+    T('NII','01 - Grocery','102 - Coffee','Tom Alvarez','Ana Petrova',16,'P4 W1',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','290 - NF Yogurt','David Chen','Emma Wilson',24,'P4 W2',1,5,'All','Adjustments made to display fixtures'),
+    T('Update','43 - Liquor','050 - Spirits','Alexander Nguyen','Isabella Garcia',20,'P5 W1',1,4,'All',''),
+    T('NII','01 - Grocery','088 - Baking','Rachel Thompson','Christopher Brown',12,'P5 W3',1,9,'All',''),
+    T('Update','02 - Dairy','069 - Eggs','Peter Grey','Ian Smith',8,'P6 W2',1,6,'All',''),
+    T('NII','01 - Grocery','120 - Tea','Laura Kim','Omar Reyes',8,'P6 W3',1,3,'All',''),
+    T('Update','17 - Natural Foods','677 - NF Baking Mixes','Sarah Johnson','Michael Lee',10,'P9 W1',1,6,12,'New layout implemented for improved flow. ALIGN WITH 062 - Yogurt'),
+    T('NII','01 - Grocery','150 - Pet Food','Maria Carmen','Teresa Mayfly',16,'P7 W1',1,4,'All',''),
+    T('Update','02 - Dairy','075 - Cream','William Turner','Zoe Henderson',8,'P7 W3',1,8,'All',''),
+    T('NII','01 - Grocery','003 - Can Beans','Rachel Thompson','Christopher Brown',8,'P8 W1',1,11,'All','Approved by category manager. ALIGN WITH 012 - Mixers'),
+    T('Update','01 - Grocery','227 - Cereal Bars','Tom Alvarez','Ana Petrova',8,'P8 W1',2,5,6,''),
+    T('Maintenance','43 - Liquor','055 - Beer','Alexander Nguyen','Isabella Garcia',24,'P8 W2',1,12,'All',''),
+    T('NII','17 - Natural Foods','300 - NF Frozen','David Chen','Emma Wilson',16,'P8 W2',1,6,'All',''),
+    T('Update','02 - Dairy','062 - Yogurt','William Turner','Zoe Henderson',12,'P9 W2',1,9,'All','ALIGN WITH 677 - NF Baking Mixes'),
+    T('NII','01 - Grocery','160 - Candy','Laura Kim','Omar Reyes',12,'P9 W2',1,3,'All',''),
+    T('Update','01 - Grocery','018 - Rice & Pasta','Monica White','Kelly Jacob',12,'P9 W3',1,3,'All',''),
+    T('Update','02 - Dairy','080 - Ice Cream','Peter Grey','Ian Smith',20,'P10 W1',1,7,'All',''),
+    T('NII','01 - Grocery','190 - Water','Maria Carmen','Teresa Mayfly',16,'P10 W3',1,8,'All',''),
+    T('Update','17 - Natural Foods','320 - NF Beverages','Sarah Johnson','Michael Lee',10,'P11 W1',1,4,'All',''),
+    T('NII','01 - Grocery','170 - Juice','Rachel Thompson','Christopher Brown',12,'P11 W3',1,3,'All',''),
+    T('Update','43 - Liquor','060 - Seltzer','Alexander Nguyen','Isabella Garcia',8,'P12 W2',1,4,'All',''),
+    T('Maintenance','01 - Grocery','200 - Paper Goods','Laura Kim','Omar Reyes',24,'P12 W1',2,4,'All',''),
+    T('NII','02 - Dairy','062 - Yogurt Cups','William Turner','Zoe Henderson',12,'P13 W4',1,7,'All','Runs into next year'),
+    T('Update','01 - Grocery','210 - Cleaning','Tom Alvarez','Ana Petrova',16,'P13 W1',1,3,'All',''),
+    T('Update','01 - Grocery','230 - Spices','Monica White','Kelly Jacob',8,'P1 W1',1,4,'All',''),
+    T('NII','02 - Dairy','085 - Dips','Peter Grey','Ian Smith',12,'P1 W1',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','330 - NF Pasta','Sarah Johnson','Michael Lee',16,'P2 W1',1,7,'All',''),
+    T('Update','01 - Grocery','240 - Oils','Laura Kim','Omar Reyes',8,'P2 W1',1,5,'All',''),
+    T('NII','02 - Dairy','095 - Creamer','Tom Alvarez','Ana Petrova',12,'P2 W4',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','310 - NF Bars','Rachel Thompson','Christopher Brown',16,'P2 W4',1,7,'All',''),
+    T('Update','01 - Grocery','235 - Sauces','Maria Carmen','Teresa Mayfly',8,'P2 W4',1,8,'All',''),
+    T('NII','02 - Dairy','260 - Bread','Monica White','Kelly Jacob',12,'P3 W2',1,4,'All',''),
+    T('Maintenance','17 - Natural Foods','098 - Kefir','Peter Grey','Ian Smith',16,'P3 W3',1,7,'All',''),
+    T('Update','01 - Grocery','340 - NF Chips','Sarah Johnson','Michael Lee',8,'P3 W3',1,12,'All',''),
+    T('NII','02 - Dairy','245 - Vinegar','Laura Kim','Omar Reyes',12,'P4 W1',1,8,'All',''),
+    T('Maintenance','17 - Natural Foods','270 - Tortillas','Tom Alvarez','Ana Petrova',16,'P4 W2',1,11,'All',''),
+    T('Update','01 - Grocery','100 - Sour Cream','Rachel Thompson','Christopher Brown',8,'P4 W4',1,9,'All',''),
+    T('NII','02 - Dairy','350 - NF Soup','Maria Carmen','Teresa Mayfly',12,'P4 W4',1,6,'All',''),
+    T('Maintenance','17 - Natural Foods','255 - Syrup','Monica White','Kelly Jacob',16,'P4 W4',1,7,'All',''),
+    T('Update','01 - Grocery','280 - Crackers','Peter Grey','Ian Smith',8,'P5 W3',1,10,'All',''),
+    T('NII','02 - Dairy','105 - Cottage Cheese','Sarah Johnson','Michael Lee',12,'P5 W3',1,4,'All',''),
+    T('Maintenance','17 - Natural Foods','360 - NF Nuts','Laura Kim','Omar Reyes',16,'P5 W3',1,7,'All',''),
+    T('Update','01 - Grocery','265 - Jam','Tom Alvarez','Ana Petrova',8,'P6 W2',1,8,'All',''),
+    T('NII','02 - Dairy','290 - Pretzels','Rachel Thompson','Christopher Brown',12,'P6 W2',2,3,'All',''),
+    T('Maintenance','17 - Natural Foods','110 - Milk','Maria Carmen','Teresa Mayfly',16,'P6 W2',2,7,'All',''),
+    T('Update','01 - Grocery','370 - NF Tea','Monica White','Kelly Jacob',8,'P7 W1',1,6,'All',''),
+    T('NII','02 - Dairy','275 - Honey','Peter Grey','Ian Smith',12,'P7 W1',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','295 - Popcorn','Sarah Johnson','Michael Lee',16,'P7 W1',1,8,'All',''),
+    T('Update','01 - Grocery','115 - Cream Cheese','Laura Kim','Omar Reyes',8,'P7 W4',1,5,'All',''),
+    T('NII','02 - Dairy','380 - NF Oats','Tom Alvarez','Ana Petrova',12,'P7 W4',1,10,'All',''),
+    T('Maintenance','17 - Natural Foods','285 - Peanut Butter','Rachel Thompson','Christopher Brown',16,'P7 W4',1,9,'All',''),
+    T('Update','01 - Grocery','300 - Cookies','Maria Carmen','Teresa Mayfly',8,'P8 W3',1,9,'All',''),
+    T('NII','02 - Dairy','120 - Half & Half','Monica White','Kelly Jacob',12,'P8 W4',1,6,'All',''),
+    T('Maintenance','17 - Natural Foods','390 - NF Rice','Peter Grey','Ian Smith',16,'P9 W1',1,3,'All',''),
+    T('Update','01 - Grocery','230 - Spices','Sarah Johnson','Michael Lee',8,'P9 W4',1,3,'All',''),
+    T('NII','02 - Dairy','085 - Dips','Laura Kim','Omar Reyes',12,'P9 W4',1,7,'All',''),
+    T('Maintenance','17 - Natural Foods','330 - NF Pasta','Tom Alvarez','Ana Petrova',16,'P10 W1',1,8,'All',''),
+    T('Update','01 - Grocery','240 - Oils','Rachel Thompson','Christopher Brown',8,'P10 W3',1,11,'All',''),
+    T('NII','02 - Dairy','095 - Creamer','Maria Carmen','Teresa Mayfly',12,'P10 W3',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','310 - NF Bars','Monica White','Kelly Jacob',16,'P10 W4',1,4,'All',''),
+    T('Update','01 - Grocery','235 - Sauces','Peter Grey','Ian Smith',8,'P10 W4',1,7,'All',''),
+    T('NII','02 - Dairy','260 - Bread','Sarah Johnson','Michael Lee',12,'P11 W2',1,6,'All',''),
+    T('Maintenance','17 - Natural Foods','098 - Kefir','Laura Kim','Omar Reyes',16,'P11 W3',1,6,'All',''),
+    T('Update','01 - Grocery','340 - NF Chips','Tom Alvarez','Ana Petrova',8,'P11 W3',1,6,'All',''),
+    T('NII','02 - Dairy','245 - Vinegar','Rachel Thompson','Christopher Brown',12,'P12 W1',1,7,'All',''),
+    T('Maintenance','17 - Natural Foods','270 - Tortillas','Maria Carmen','Teresa Mayfly',16,'P12 W2',1,10,'All',''),
+    T('Update','01 - Grocery','100 - Sour Cream','Monica White','Kelly Jacob',8,'P12 W3',1,5,'All',''),
+    T('NII','02 - Dairy','350 - NF Soup','Peter Grey','Ian Smith',12,'P12 W3',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','255 - Syrup','Sarah Johnson','Michael Lee',16,'P12 W4',1,11,'All',''),
+    T('Update','01 - Grocery','280 - Crackers','Laura Kim','Omar Reyes',8,'P13 W2',1,10,'All',''),
+    T('NII','02 - Dairy','105 - Cottage Cheese','Tom Alvarez','Ana Petrova',12,'P13 W2',1,8,'All',''),
+    T('Maintenance','17 - Natural Foods','360 - NF Nuts','Rachel Thompson','Christopher Brown',16,'P13 W3',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','500 - NF Pasta','Sarah Johnson','Michael Lee',12,'P1 W1',1,12,'All',''),
+    T('Maintenance','01 - Grocery','400 - Spices','Maria Carmen','Teresa Mayfly',10,'P1 W2',1,4,'All',''),
+    T('Update','01 - Grocery','401 - Oils','Tom Alvarez','Ana Petrova',24,'P1 W2',1,11,'All',''),
+    T('Maintenance','01 - Grocery','402 - Vinegar','Maria Carmen','Teresa Mayfly',10,'P1 W2',1,10,10,''),
+    T('Update','43 - Liquor','070 - Whiskey','Alexander Nguyen','Isabella Garcia',8,'P1 W3',1,6,'All',''),
+    T('Update','01 - Grocery','403 - Syrup','Rachel Thompson','Christopher Brown',20,'P1 W3',1,9,12,''),
+    T('Update','02 - Dairy','120 - Milk','Peter Grey','Ian Smith',24,'P1 W3',1,10,'All',''),
+    T('Update','01 - Grocery','404 - Jam','Laura Kim','Omar Reyes',20,'P1 W4',1,10,'All',''),
+    T('Update','01 - Grocery','405 - Crackers','Tom Alvarez','Ana Petrova',16,'P1 W4',1,6,4,''),
+    T('Update','01 - Grocery','406 - Cookies','Maria Carmen','Teresa Mayfly',8,'P1 W4',1,8,'All',''),
+    T('NII','02 - Dairy','121 - Cream','William Turner','Zoe Henderson',8,'P1 W4',1,3,'All',''),
+    T('Update','01 - Grocery','407 - Pretzels','Monica White','Kelly Jacob',20,'P1 W4',1,8,'All',''),
+    T('Maintenance','02 - Dairy','122 - Half & Half','Peter Grey','Ian Smith',12,'P2 W1',1,6,'All',''),
+    T('NII','01 - Grocery','408 - Popcorn','Laura Kim','Omar Reyes',8,'P2 W1',1,8,'All',''),
+    T('Update','02 - Dairy','123 - Kefir','William Turner','Zoe Henderson',8,'P2 W2',2,3,'All',''),
+    T('Update','01 - Grocery','409 - Tortillas','Tom Alvarez','Ana Petrova',24,'P2 W2',1,11,'All',''),
+    T('Update','01 - Grocery','410 - Bread','Tom Alvarez','Ana Petrova',16,'P2 W3',1,4,'All',''),
+    T('Update','02 - Dairy','124 - Sour Cream','William Turner','Zoe Henderson',8,'P2 W3',1,9,'All',''),
+    T('Update','01 - Grocery','411 - Canned Tomatoes','Maria Carmen','Teresa Mayfly',12,'P2 W3',2,3,'All',''),
+    T('Maintenance','01 - Grocery','412 - Canned Fruit','Tom Alvarez','Ana Petrova',8,'P2 W3',1,3,12,''),
+    T('Update','01 - Grocery','413 - Canned Vegetables','Rachel Thompson','Christopher Brown',8,'P2 W3',1,10,'All',''),
+    T('NII','43 - Liquor','071 - Vodka','Alexander Nguyen','Isabella Garcia',8,'P2 W4',1,6,'All',''),
+    T('Update','01 - Grocery','414 - Pickles','Monica White','Kelly Jacob',8,'P2 W4',1,9,'All',''),
+    T('NII','43 - Liquor','072 - Tequila','Alexander Nguyen','Isabella Garcia',10,'P3 W1',1,4,'All',''),
+    T('Update','43 - Liquor','073 - Rum','Alexander Nguyen','Isabella Garcia',16,'P3 W1',1,8,'All',''),
+    T('Update','01 - Grocery','415 - Olives','Rachel Thompson','Christopher Brown',12,'P3 W1',1,9,'All',''),
+    T('Maintenance','01 - Grocery','416 - Mustard','Rachel Thompson','Christopher Brown',12,'P3 W1',1,7,'All',''),
+    T('NII','02 - Dairy','125 - Cottage Cheese','Peter Grey','Ian Smith',8,'P3 W2',1,11,'All',''),
+    T('Update','01 - Grocery','417 - Ketchup','Monica White','Kelly Jacob',12,'P3 W2',1,8,'All',''),
+    T('Maintenance','02 - Dairy','126 - Cream Cheese','Peter Grey','Ian Smith',20,'P3 W2',1,3,'All',''),
+    T('Update','01 - Grocery','418 - Mayonnaise','Maria Carmen','Teresa Mayfly',10,'P3 W2',1,6,'All',''),
+    T('Maintenance','01 - Grocery','419 - Salad Dressing','Tom Alvarez','Ana Petrova',8,'P3 W3',1,7,'All',''),
+    T('Update','01 - Grocery','420 - Marinades','Rachel Thompson','Christopher Brown',8,'P3 W3',1,3,6,''),
+    T('Update','01 - Grocery','421 - Taco Kits','Tom Alvarez','Ana Petrova',8,'P3 W4',1,3,'All',''),
+    T('Maintenance','01 - Grocery','422 - Instant Noodles','Laura Kim','Omar Reyes',10,'P3 W4',1,11,'All',''),
+    T('NII','01 - Grocery','423 - Cereal','Laura Kim','Omar Reyes',16,'P3 W4',1,12,'All',''),
+    T('Update','17 - Natural Foods','501 - NF Bars','David Chen','Emma Wilson',20,'P3 W4',1,7,'All',''),
+    T('Maintenance','02 - Dairy','127 - Shredded Cheese','Peter Grey','Ian Smith',8,'P4 W1',1,5,3,''),
+    T('NII','17 - Natural Foods','502 - NF Chips','David Chen','Emma Wilson',10,'P4 W1',1,5,'All',''),
+    T('NII','01 - Grocery','424 - Oatmeal','Monica White','Kelly Jacob',8,'P4 W1',2,7,'All',''),
+    T('NII','01 - Grocery','425 - Pancake Mix','Laura Kim','Omar Reyes',8,'P4 W2',1,5,'All',''),
+    T('Update','02 - Dairy','128 - Sliced Cheese','William Turner','Zoe Henderson',16,'P4 W2',1,8,12,''),
+    T('Update','02 - Dairy','129 - String Cheese','William Turner','Zoe Henderson',8,'P4 W2',1,10,'All',''),
+    T('NII','01 - Grocery','426 - Baking Chips','Laura Kim','Omar Reyes',20,'P4 W3',1,9,8,''),
+    T('Update','17 - Natural Foods','503 - NF Soup','Sarah Johnson','Michael Lee',24,'P4 W3',1,7,'All',''),
+    T('Update','17 - Natural Foods','504 - NF Nuts','David Chen','Emma Wilson',20,'P4 W3',1,6,'All',''),
+    T('NII','01 - Grocery','427 - Sugar','Rachel Thompson','Christopher Brown',20,'P4 W3',1,8,4,''),
+    T('Update','01 - Grocery','428 - Broth','Monica White','Kelly Jacob',12,'P4 W3',1,4,'All',''),
+    T('NII','17 - Natural Foods','505 - NF Tea','David Chen','Emma Wilson',20,'P4 W4',1,8,'All',''),
+    T('Update','17 - Natural Foods','506 - NF Oats','David Chen','Emma Wilson',12,'P4 W4',1,7,'All',''),
+    T('Update','02 - Dairy','130 - Butter Spreads','William Turner','Zoe Henderson',16,'P5 W1',1,11,9,''),
+    T('NII','01 - Grocery','429 - Gravy','Rachel Thompson','Christopher Brown',8,'P5 W1',2,4,'All',''),
+    T('Update','01 - Grocery','430 - Hot Sauce','Laura Kim','Omar Reyes',20,'P5 W1',1,5,'All',''),
+    T('NII','17 - Natural Foods','507 - NF Rice','Sarah Johnson','Michael Lee',24,'P5 W1',1,12,9,''),
+    T('Maintenance','17 - Natural Foods','508 - NF Granola','Sarah Johnson','Michael Lee',20,'P5 W2',1,6,'All',''),
+    T('Update','02 - Dairy','131 - Egg Substitutes','William Turner','Zoe Henderson',8,'P5 W2',1,9,'All',''),
+    T('Maintenance','01 - Grocery','431 - Nut Butters','Maria Carmen','Teresa Mayfly',8,'P5 W2',2,4,'All',''),
+    T('Update','01 - Grocery','432 - Dried Fruit','Tom Alvarez','Ana Petrova',12,'P5 W2',1,5,'All',''),
+    T('Update','01 - Grocery','433 - Trail Mix','Rachel Thompson','Christopher Brown',20,'P5 W2',1,5,'All',''),
+    T('NII','01 - Grocery','434 - Granola Bars','Maria Carmen','Teresa Mayfly',8,'P5 W3',1,4,'All',''),
+    T('Update','01 - Grocery','435 - Fruit Snacks','Rachel Thompson','Christopher Brown',10,'P5 W4',1,5,'All',''),
+    T('Update','01 - Grocery','436 - Chips','Tom Alvarez','Ana Petrova',10,'P5 W4',1,6,'All',''),
+    T('Maintenance','01 - Grocery','437 - Salsa','Laura Kim','Omar Reyes',24,'P5 W4',1,12,'All',''),
+    T('Update','17 - Natural Foods','509 - NF Crackers','David Chen','Emma Wilson',8,'P5 W4',1,10,'All',''),
+    T('NII','02 - Dairy','132 - Whipped Topping','Peter Grey','Ian Smith',12,'P5 W4',1,7,'All',''),
+    T('NII','01 - Grocery','438 - Dips','Tom Alvarez','Ana Petrova',16,'P6 W1',1,9,'All',''),
+    T('Update','17 - Natural Foods','510 - NF Juice','Sarah Johnson','Michael Lee',8,'P6 W1',1,8,'All',''),
+    T('NII','01 - Grocery','439 - Honey','Rachel Thompson','Christopher Brown',8,'P6 W1',1,10,'All',''),
+    T('Update','01 - Grocery','440 - Rice Cakes','Maria Carmen','Teresa Mayfly',8,'P6 W1',1,4,8,''),
+    T('NII','02 - Dairy','133 - Plant Milk','William Turner','Zoe Henderson',24,'P6 W1',1,10,'All',''),
+    T('Update','02 - Dairy','134 - Yogurt Cups','Peter Grey','Ian Smith',12,'P6 W2',1,6,'All',''),
+    T('Update','01 - Grocery','441 - Soup Mixes','Tom Alvarez','Ana Petrova',24,'P6 W3',1,3,'All',''),
+    T('NII','02 - Dairy','135 - Drinkable Yogurt','William Turner','Zoe Henderson',24,'P6 W3',1,5,'All',''),
+    T('Update','17 - Natural Foods','511 - NF Kombucha','Sarah Johnson','Michael Lee',12,'P6 W3',1,3,'All',''),
+    T('Maintenance','17 - Natural Foods','512 - NF Dressings','Sarah Johnson','Michael Lee',10,'P6 W3',1,7,'All',''),
+    T('NII','17 - Natural Foods','513 - NF Pasta Sauce','Sarah Johnson','Michael Lee',12,'P6 W4',1,5,'All',''),
+    T('Update','01 - Grocery','442 - Pasta Sides','Rachel Thompson','Christopher Brown',20,'P6 W4',1,12,11,''),
+    T('NII','01 - Grocery','443 - Frozen Pizza','Tom Alvarez','Ana Petrova',8,'P6 W4',1,5,'All',''),
+    T('Update','43 - Liquor','074 - Gin','Alexander Nguyen','Isabella Garcia',24,'P6 W4',1,6,'All',''),
+    T('Update','02 - Dairy','136 - Pudding','William Turner','Zoe Henderson',8,'P6 W4',1,6,'All',''),
+    T('NII','17 - Natural Foods','514 - NF Frozen Meals','Sarah Johnson','Michael Lee',12,'P7 W1',1,9,'All',''),
+    T('NII','01 - Grocery','444 - Frozen Vegetables','Tom Alvarez','Ana Petrova',16,'P7 W2',1,8,'All',''),
+    T('NII','17 - Natural Foods','515 - NF Plant Milk','Sarah Johnson','Michael Lee',8,'P7 W2',1,6,'All',''),
+    T('Update','01 - Grocery','445 - Ice Pops','Rachel Thompson','Christopher Brown',8,'P7 W2',1,10,'All',''),
+    T('NII','01 - Grocery','446 - Bottled Water','Rachel Thompson','Christopher Brown',16,'P7 W2',1,12,'All',''),
+    T('Update','02 - Dairy','137 - Biscuit Dough','William Turner','Zoe Henderson',20,'P7 W2',2,3,'All',''),
+    T('Update','43 - Liquor','075 - Cider','Alexander Nguyen','Isabella Garcia',12,'P7 W3',1,5,12,''),
+    T('NII','17 - Natural Foods','516 - NF Protein','Sarah Johnson','Michael Lee',24,'P7 W3',1,5,'All',''),
+    T('Maintenance','43 - Liquor','076 - Red Wine','Alexander Nguyen','Isabella Garcia',12,'P7 W3',1,9,'All',''),
+    T('Maintenance','17 - Natural Foods','517 - NF Seeds','David Chen','Emma Wilson',10,'P7 W3',1,6,12,''),
+    T('Maintenance','01 - Grocery','447 - Sports Drinks','Laura Kim','Omar Reyes',16,'P7 W4',1,8,8,''),
+    T('Update','01 - Grocery','448 - Energy Drinks','Rachel Thompson','Christopher Brown',8,'P7 W4',1,8,'All',''),
+    T('Update','01 - Grocery','449 - Coffee Pods','Rachel Thompson','Christopher Brown',12,'P8 W1',1,3,'All',''),
+    T('NII','02 - Dairy','138 - Cookie Dough','William Turner','Zoe Henderson',24,'P8 W1',1,7,'All',''),
+    T('Update','01 - Grocery','450 - Creamers','Rachel Thompson','Christopher Brown',8,'P8 W1',1,10,'All',''),
+    T('NII','01 - Grocery','451 - Flour Mixes','Maria Carmen','Teresa Mayfly',8,'P8 W2',1,5,'All',''),
+    T('Update','17 - Natural Foods','518 - NF Honey','Sarah Johnson','Michael Lee',8,'P8 W2',1,9,'All',''),
+    T('Maintenance','17 - Natural Foods','519 - NF Spreads','David Chen','Emma Wilson',24,'P8 W2',1,3,'All',''),
+    T('Update','43 - Liquor','077 - White Wine','Alexander Nguyen','Isabella Garcia',8,'P8 W3',1,6,'All',''),
+    T('NII','01 - Grocery','452 - Cake Mixes','Rachel Thompson','Christopher Brown',8,'P8 W3',1,12,'All',''),
+    T('NII','43 - Liquor','078 - Sparkling Wine','Alexander Nguyen','Isabella Garcia',8,'P8 W3',1,10,'All',''),
+    T('NII','01 - Grocery','453 - Frosting','Laura Kim','Omar Reyes',24,'P8 W3',1,11,'All',''),
+    T('NII','02 - Dairy','139 - Parmesan','Peter Grey','Ian Smith',8,'P8 W4',1,10,'All',''),
+    T('NII','01 - Grocery','454 - Sprinkles','Rachel Thompson','Christopher Brown',16,'P8 W4',1,10,'All',''),
+    T('Update','02 - Dairy','140 - Ricotta','Peter Grey','Ian Smith',8,'P8 W4',1,10,12,''),
+    T('Update','17 - Natural Foods','520 - NF Snack Mix','David Chen','Emma Wilson',16,'P8 W4',1,4,'All',''),
+    T('NII','43 - Liquor','079 - Hard Seltzer','Alexander Nguyen','Isabella Garcia',12,'P9 W1',1,10,'All',''),
+    T('Update','01 - Grocery','455 - Peanuts','Monica White','Kelly Jacob',16,'P9 W1',1,12,'All',''),
+    T('NII','01 - Grocery','456 - Almonds','Laura Kim','Omar Reyes',10,'P9 W1',1,6,8,''),
+    T('Update','02 - Dairy','141 - Feta','William Turner','Zoe Henderson',16,'P9 W2',1,6,'All',''),
+    T('NII','01 - Grocery','457 - Cashews','Tom Alvarez','Ana Petrova',8,'P9 W2',1,5,'All',''),
+    T('NII','01 - Grocery','458 - Seltzer Water','Laura Kim','Omar Reyes',12,'P9 W2',1,12,7,''),
+    T('NII','02 - Dairy','142 - Goat Cheese','William Turner','Zoe Henderson',24,'P9 W3',1,8,'All',''),
+    T('NII','17 - Natural Foods','521 - NF Jerky','David Chen','Emma Wilson',8,'P9 W3',2,6,'All',''),
+    T('Update','01 - Grocery','459 - Soda','Maria Carmen','Teresa Mayfly',12,'P9 W3',1,4,'All',''),
+    T('Update','17 - Natural Foods','522 - NF Broth','Sarah Johnson','Michael Lee',16,'P9 W3',1,9,'All',''),
+    T('Update','01 - Grocery','460 - Hot Cocoa','Monica White','Kelly Jacob',16,'P9 W4',1,3,'All',''),
+    T('Update','17 - Natural Foods','523 - NF Beans','Sarah Johnson','Michael Lee',20,'P9 W4',1,11,12,''),
+    T('Update','01 - Grocery','461 - Rice Mixes','Maria Carmen','Teresa Mayfly',16,'P9 W4',1,5,'All',''),
+    T('Update','01 - Grocery','462 - Stuffing','Tom Alvarez','Ana Petrova',20,'P10 W1',1,5,'All',''),
+    T('NII','17 - Natural Foods','524 - NF Cookies','David Chen','Emma Wilson',16,'P10 W1',2,7,'All',''),
+    T('NII','01 - Grocery','463 - Couscous','Maria Carmen','Teresa Mayfly',16,'P10 W1',2,5,'All',''),
+    T('Update','17 - Natural Foods','525 - NF Cereal','Sarah Johnson','Michael Lee',24,'P10 W2',1,6,'All',''),
+    T('Update','01 - Grocery','464 - Lentils','Laura Kim','Omar Reyes',8,'P10 W2',1,3,'All',''),
+    T('NII','01 - Grocery','465 - Quinoa','Tom Alvarez','Ana Petrova',8,'P10 W2',1,5,'All',''),
+    T('NII','02 - Dairy','143 - Deli Cheese','Peter Grey','Ian Smith',8,'P10 W2',1,10,'All',''),
+    T('Update','01 - Grocery','466 - Tuna','Tom Alvarez','Ana Petrova',12,'P10 W2',1,3,'All',''),
+    T('NII','01 - Grocery','467 - Chili','Maria Carmen','Teresa Mayfly',10,'P10 W3',1,12,'All',''),
+    T('Update','01 - Grocery','468 - Ramen','Maria Carmen','Teresa Mayfly',16,'P10 W3',1,8,'All',''),
+    T('Update','17 - Natural Foods','526 - NF Coffee','David Chen','Emma Wilson',16,'P10 W4',1,10,'All',''),
+    T('NII','17 - Natural Foods','527 - NF Syrup','David Chen','Emma Wilson',10,'P10 W4',1,4,'All',''),
+    T('Maintenance','02 - Dairy','144 - Buttermilk','Peter Grey','Ian Smith',16,'P10 W4',1,9,'All',''),
+    T('Update','02 - Dairy','145 - Chocolate Milk','William Turner','Zoe Henderson',20,'P11 W1',1,7,5,''),
+    T('Maintenance','01 - Grocery','469 - Stew','Maria Carmen','Teresa Mayfly',16,'P11 W1',1,8,11,''),
+    T('Maintenance','01 - Grocery','470 - Pudding Cups','Laura Kim','Omar Reyes',12,'P11 W1',1,10,'All',''),
+    T('Update','01 - Grocery','471 - Applesauce','Rachel Thompson','Christopher Brown',24,'P11 W1',1,10,'All',''),
+    T('Update','01 - Grocery','472 - Baby Food','Monica White','Kelly Jacob',12,'P11 W2',2,5,'All',''),
+    T('Update','01 - Grocery','473 - Pet Treats','Tom Alvarez','Ana Petrova',8,'P11 W2',1,7,'All',''),
+    T('Update','01 - Grocery','474 - Spices','Maria Carmen','Teresa Mayfly',10,'P11 W2',1,8,'All',''),
+    T('NII','17 - Natural Foods','528 - NF Flour','David Chen','Emma Wilson',20,'P11 W2',1,11,'All',''),
+    T('NII','17 - Natural Foods','529 - NF Oils','Sarah Johnson','Michael Lee',20,'P11 W3',1,9,'All',''),
+    T('NII','01 - Grocery','475 - Oils','Monica White','Kelly Jacob',12,'P11 W3',1,8,'All',''),
+    T('NII','17 - Natural Foods','530 - NF Vinegar','Sarah Johnson','Michael Lee',10,'P11 W4',1,11,'All',''),
+    T('Maintenance','02 - Dairy','146 - Eggnog','William Turner','Zoe Henderson',16,'P11 W4',1,7,'All',''),
+    T('Update','01 - Grocery','476 - Vinegar','Maria Carmen','Teresa Mayfly',16,'P11 W4',1,7,'All',''),
+    T('NII','02 - Dairy','147 - Mozzarella','William Turner','Zoe Henderson',8,'P11 W4',1,5,'All',''),
+    T('Maintenance','17 - Natural Foods','531 - NF Salsa','David Chen','Emma Wilson',20,'P11 W4',1,7,'All',''),
+    T('Update','17 - Natural Foods','532 - NF Pasta','Sarah Johnson','Michael Lee',8,'P12 W1',1,8,'All',''),
+    T('Update','01 - Grocery','477 - Syrup','Rachel Thompson','Christopher Brown',12,'P12 W1',1,9,12,''),
+    T('Update','17 - Natural Foods','533 - NF Bars','Sarah Johnson','Michael Lee',12,'P12 W1',1,5,'All',''),
+    T('Update','02 - Dairy','148 - Cheddar','Peter Grey','Ian Smith',16,'P12 W2',1,7,'All',''),
+    T('NII','17 - Natural Foods','534 - NF Chips','Sarah Johnson','Michael Lee',20,'P12 W2',1,8,'All',''),
+    T('NII','02 - Dairy','149 - Swiss','William Turner','Zoe Henderson',12,'P12 W2',1,7,'All',''),
+    T('Update','01 - Grocery','478 - Jam','Laura Kim','Omar Reyes',16,'P12 W3',1,7,'All',''),
+    T('Maintenance','02 - Dairy','150 - Brie','Peter Grey','Ian Smith',16,'P12 W3',1,11,'All',''),
+    T('Maintenance','02 - Dairy','151 - Gouda','William Turner','Zoe Henderson',10,'P12 W3',1,7,'All',''),
+    T('NII','01 - Grocery','479 - Crackers','Monica White','Kelly Jacob',8,'P12 W4',1,9,'All',''),
+    T('Update','01 - Grocery','480 - Cookies','Maria Carmen','Teresa Mayfly',12,'P12 W4',1,10,'All',''),
+    T('Maintenance','01 - Grocery','481 - Pretzels','Tom Alvarez','Ana Petrova',12,'P12 W4',2,3,'All',''),
+    T('Update','17 - Natural Foods','535 - NF Soup','David Chen','Emma Wilson',8,'P12 W4',1,9,'All',''),
+    T('Update','02 - Dairy','152 - Milk','William Turner','Zoe Henderson',8,'P13 W1',2,4,'All',''),
+    T('NII','02 - Dairy','153 - Cream','William Turner','Zoe Henderson',24,'P13 W1',1,3,'All',''),
+    T('NII','02 - Dairy','154 - Half & Half','Peter Grey','Ian Smith',16,'P13 W1',1,11,'All',''),
+    T('Update','01 - Grocery','482 - Popcorn','Tom Alvarez','Ana Petrova',8,'P13 W1',1,6,'All',''),
+    T('Update','02 - Dairy','155 - Kefir','Peter Grey','Ian Smith',20,'P13 W2',1,6,9,''),
+    T('Update','17 - Natural Foods','536 - NF Nuts','David Chen','Emma Wilson',8,'P13 W2',2,3,'All',''),
+    T('Update','02 - Dairy','156 - Sour Cream','Peter Grey','Ian Smith',16,'P13 W2',1,6,6,''),
+    T('NII','01 - Grocery','483 - Tortillas','Laura Kim','Omar Reyes',24,'P13 W3',1,3,'All',''),
+    T('NII','01 - Grocery','484 - Bread','Laura Kim','Omar Reyes',12,'P13 W3',1,11,3,''),
+    T('Update','01 - Grocery','485 - Canned Tomatoes','Laura Kim','Omar Reyes',8,'P13 W3',1,12,'All',''),
+    T('Update','17 - Natural Foods','537 - NF Tea','David Chen','Emma Wilson',16,'P13 W3',1,5,'All',''),
+    T('Update','01 - Grocery','486 - Canned Fruit','Rachel Thompson','Christopher Brown',12,'P13 W4',1,6,'All',''),
+    T('Update','43 - Liquor','080 - Craft Beer','Alexander Nguyen','Isabella Garcia',20,'P13 W4',1,11,'All',''),
+    T('NII','01 - Grocery','487 - Canned Vegetables','Laura Kim','Omar Reyes',24,'P13 W4',1,6,'All',''),
+    T('NII','17 - Natural Foods','538 - NF Oats','Sarah Johnson','Michael Lee',16,'P13 W4',1,6,10,''),
+  ].map((r, i) => Object.assign(r, { id: i + 1 }));
+
+  const WEEKS = 52, P = 13;
+  const wkIdx = s => { const m = /P(\d+)\s*W(\d+)/.exec(s); return (+m[1] - 1) * 4 + (+m[2] - 1); };
+  const wkLbl = i => `P${Math.floor(i / 4) + 1} W${(i % 4) + 1}`;
+  const span = e => { const a = wkIdx(e.start); return [a, Math.min(WEEKS - 1, a + e.dur - 1)]; };
+  const covers = (e, w) => { const [a, b] = span(e); return w >= a && w <= b; };
+
+  const DATA_YEAR = 2026;
+  const DIVS = ['Atlanta', 'Central', 'Cincinnati', 'Dallas', 'Delta', 'Houston', 'Louisville', 'Michigan', 'Mid-Atlantic', 'Nashville', 'Pacific', 'Mountain'];
+  const DIVNO = { 'Atlanta': '011', 'Central': '014', 'Cincinnati': '015', 'Dallas': '019', 'Delta': '020', 'Houston': '023', 'Louisville': '025', 'Michigan': '028', 'Mid-Atlantic': '031', 'Nashville': '034', 'Pacific': '037', 'Mountain': '040' };   // demo numbers
+  PUBROWS.forEach((e, i) => {
+    e.year = DATA_YEAR;
+    if (+e.divs === DIVS.length) e.divs = 'All';
+    const n = e.divs === 'All' ? DIVS.length : +e.divs;
+    e.divList = Array.from({ length: n }, (_, k) => DIVS[(i + k) % DIVS.length]);
+    e.status = i === 0 || i === 14 || i === 27 ? 'Added' : i === 18 || i === 8 || i === 31 ? 'Modified' : '';
+    e.chg = e.status === 'Modified' ? ['dur', 'hours'] : []; e.by = '';
+  });
+
+  /* Cross-commodity sets. Members are peers: no parent, no child. Keys are internal only; nothing shows them. */
+    const XSETS = {
+    A: [['017 - Flour & Meal', 'P1 W1'], ['005 - Soup', 'P1 W2']],
+    B: [['062 - Yogurt', 'P1 W3'], ['007 - Shelf Stable Milk', 'P2 W2'], ['677 - NF Baking Mixes', 'P9 W1']],
+    C: [['012 - Mixers', 'P1 W1'], ['003 - Can Beans', 'P8 W1']],
+    D: [['400 - Spices', 'P1 W2'], ['401 - Oils', 'P1 W2'], ['402 - Vinegar', 'P1 W2']],
+    E: [['120 - Milk', 'P1 W3'], ['121 - Cream', 'P1 W4'], ['122 - Half & Half', 'P2 W1'], ['123 - Kefir', 'P2 W2']],
+  };
+  const XSTART = { A: 'P1 W1', B: 'P1 W3', C: 'P1 W1', D: 'P1 W2', E: 'P1 W3' };
+  Object.entries(XSETS).forEach(([k, list]) => list.forEach(([c, st]) => {
+    const e = PUBROWS.find(x => x.comm === c && x.start === st); if (!e) throw new Error('cross-commodity row missing: ' + c); e.xset = k; e.start = XSTART[k];   // all resets in a set share one start date
+  }));
+  Object.keys(XSETS).forEach(k => { const g = PUBROWS.filter(x => x.xset === k), f = g[0]; g.forEach(x => { x.type = f.type; x.divs = f.divs; x.divList = [...f.divList]; }); });   // ...and the same Type and Division
+
+  /* Loads per week. cap = comfortable hours per week. */
+  function calc(rows, cap) {
+    const load = Array(WEEKS).fill(0);
+    rows.forEach(e => { const [a, b] = span(e); for (let w = a; w <= b; w++) { load[w] += e.hours; } });
+    return { load };
+  }
+  /*DATA-END*/
+
+  /* ---------- Creator: draft vs published ----------
+     PUBROWS = the published calendar (what Viewers see). DRAFTROWS = the Creator's working copy with unpublished changes.
+     Per draft row: status 'Added' | 'Modified' | 'Removed' ('' = unchanged), chg = fields edited, by = who changed it,
+     pub = marked ready to publish, orig = values at the last publish (to detect edits that are undone). */
+  const USER = 'Jane Doe';                   // the signed-in Creator in this demo ("me")
+  const nowStr = () => { const d = new Date(); return d.toLocaleDateString('en-US') + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); };
+  const FIELDS = ['type', 'dept', 'comm', 'cm', 'pm', 'size', 'start', 'dur', 'hours', 'divs', 'comments'];
+  const snap = e => Object.fromEntries(FIELDS.map(k => [k, e[k]]));
+  const divListFor = (id, divs) => Array.from({ length: divs === 'All' ? DIVS.length : +divs }, (_, k) => DIVS[(id + k) % DIVS.length]);
+  const FLABEL = { type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
+  /* Weekly publish: every Thursday at 1:00 PM. That is also the cutoff for changes to go out in it. */
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], FULLDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const nextPublish = () => { const n = new Date(), d = new Date(n); d.setHours(13, 0, 0, 0); d.setDate(n.getDate() + ((4 - n.getDay() + 7) % 7)); if (d <= n) d.setDate(d.getDate() + 7); return d; };
+  const shortDate = d => `${DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
+  const longDate = d => `${FULLDAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()} at 1:00 PM`;
+  const cutoffTxt = d => `${shortDate(d)}, 1:00 PM`;
+  const DRAFTROWS = PUBROWS.map(r => ({ ...r, divList: [...r.divList], status: '', chg: [], by: '', sched: null }));
+  (() => {
+    const find = (c, st) => { const e = DRAFTROWS.find(x => x.comm === c && x.start === st); if (!e) throw new Error('demo row missing: ' + c); return e; };
+    const edit = (c, st, vals, by) => { const e = find(c, st); e.orig = snap(e); Object.assign(e, vals); e.divList = divListFor(e.id, e.divs); e.status = 'Modified'; e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k])); e.by = by; };
+    const drop = (c, st, by) => { const e = find(c, st); e.status = 'Removed'; e.by = by; };
+    const add = vals => { const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1; DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: 'John Doe', sched: null }); };
+    edit('677 - NF Baking Mixes', 'P1 W3', { dur: 2, hours: 5 }, 'Jane Doe');
+    edit('071 - Cheese', 'P2 W1', { hours: 10 }, 'Jane Doe');
+    edit('102 - Coffee', 'P4 W1', { start: 'P4 W3' }, 'John Doe');
+    drop('290 - NF Yogurt', 'P4 W2', 'John Doe');
+    drop('410 - NF Cereal', 'P1 W3', 'Jane Doe');
+    add({ type: 'NII', dept: '02 - Dairy', comm: '130 - Greek Yogurt', cm: 'William Turner', pm: 'Zoe Henderson', size: 12, start: 'P6 W2', dur: 1, hours: 6, divs: 'All', comments: 'New vendor listing' });
+    add({ type: 'Update', dept: '01 - Grocery', comm: '235 - Curry Sauces', cm: 'Laura Kim', pm: 'Omar Reyes', size: 16, start: 'P3 W2', dur: 1, hours: 5, divs: 'All', comments: '' });
+    add({ type: 'NII', dept: '17 - Natural Foods', comm: '560 - NF Protein Bars', cm: 'David Chen', pm: 'Emma Wilson', size: 8, start: 'P11 W3', dur: 1, hours: 4, divs: 6, comments: 'Test in 6 divisions first' });
+    const nx0 = nextPublish();               // a few changes are already in the queue, from different Creators
+    [['071 - Cheese', 'Jane Doe'], ['677 - NF Baking Mixes', 'Jane Doe'], ['235 - Curry Sauces', 'John Doe']].forEach(([c, by]) => { const e = DRAFTROWS.find(x => x.comm === c && x.status); e.sched = { label: shortDate(nx0), at: nx0.toISOString(), by }; });
+  })();
+  let ROWS = PUBROWS;
+  let role = new URLSearchParams(location.search).get('role') === 'creator' ? 'creator' : 'viewer', draftView = true;
+  let version = 2, updatedAt = '10/9/2026 3:28PM';
+  const sel = new Set();
+  let tableRows = [];
+  const openCom = new Set();               // ids of rows whose comment is shown in full
+  const inDraft = () => role === 'creator' && draftView;
+  let EV = +new URLSearchParams(location.search).get('ev') === 2 ? 2 : 1;      // how editing a reset inside a cross-commodity set works: 1 = the reset you opened, 2 = every reset in the set
+  const applyEV = () => document.querySelectorAll('[data-ev]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.ev === EV));
+  function useData() {                      // which data set the page shows
+    ROWS = inDraft() ? DRAFTROWS : PUBROWS;
+    rowOrder = null; if ((sortKey === 'mod' || sortKey === 'pub') && !inDraft()) sortKey = null; if (sortKey) applySort();
+    sel.clear(); buildFilters();
+  }
+  function resetOrder() {                   // after rows are added/removed/edited: keep the user's sort, put new rows on top
+    if (!sortKey) { rowOrder = null; return; }
+    ensureOrder(); const ids = new Set(ROWS.map(e => e.id)); rowOrder = rowOrder.filter(id => ids.has(id));
+    const have = new Set(rowOrder), by = new Map(ROWS.map(e => [e.id, e]));
+    ROWS.forEach(e => {                                                   // a new member of an existing set goes right after that set. Everything else goes on top
+      if (have.has(e.id)) return; have.add(e.id);
+      let at = -1; if (e.xset) rowOrder.forEach((id, k) => { const o = by.get(id); if (o && o.xset === e.xset) at = k; });
+      at >= 0 ? rowOrder.splice(at + 1, 0, e.id) : rowOrder.unshift(e.id);
+    });
+  }
+
+  /* ---------- Filter state ----------
+     draft = what the panel shows; applied = what the page uses (changes on Apply).
+     The Date filter is a "zoom", not a data filter: it narrows the table and numbers,
+     but the year strip keeps showing every period so you can move around. */
+  const YEAR = DATA_YEAR;
+  const FKEYS = ['dept', 'comm', 'type', 'cm', 'pm', 'div', 'status', 'pstate', 'by'];
+  const blank = () => ({ year: '', mode: 'range', start: null, end: null, singles: [], dept: '', comm: '', type: '', cm: '', pm: '', div: '', status: '', pstate: '', by: '' });
+  const clone = f => ({ ...f, singles: [...f.singles] });
+  let applied = blank(), draft = blank();
+  const cap = 40;   // weekly capacity, fixed for now
+  let startOpen = false;                    // weekly-hours grid: opened with the button in the Start header
+  let sortKey = null, sortDir = 'asc';   // null = default order (changed rows first, then start week)
+  const MAXGRID = 8;
+
+  const idx = (p, w) => (p - 1) * 4 + (w - 1);
+  const nm = i => `P${Math.floor(i / 4) + 1}W${(i % 4) + 1}`;
+  const pOf = w => Math.floor(w / 4) + 1;
+  const pWeeks = p => [0, 1, 2, 3].map(i => (p - 1) * 4 + i);
+  const hasDate = f => f.mode === 'single' ? f.singles.length > 0 : f.start !== null;
+  const dateList = f => !hasDate(f) ? null : f.mode === 'single' ? [...f.singles].sort((a, b) => a - b)
+    : Array.from({ length: Math.abs(f.end - f.start) + 1 }, (_, k) => Math.min(f.start, f.end) + k);
+  const dateText = f => {
+    const l = dateList(f);
+    if (f.mode !== 'single') return `${nm(l[0])}-${nm(l[l.length - 1])}`;
+    const by = {}; l.forEach(w => { (by[pOf(w)] = by[pOf(w)] || []).push(w); });
+    return Object.keys(by).map(Number).sort((a, b) => a - b).map(p => by[p].length === 4 ? `P${p}` : by[p].map(nm).join(', ')).join(', ');
+  };
+  const dateLabel = f => `${f.year || YEAR}: ${dateText(f)}`;
+  const activeKeys = f => [f.year && 'year', hasDate(f) && 'date', ...FKEYS.filter(k => f[k])].filter(Boolean);
+  const clearDate = f => { f.start = null; f.end = null; f.singles = []; };
+  const baseRows = () => ROWS.filter(e => (!applied.year || +applied.year === e.year) &&
+    ['dept', 'comm', 'type', 'cm', 'pm', 'status'].every(k => !applied[k] || e[k] === applied[k]) && (!applied.div || e.divList.includes(applied.div)) &&
+    (!applied.pstate || (e.status && (applied.pstate === 'Scheduled' ? !!e.sched : !e.sched))) && (!applied.by || e.by === applied.by));
+  const scopeWs = () => dateList(applied);
+
+
+  /* ---------- Table ---------- */
+  const CH = d => `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  /* Sorting re-orders a stored list of row ids. Ties keep the order they already had (no automatic secondary sort),
+     so clicking one column and then another builds a two-level sort. Clearing the sort restores the default order: rows with a status (changes since the last published calendar) first,
+     then everything else, each group by start week. */
+  /* Cross-commodity members always stay together by default. A set sorts as one unit: it moves up to the changed block
+     if ANY member has a change, and it is placed by its earliest start week. Inside the set, members go by start week. */
+  let GK = {};
+  const buildGK = () => { GK = {}; ROWS.forEach(e => { if (!e.xset) return; const g = GK[e.xset] = GK[e.xset] || { ch: 1, st: 1e9 }; if (e.status) g.ch = 0; g.st = Math.min(g.st, wkIdx(e.start)); }); };
+  const gk = e => e.xset ? GK[e.xset] : { ch: e.status ? 0 : 1, st: wkIdx(e.start) };
+  const gid = e => e.xset ? 'x' + e.xset : 'y' + String(e.id).padStart(6, '0');
+  const dflt = (a, b) => { const x = gk(a), y = gk(b); return x.ch - y.ch || x.st - y.st || gid(a).localeCompare(gid(b)) || wkIdx(a.start) - wkIdx(b.start) || a.id - b.id; };
+  const SORTV = { status: e => e.status, type: e => e.type, dept: e => e.dept, comm: e => e.comm, cm: e => e.cm, pm: e => e.pm, size: e => e.size,
+    start: e => wkIdx(e.start), dur: e => e.dur, hours: e => e.hours, divs: e => e.divList.length, comments: e => e.comments, mod: e => e.by, pub: e => e.status ? (e.sched ? 'Scheduled' : 'Not scheduled') : '', xc: e => e.xset || '' };
+  let rowOrder = null;
+  const ensureOrder = () => { if (!rowOrder) { buildGK(); rowOrder = ROWS.slice().sort(dflt).map(e => e.id); } };
+  /* Sorting treats a cross-commodity set as ONE unit. The set is placed by its first member under the current sort
+     (lowest value ascending, highest descending; blanks last), and inside the set the members follow the same sort.
+     Rows with no set sort on their own. Ties keep the order they already had, so clicking two columns in a row still builds a two-level sort. */
+  function applySort() {
+    ensureOrder();
+    const byId = new Map(ROWS.map(e => [e.id, e])), sg = sortDir === 'desc' ? -1 : 1;
+    const cmp = (a, b) => {
+      const x = SORTV[sortKey](a), y = SORTV[sortKey](b), ex = x === '' || x == null, ey = y === '' || y == null;
+      if (ex !== ey) return ex ? 1 : -1;                                   // blanks always last
+      return sg * (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true, sensitivity: 'base' }));
+    };
+    const units = [], bySet = {};
+    rowOrder.map(id => byId.get(id)).forEach(e => {
+      if (!e.xset) { units.push([e]); return; }
+      if (!bySet[e.xset]) units.push(bySet[e.xset] = []);
+      bySet[e.xset].push(e);
+    });
+    units.forEach(u => u.sort(cmp));
+    units.sort((u, v) => cmp(u[0], v[0]));
+    rowOrder = units.flat().map(e => e.id);
+  }
+  const FSORT = { xc: 'Cross-commodity set', mod: 'Modified By', pub: 'Publish', status: 'Status', type: 'Type', dept: 'Department', comm: 'Commodity', cm: 'Category Manager', pm: 'Process Manager', size: 'Core Size', start: 'Start', dur: 'Duration', hours: 'Hours', divs: 'Nr of Divisions', comments: 'Comments' };
+  function renderTable(c, shown, sw) {
+    const showGrid = startOpen;
+    const gw = showGrid ? (sw || [...Array(WEEKS).keys()]) : [], cmp = gw.length > MAXGRID, two = gw.length > 0;
+    ensureOrder();
+    const pos = new Map(rowOrder.map((id, i) => [id, i]));
+    const rows = shown.slice().sort((a, b) => pos.get(a.id) - pos.get(b.id));
+    const lead = inDraft() ? [['sel', ''], ['edit', 'Edit'], ['remove', 'Remove'], ['pub', 'Publish'], ['mod', 'Modified By']] : [];
+    const pre = [...lead, ['status', 'Status'], ['type', 'Type'], ['dept', 'Department'], ['comm', 'Commodity'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['size', 'Core Size'], ['start', 'Start']];
+    const post = [['dur', 'Duration'], ['hours', 'Hours'], ['divs', 'Nr of Divisions'], ['comments', 'Comments']];
+    const rs = two ? ' rowspan="2"' : '';
+    const stk = k => k === 'comm' ? 'stk stk1' : k === 'start' ? 'stk stk2' : '';
+    const cl = (k, x = '') => { const v = (x + ' ' + stk(k)).trim(); return v ? ` class="${v}"` : ''; };
+    const groups = []; gw.forEach(w => { const g = groups[groups.length - 1]; g && g.p === pOf(w) ? g.n++ : groups.push({ p: pOf(w), n: 1 }); });
+    const xbtn = `<button type="button" class="xbtn" data-startx aria-expanded="${startOpen}" aria-label="${startOpen ? 'Hide' : 'Show'} weekly hours next to Start" title="${startOpen ? 'Hide' : 'Show'} weekly hours">${startOpen ? CH('M15 5l-7 7 7 7') : CH('M9 5l7 7-7 7')}</button>`;
+    const ARR = { asc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor"/><path d="M5 11L1 6h8z" fill="currentColor" opacity=".25"/></svg>', desc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor" opacity=".25"/><path d="M5 11L1 6h8z" fill="currentColor"/></svg>', none: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1zM5 11L1 6h8z" fill="currentColor"/></svg>' };
+    const sortBtn = (k, l) => { const on = sortKey === k; return `<button type="button" class="sorth${on ? ' on' : ''}" data-sort="${k}" title="Sort by ${l}"><span>${l}</span><i class="sa">${on ? ARR[sortDir] : ARR.none}</i></button>`; };
+    const NOSORT = { sel: 1, edit: 1, remove: 1 };
+    const xInfo = e => { const m = ROWS.filter(x => x.xset === e.xset), o = m.filter(x => x !== e).map(x => x.comm); return `Cross-commodity reset, ${m.length} resets in this set. Linked with ${o.join(', ')}`; };
+    const xcMark = (e, i) => {
+      if (!e.xset) return '';
+      const pv = rows[i - 1] && rows[i - 1].xset === e.xset, nx = rows[i + 1] && rows[i + 1].xset === e.xset, pos = pv && nx ? 'm' : pv ? 'b' : nx ? 't' : 's';
+      return `<span class="xw ${pos}" tabindex="0" role="img" aria-label="${esc(xInfo(e))}"><i class="l"></i><i class="k a"></i><i class="k e"></i></span>`;
+    };
+    const th = ([k, l]) => {
+      const aria = sortKey === k ? ` aria-sort="${sortDir === 'asc' ? 'ascending' : 'descending'}"` : '';
+      const inner = k === 'sel' ? '<input type="checkbox" id="selAll" aria-label="Select all changed resets">' : NOSORT[k] ? esc(l)
+        : k === 'start' && xbtn ? `<span class="hwrap">${sortBtn(k, l)}${xbtn}</span>` : sortBtn(k, l);
+      return `<th scope="col"${rs}${cl(k, (k === pre[0][0] ? 'xfirst ' : '') + (k === 'pub' ? 'pubc' : NOSORT[k] ? 'actc' : ''))} data-c="${k}"${aria}>${inner}</th>`;
+    };
+    $('thead').parentElement.classList.toggle('cmp', cmp);
+    queueMicrotask(pinOffset);
+    $('thead').innerHTML = '<tr>' + pre.map(th).join('') + groups.map(g => `<th scope="colgroup" colspan="${g.n}" class="wk pg ps">P${g.p}</th>`).join('') + post.map(th).join('') + '</tr>' +
+      (two ? '<tr>' + gw.map(w => `<th scope="col" class="wk w${w % 4 === 0 ? ' ps' : ''}" aria-label="${wkLbl(w)}">W${w % 4 + 1}</th>`).join('') + '</tr>' : '');
+    const ck = (k, e, extra = '') => cl(k, ((e.chg && e.chg.includes(k)) ? 'chg ' : '') + extra);
+    const cellHtml = (k, e) => {
+      switch (k) {
+        case 'sel': return `<td class="act"><input type="checkbox" data-sel="${e.id}" ${sel.has(e.id) ? 'checked' : ''} ${e.status ? '' : 'disabled'} aria-label="Select ${esc(e.comm)}"></td>`;
+        case 'edit': return `<td class="act"><button type="button" class="ib" data-edit="${e.id}" ${e.status === 'Removed' ? 'aria-disabled="true"' : ''} aria-label="Edit ${esc(e.comm)}">${ICON.edit}</button></td>`;
+        case 'remove': return e.status === 'Removed'
+          ? `<td class="act"><button type="button" class="ib" data-restore="${e.id}" aria-label="Restore ${esc(e.comm)}">${ICON.restore}</button></td>`
+          : `<td class="act"><button type="button" class="ib" data-remove="${e.id}" aria-label="Remove ${esc(e.comm)}">${ICON.trash}</button></td>`;
+        case 'pub': return !e.status ? '<td class="pubc"></td>' : e.sched
+          ? `<td class="pubc"><span class="pchip" title="Scheduled by ${esc(e.sched.by)}">${CLOCK}${esc(e.sched.label)}<button type="button" class="pun" data-unsched="${e.id}" aria-label="Unschedule ${esc(e.comm)} from the ${esc(e.sched.label)} publish">✕</button></span></td>`
+          : '<td class="pubc"><span class="pnot">Not scheduled</span></td>';
+        case 'mod': return `<td>${esc(e.by)}</td>`;
+        case 'dur': return `<td${ck(k, e)}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
+        case 'comments': { if (!e.comments) return `<td${ck(k, e, 'com')}></td>`; const open = openCom.has(e.id);
+          return `<td${ck(k, e, 'com' + (open ? ' open' : ''))}><div class="cwrap"><span class="ctext">${esc(e.comments)}</span><button type="button" class="cmore" data-cmore="${e.id}" aria-expanded="${open}" aria-label="${open ? 'Display less' : 'Display more'} of the comment for ${esc(e.comm)}"${open ? '' : ' hidden'}>${open ? '(less)' : '(more)'}</button></div></td>`; }
+        case 'status': return `<td>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;
+        case 'divs': return e.divs === 'All' ? `<td${ck(k, e)}>All</td>`
+          : `<td${ck(k, e)}><button type="button" class="divbtn" data-divs="${e.id}" aria-haspopup="dialog" aria-label="${e.divs} ${e.divs === 1 ? 'division' : 'divisions'}, view list for ${esc(e.comm)}">${e.divs}</button></td>`;
+        default: return `<td${ck(k, e)}>${esc(e[k])}</td>`;
+      }
+    };
+    const ps = w => w % 4 === 0 ? ' ps' : '';
+    const filtered = activeKeys(applied).length > 0, ncol = pre.length + gw.length + post.length;
+    $('tbody').innerHTML = rows.length ? rows.map((e, i) => `<tr data-id="${e.id}"${e.xset ? ` data-xs="${e.xset}"` : ''} class="${e.status === 'Added' ? 'add' : e.status === 'Removed' ? 'rm' : ''}">` + pre.map(([k], j) => j ? cellHtml(k, e) : cellHtml(k, e).replace(/^(<td[^>]*>)/, `$1${xcMark(e, i)}`)).join('') +
+      gw.map(w => covers(e, w) ? `<td class="wk on${c.load[w] > cap ? ' over' : ''}${ps(w)}">${e.hours}</td>` : `<td class="wk${ps(w)}"></td>`).join('') +
+      post.map(([k]) => cellHtml(k, e)).join('') + '</tr>').join('')
+      : `<tr><td class="emp" colspan="${ncol}">No resets match these filters.${filtered ? ' <button class="link-btn" data-clearall>Clear all filters</button>' : ''}</td></tr>`;
+    tableRows = rows;
+    document.querySelectorAll('#tbody td.com:not(.open) .cwrap').forEach(w => { const t = w.firstElementChild, b = w.lastElementChild; b.hidden = !(t.scrollWidth > t.clientWidth); });   // "Display more" only where the text is actually cut off
+    const selAll = $('selAll');
+    if (selAll) { const ch = rows.filter(e => e.status); selAll.disabled = !ch.length; selAll.checked = ch.length > 0 && ch.every(e => sel.has(e.id)); selAll.indeterminate = !selAll.checked && ch.some(e => sel.has(e.id)); }
+    $('tfoot').innerHTML = two && rows.length ? `<tr>` + pre.map(([k]) => `<td${cl(k)}>${k === 'comm' ? 'Total hours per week' : ''}</td>`).join('') +
+      gw.map(w => { const v = c.load[w], o = v > cap; return `<td class="wk${o ? ' over' : ''}${ps(w)}"${o ? ` title="${wkLbl(w)}: ${v - cap} over capacity"` : ''}>${cmp ? v : (o ? WARN + ' ' : '') + v}</td>`; }).join('') +
+      `<td colspan="${post.length}"></td></tr>` : '';
+    $('gridbar').innerHTML = `<span>Showing ${rows.length} of ${ROWS.length} resets</span>`;
+  }
+  const pinOffset = () => {
+    const t = document.querySelector('.tablewrap table'), c = $('thead').querySelector('th[data-c="comm"]'), r0 = $('thead').rows[0];
+    if (c) t.style.setProperty('--c1w', c.getBoundingClientRect().width + 'px');
+    if (r0) t.style.setProperty('--h1', r0.getBoundingClientRect().height + 'px');
+  };
+  window.addEventListener('resize', pinOffset);
+  const bringGrid = () => {
+    const w1 = $('thead').querySelector('th.wk'), st = $('thead').querySelector('th[data-c="start"]'), c = $('thead').querySelector('th[data-c="comm"]'), wrap = document.querySelector('.tablewrap');
+    if (w1 && st && c) wrap.scrollTo({ left: Math.max(0, w1.offsetLeft - c.offsetWidth - st.offsetWidth - 4), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+
+  function renderChrome() {
+    const cr = role === 'creator';
+    $('toolbar').hidden = !cr; $('tools').hidden = !cr; $('banner').hidden = !inDraft();
+    $('titleYear').textContent = applied.year || YEAR;
+    $('meta').textContent = `Updated on: ${updatedAt}`;
+    if (cr) {
+      const yr = +(applied.year || YEAR), ch = DRAFTROWS.filter(e => e.status && e.year === yr), sc = ch.filter(e => e.sched).length, ns = ch.length - sc, nx = nextPublish();
+      const pfb = (v, txt) => `<button type="button" class="blink" data-pf="${v}" aria-pressed="${applied.pstate === v}">${txt}</button>`;
+      const mineN = ch.filter(e => e.by === USER).length, mineOn = applied.by === USER;
+      const mineLink = mineOn || mineN ? `<button type="button" class="blink" data-mine aria-pressed="${mineOn}">${mineOn ? 'Show all changes' : `Show my changes (${mineN})`}</button>` : '';
+      const w = ch.length === 1 ? 'change' : 'changes', bn = $('banner');
+      if (!ch.length) { bn.className = 'banner info'; bn.innerHTML = `${BICON.info}<span>No unpublished changes in ${yr} schedule.</span>`; }
+      else if (!ns) { bn.className = 'banner success'; bn.innerHTML = `${BICON.success}<span>${ch.length === 1 ? 'The' : 'All'} ${ch.length} unpublished ${w} in ${yr} schedule ${ch.length === 1 ? 'is' : 'are'} scheduled for ${shortDate(nx)}.${mineLink ? ' ' + mineLink : ''}</span>`; }
+      else { bn.className = 'banner warn'; bn.innerHTML = `${BICON.warn}<span>${ch.length} unpublished ${w} in ${yr} schedule: ${sc ? pfb('Scheduled', `${sc} scheduled for ${shortDate(nx)}`) + ' · ' : ''}${pfb('Not scheduled', `${ns} not scheduled`)}${mineLink ? ' · ' + mineLink : ''}</span>`; }
+      $('viewSwitch').setAttribute('aria-checked', !draftView); $('lblDraft').className = draftView ? 'on' : ''; $('lblPub').className = draftView ? '' : 'on';
+      $('newBtn').disabled = !draftView;
+      $('publishBtn').disabled = !(inDraft() && sel.size);
+    }
+    $('who').hidden = !cr; $('whoName').textContent = USER; $('whoAv').textContent = USER.split(' ').map(w => w[0]).join('');
+    $('who').title = `Signed in as ${USER}`;
+    document.querySelectorAll('[data-role]').forEach(b => b.setAttribute('aria-pressed', b.dataset.role === role));
+  }
+  function render() {
+    [...sel].forEach(id => { const e = ROWS.find(x => x.id === id); if (!e || !e.status) sel.delete(id); });
+    const base = baseRows(), c = calc(base.filter(e => e.status !== 'Removed'), cap), sw = scopeWs();
+    const shown = sw ? base.filter(e => sw.some(w => covers(e, w))) : base;
+    { const vis = new Set(shown.map(e => e.id)); [...sel].forEach(id => { if (!vis.has(id)) sel.delete(id); }); }
+    renderChrome(); renderTable(c, shown, sw); renderPanel();
+  }
+
+  /* ---------- Filter panel: fields ---------- */
+  const uniq = k => [...new Set(ROWS.map(e => e[k]))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const selHtml = (key, label, opts) => `<label class="flabel" for="f_${key}">${label}</label><div class="sel"><select class="field empty" id="f_${key}" data-k="${key}"><option value="">--- Select a Value ---</option>${opts.map(o => `<option>${esc(o)}</option>`).join('')}</select><button class="clear-x" type="button" data-clr="${key}" aria-label="Clear ${label}" hidden>✕</button><span class="caret">▼</span></div>`;
+  $('fieldYear').innerHTML = selHtml('year', 'Year', [YEAR - 1, YEAR, YEAR + 1].map(String));
+  function buildFilters() {
+    const opts = { dept: uniq('dept'), comm: uniq('comm'), type: uniq('type'), cm: uniq('cm'), pm: uniq('pm'), div: DIVS, status: inDraft() ? ['Added', 'Modified', 'Removed'] : ['Added', 'Modified'], pstate: inDraft() ? ['Scheduled', 'Not scheduled'] : [], by: inDraft() ? [...new Set(ROWS.filter(e => e.by).map(e => e.by))].sort() : [] };
+    const labels = [['dept', 'Department'], ['comm', 'Commodity'], ['type', 'Type'], ['cm', 'Category Manager'], ['pm', 'Process Manager'], ['div', 'Division'], ['status', 'Status'], ...(inDraft() ? [['pstate', 'Publish state'], ['by', 'Modified By']] : [])];
+    $('fieldRest').innerHTML = labels.map(([k, l]) => selHtml(k, l, opts[k])).join('');
+    for (const f of [applied, draft]) for (const k of FKEYS) if (f[k] && !(opts[k] || []).includes(f[k])) f[k] = '';   // drop filters that no longer exist
+  }
+
+  const trigger = $('trigger'), popover = $('popover'), pgrid = $('pgrid'), clearX = $('clearX'), clearAllBtn = $('clearAll');
+  const pk = { s: null, e: null, h: null };   // in-progress range while picking
+  for (let p = 1; p <= P; p++) {
+    const row = document.createElement('div'); row.className = 'pk-row';
+    row.innerHTML = `<div class="pk-plabel" data-p="${p}">${p}</div><div class="pk-div"></div>`;
+    for (let w = 1; w <= 4; w++) {
+      const b = document.createElement('button'); b.className = 'pk-week'; b.type = 'button'; b.dataset.i = idx(p, w);
+      b.innerHTML = `<span>${w}</span>`; b.setAttribute('aria-label', `Period ${p} week ${w}`); row.appendChild(b);
+    }
+    pgrid.appendChild(row);
+  }
+  const weekEls = [...pgrid.querySelectorAll('.pk-week')], plabels = [...pgrid.querySelectorAll('.pk-plabel')];
+  const pkBounds = () => {
+    if (draft.mode !== 'range' || pk.s === null) return null;
+    const o = pk.e !== null ? pk.e : (pk.h !== null ? pk.h : pk.s);
+    return [Math.min(pk.s, o), Math.max(pk.s, o)];
+  };
+  function renderPicker() {
+    const b = pkBounds(), picking = pk.s !== null && pk.e === null, single = draft.mode === 'single';
+    weekEls.forEach(el => {
+      const i = +el.dataset.i, on = draft.singles.includes(i);
+      el.setAttribute('aria-pressed', single ? on : 'false');
+      if (single) { el.classList.toggle('edge', on); el.classList.remove('inrange', 'preview'); return; }
+      const edge = b && (i === b[0] || i === b[1]), inside = b && i > b[0] && i < b[1];
+      el.classList.toggle('edge', !!edge); el.classList.toggle('inrange', !!inside && !picking); el.classList.toggle('preview', !!inside && picking);
+    });
+    plabels.forEach(el => {
+      const p = +el.dataset.p;
+      const on = single ? draft.singles.some(i => pOf(i) === p) : !!b && (pOf(b[0]) === p || pOf(b[1]) === p);
+      el.classList.toggle('edge', on); el.classList.toggle('clickable', !single);
+      if (!single) { el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', `Select all of period ${p}`); }
+      else { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label'); }
+    });
+    $('modeRange').setAttribute('aria-pressed', !single); $('modeSingle').setAttribute('aria-pressed', single);
+    $('pkHint').textContent = single ? (draft.singles.length ? `${draft.singles.length} selected. Click a selected week to remove it.` : 'Click weeks to select them individually.')
+      : pk.s === null ? 'Click a week to start your range.' : pk.e === null ? 'Now click an end week.' : '';
+    const has = hasDate(draft), label = has ? dateLabel(draft) : '--- Select a Value ---';
+    $('triggerLabel').textContent = label; trigger.title = has ? label : ''; trigger.classList.toggle('placeholder', !has); clearX.hidden = !has;
+  }
+  function renderPanel() {
+    ['year', ...FKEYS].forEach(k => {
+      const s = $('f_' + k); if (!s) return;                      // 'Publish state' only exists in the Creator's draft view
+      s.value = draft[k]; s.classList.toggle('empty', !draft[k]);
+      document.querySelector(`[data-clr="${k}"]`).hidden = !draft[k];
+    });
+    renderPicker();
+    const n = activeKeys(applied).length;
+    $('badge').hidden = !n; $('badge').textContent = n;
+    clearAllBtn.disabled = !activeKeys(draft).length && !n;
+  }
+  const syncPicker = () => { pk.s = draft.start; pk.e = draft.end; pk.h = null; };
+  function setOpen(open) {
+    if (open === !popover.hidden) return;
+    syncPicker(); popover.hidden = !open; trigger.setAttribute('aria-expanded', open); renderPicker();
+  }
+  function pick(i) {
+    if (draft.mode === 'single') {
+      const k = draft.singles.indexOf(i); k >= 0 ? draft.singles.splice(k, 1) : draft.singles.push(i);
+      if (draft.singles.length && !draft.year) draft.year = String(YEAR);
+    } else if (pk.s === null || pk.e !== null) { pk.s = i; pk.e = null; pk.h = null; }
+    else { pk.e = i; draft.start = pk.s; draft.end = pk.e; if (!draft.year) draft.year = String(YEAR); }
+    renderPanel();
+  }
+  function pickPeriod(p) {
+    if (draft.mode !== 'range') return;
+    pk.s = idx(p, 1); pk.e = idx(p, 4); pk.h = null; draft.start = pk.s; draft.end = pk.e;
+    if (!draft.year) draft.year = String(YEAR);
+    renderPanel();
+  }
+  pgrid.addEventListener('click', e => {
+    const pl = e.target.closest('.pk-plabel'); if (pl) return pickPeriod(+pl.dataset.p);
+    const b = e.target.closest('.pk-week'); if (b) pick(+b.dataset.i);
+  });
+  const hoverWeek = e => { const b = e.target.closest('.pk-week'); if (draft.mode === 'range' && b && pk.s !== null && pk.e === null) { pk.h = +b.dataset.i; renderPicker(); } };
+  pgrid.addEventListener('mouseover', hoverWeek); pgrid.addEventListener('focusin', hoverWeek);
+  pgrid.addEventListener('mouseleave', () => { if (pk.e === null && pk.h !== null) { pk.h = null; renderPicker(); } });
+  pgrid.addEventListener('keydown', e => { const pl = e.target.closest('.pk-plabel'); if (pl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickPeriod(+pl.dataset.p); } });
+  trigger.addEventListener('click', e => { if (e.target === clearX) return; setOpen(true); });
+  trigger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } });
+  document.addEventListener('mousedown', e => { if (!$('dd').contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+  clearX.addEventListener('click', e => { e.stopPropagation(); clearDate(draft); syncPicker(); renderPanel(); });
+  const setMode = m => { if (m === draft.mode) return; draft.mode = m; clearDate(draft); syncPicker(); renderPanel(); };
+  $('modeRange').addEventListener('click', () => setMode('range')); $('modeSingle').addEventListener('click', () => setMode('single'));
+
+  function setField(k, v) { draft[k] = v; if (k === 'year' && !v) { clearDate(draft); syncPicker(); } renderPanel(); }   // clearing Year clears Date
+  $('panelBody').addEventListener('change', e => { const s = e.target.closest('select[data-k]'); if (s) setField(s.dataset.k, s.value); });
+  $('panelBody').addEventListener('click', e => { const x = e.target.closest('[data-clr]'); if (x) { setField(x.dataset.clr, ''); $('f_' + x.dataset.clr).focus(); } });
+
+  $('applyBtn').addEventListener('click', () => {
+    applied = clone(draft); setOpen(false); render();
+    const n = baseRows().length; toast(activeKeys(applied).length ? `Filters applied · ${n} ${n === 1 ? 'reset' : 'resets'} match` : 'No filters applied');
+  });
+  function clearEverything() { applied = blank(); draft = blank(); pk.s = pk.e = pk.h = null; setOpen(false); render(); }
+  clearAllBtn.addEventListener('click', clearEverything);
+
+  /* ---------- Global toasts ---------- */
+  const TOAST_MS = 10000, TOAST_MAX = 3;
+  function closeToast(el) { if (!el) return; clearTimeout(el._t); el.remove(); }
+  function clearToasts() { document.querySelectorAll('.gtoast').forEach(closeToast); }
+  function pushToast({ kind = 'success', title, body = '', link = null }) {
+    const el = document.createElement('div'); el.className = 'gtoast ' + kind;
+    el.innerHTML = `<span class="gti">${BICON[kind]}</span><div class="gtt">${esc(title)}</div><button type="button" class="gtx" data-tclose aria-label="Dismiss">✕</button>` +
+      (body ? `<div class="gtb">${esc(body)}</div>` : '') + (link ? `<div class="gtl"><button type="button" class="tlink" data-tlink="${link.act}">${esc(link.label)}</button></div>` : '');
+    const box = $('toasts'); box.appendChild(el);
+    while (box.children.length > TOAST_MAX) closeToast(box.firstElementChild);
+    let left = TOAST_MS, t0 = 0;                                  // auto-dismiss, paused while the pointer or keyboard focus is on it
+    const run = () => { t0 = Date.now(); el._t = setTimeout(() => closeToast(el), left); };
+    const hold = () => { if (el._t) { clearTimeout(el._t); el._t = 0; left -= Date.now() - t0; } };
+    const go = () => { if (!el._t && !el.matches(':hover') && !el.matches(':focus-within')) run(); };
+    el.addEventListener('mouseenter', hold); el.addEventListener('focusin', hold); el.addEventListener('mouseleave', go); el.addEventListener('focusout', () => setTimeout(go, 0));
+    run(); return el;
+  }
+  const refocusAfterPublish = () => { const a = $('selAll'), t = a && !a.disabled ? a : $('newBtn'); if (t && !t.disabled) t.focus(); };
+
+  /* ---------- Division list modal ---------- */
+  let divOpener = null;
+  function openDivs(id, trig) {
+    const e = ROWS.find(x => x.id === id); if (!e || e.divs === 'All') return;
+    const list = e.divList.map(n => ({ no: DIVNO[n] || '', name: n })).sort((a, b) => a.no.localeCompare(b.no, undefined, { numeric: true }));
+    $('dTitle').textContent = `${list.length} ${list.length === 1 ? 'division' : 'divisions'}`;
+    $('dSub').textContent = [e.type, e.comm, e.start, `${e.hours} ${e.hours === 1 ? 'Hour' : 'Hours'}`].join(' · ');
+    $('dList').innerHTML = list.map(d => `<li><span class="dn">${esc(d.no)}</span><span>${esc(d.name)}</span></li>`).join('');
+    divOpener = trig || null; lockPage(true); $('dScrim').hidden = false; $('dClose').focus();
+  }
+  function closeDivs() {
+    if ($('dScrim').hidden) return;
+    $('dScrim').hidden = true; lockPage(false);
+    if (divOpener && divOpener.isConnected) divOpener.focus(); divOpener = null;
+  }
+  $('dClose').addEventListener('click', closeDivs); $('dDone').addEventListener('click', closeDivs);
+  $('dScrim').addEventListener('keydown', ev => trapTab(ev, $('dDlg')));
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('dScrim').hidden) closeDivs(); });
+
+  /* ---------- Creator actions ---------- */
+  const rowById = id => DRAFTROWS.find(x => x.id === id);
+  const focusAfter = (selector) => { const el = document.querySelector(selector); if (el) el.focus(); };
+  function setRole(r) {
+    if (r === role) return;
+    role = r; draftView = true; clearToasts(); useData();
+    try { const u = new URL(location.href); r === 'creator' ? u.searchParams.set('role', 'creator') : u.searchParams.delete('role'); history.replaceState(null, '', u); } catch (e) {}
+    render();
+    toast(r === 'creator' ? 'Creator view: you can edit the draft and publish changes' : 'Viewer view: the published calendar');
+  }
+  const recalc = e => {                      // which fields differ from the published version (the connection to a set counts too)
+    e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k]));
+    const p = PUBROWS.find(x => x.id === e.id); if (p && (p.xset || '') !== (e.xset || '')) e.chg.push('xset');
+    e.status = e.chg.length ? 'Modified' : ''; e.by = e.chg.length ? USER : '';
+  };
+  /* A cross-commodity set has ONE start date. Changing it on any member moves every other member too. */
+  function moveSetStart(anchor, start) {
+    let moved = 0, unscheduled = 0;
+    DRAFTROWS.filter(x => x.xset === anchor.xset && x !== anchor && x.status !== 'Removed' && x.start !== start).forEach(m => {
+      if (!m.orig && m.status !== 'Added') m.orig = snap(m);
+      if (m.sched) { m.sched = null; unscheduled++; }
+      m.start = start; moved++;
+      if (m.status === 'Added') m.by = USER; else recalc(m);
+    });
+    return { moved, unscheduled };
+  }
+  const unsched = (e, why) => { const was = e.sched; e.sched = null; return was; };
+  const reschedNote = was => ` Removed from the ${was.label} publish because it changed. Schedule it again when you're ready.`;
+  function removeRow(id) {
+    const e = rowById(id); if (!e) return;
+    if (e.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); resetOrder(); render(); toast('Discarded the new entry'); return; }
+    const was = unsched(e); e.prev = { status: e.status, chg: e.chg, by: e.by }; e.status = 'Removed'; e.chg = []; e.by = USER;
+    resetOrder(); render(); focusAfter(`[data-restore="${id}"]`); toast('Marked for removal. It stays in the draft until you publish.' + (was ? reschedNote(was) : ''));
+  }
+  function restoreRow(id) {
+    const e = rowById(id); if (!e) return;
+    const was = unsched(e); const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; e.prev = null;
+    resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.' + (was ? reschedNote(was) : ''));
+  }
+  const selectedRows = () => DRAFTROWS.filter(e => sel.has(e.id) && e.status);
+  function applyPstate(v) {
+    const nv = applied.pstate === v ? '' : v;
+    for (const f of [applied, draft]) f.pstate = nv;
+    render(); toast(nv ? `Showing ${nv.toLowerCase()} changes only. Select the banner link again to show everything.` : 'Showing all resets');
+  }
+  function applyMine() {
+    const nv = applied.by === USER ? '' : USER;
+    for (const f of [applied, draft]) f.by = nv;
+    render(); toast(nv ? 'Showing your changes only. Select the banner link again to show everything.' : 'Showing all resets');
+  }
+  function unschedule(id) {
+    const e = rowById(id); if (!e || !e.sched) return;
+    const was = e.sched; e.sched = null;
+    render(); focusAfter(`[data-edit="${id}"]`); toast(`Removed from the ${was.label} publish. It is not scheduled anymore.`);
+  }
+  function scheduleRows(rows) {
+    const nx = nextPublish(), lbl = shortDate(nx), fresh = rows.filter(e => !e.sched);
+    fresh.forEach(e => { e.sched = { label: lbl, at: nx.toISOString(), by: USER }; });
+    sel.clear();
+    const n = fresh.length;
+    render();
+    pushToast({ kind: 'success', title: `${n} ${n === 1 ? 'change' : 'changes'} scheduled`, body: `${n === 1 ? "It'll" : "They'll"} go live ${longDate(nx)}. You can unschedule ${n === 1 ? 'it' : 'them'} until then.` });
+    refocusAfterPublish();
+  }
+  function publishNow(rows) {
+    const rem = rows.filter(e => e.status === 'Removed').length;
+    PUBROWS.forEach(r => { r.status = ''; r.chg = []; });                       // a new version: older change flags no longer apply
+    rows.forEach(e => {
+      if (e.status === 'Added') PUBROWS.push({ ...e, divList: [...e.divList], status: 'Added', chg: [], by: '', sched: null });
+      else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg], xset: e.xset }); }
+      else if (e.status === 'Removed') PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1);
+    });
+    rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; } });
+    version++; updatedAt = nowStr(); sel.clear(); resetOrder();
+    const n = rows.length;
+    render();
+    pushToast({ kind: 'success', title: `${n} ${n === 1 ? 'change' : 'changes'} published`, body: `Published as version 2026.0${version}.` + (rem ? ` ${rem} removed ${rem === 1 ? 'reset no longer appears' : 'resets no longer appear'} in the Published view.` : ''), link: { label: 'View in Published', act: 'viewPub' } });
+    refocusAfterPublish();
+  }
+  function goPublished() {
+    draftView = false; useData(); render();
+    const w = document.querySelector('.tablewrap'); if (w) w.scrollTop = 0; $('viewSwitch').focus();
+    toast(`Showing the published calendar (version 2026.0${version}). The rows from this publish are highlighted.`);
+  }
+
+  /* ---------- Publish dialog ---------- */
+  let pOpener = null;
+  const lockPage = on => { document.querySelector('.topbar').inert = on; document.querySelector('.app').inert = on; };
+  const modeNow = () => document.querySelector('input[name="pmode"]:checked').value;
+  function syncPublishMode() {
+    const rows = selectedRows(), n = rows.length, fresh = rows.filter(e => !e.sched).length, pl = c => c === 1 ? 'change' : 'changes';
+    if (modeNow() === 'weekly') { $('pGo').textContent = fresh ? `Schedule ${fresh} ${pl(fresh)}` : 'Schedule'; $('pGo').disabled = !fresh; }
+    else { $('pGo').textContent = `Publish ${n} ${pl(n)} now`; $('pGo').disabled = false; }
+  }
+  function openPublish(from) {
+    const rows = selectedRows(); if (!rows.length) return;
+    pOpener = from || null;
+    const n = rows.length, already = rows.filter(e => e.sched).length, nx = nextPublish();
+    const cnt = st => rows.filter(e => e.status === st).length;
+    $('pTitle').textContent = `Publish ${n} ${n === 1 ? 'change' : 'changes'}`;
+    $('pCounts').textContent = [['Added', 'added'], ['Modified', 'modified'], ['Removed', 'removed']].filter(([st]) => cnt(st)).map(([st, w]) => `${cnt(st)} ${w}`).join(' · ');
+    $('pList').innerHTML = rows.map(e => `<li><span class="st ${e.status}">${e.status}</span><span>${esc(e.comm)}</span></li>`).join('');
+    $('pList').hidden = true; $('pReview').setAttribute('aria-expanded', 'false'); $('pReview').textContent = 'Review';
+    $('pWeeklyTxt').textContent = already === n ? (n === 1 ? `Already scheduled for ${shortDate(nx)}` : `All ${n} are already scheduled for ${shortDate(nx)}`)
+      : `Goes live ${shortDate(nx)} at 1:00 PM EST · Add ${n - already} ${n - already === 1 ? 'change' : 'changes'}` + (already ? ` · ${already} already scheduled` : '');
+    $('pNowTxt').textContent = 'Goes live right away' + (already ? ` · ${already} already scheduled will go live now instead` : '');
+    document.querySelector('input[name="pmode"][value="weekly"]').checked = true;
+    syncPublishMode(); lockPage(true); $('pScrim').hidden = false;
+    (document.querySelector('input[name="pmode"]:checked')).focus();
+  }
+  $('pReview').addEventListener('click', () => { const open = $('pList').hidden; $('pList').hidden = !open; $('pReview').setAttribute('aria-expanded', open); $('pReview').textContent = open ? 'Hide' : 'Review'; });
+  function closePublish() { $('pScrim').hidden = true; lockPage(false); if (pOpener && pOpener.isConnected && !pOpener.disabled) pOpener.focus(); pOpener = null; }
+  $('pForm').addEventListener('change', ev => { if (ev.target.name === 'pmode') syncPublishMode(); });
+  $('pForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const rows = selectedRows(), mode = modeNow(); if (!rows.length) { closePublish(); return; }
+    pOpener = null; closePublish();
+    mode === 'now' ? publishNow(rows) : scheduleRows(rows);
+  });
+  $('pCancel').addEventListener('click', closePublish); $('pClose').addEventListener('click', closePublish);
+
+  const trapTab = (ev, box) => {                                            // keep Tab inside an open dialog
+    if (ev.key !== 'Tab') return;
+    const f = [...box.querySelectorAll('input, select, textarea, button')].filter(x => !x.disabled && x.offsetParent !== null), first = f[0], last = f[f.length - 1];
+    if (!f.length) return;
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  };
+  $('pScrim').addEventListener('keydown', ev => trapTab(ev, $('pForm')));
+  document.addEventListener('keydown', ev => { if (ev.key !== 'Escape') return; if (!$('pScrim').hidden) closePublish(); });
+
+  /* ---------- New entry / edit dialog ---------- */
+  /* Shared by every commodity in a cross-commodity reset: Date, Type, Division, Internal Notes.
+     Per commodity: Department, Commodity (Category Manager and Process Manager fill in from it), Core Size, Hours, Comments. */
+  const TYPES = ['Update', 'NII', 'Maintenance'], DEPTS = ['01 - Grocery', '02 - Dairy', '17 - Natural Foods', '43 - Liquor'];
+  const SIZES = [...new Set(PUBROWS.map(e => e.size))].sort((a, b) => a - b);
+  const COMMS = {}; PUBROWS.forEach(e => { const d = COMMS[e.dept] = COMMS[e.dept] || {}; if (!d[e.comm]) d[e.comm] = { cm: e.cm, pm: e.pm }; });
+  const COMM_DEPT = {}; Object.entries(COMMS).forEach(([d, cs]) => Object.keys(cs).forEach(c => { COMM_DEPT[c] = d; }));
+  const PH = '<option value="">--- Select a Value ---</option>';
+  const optHtml = (arr, cur, fmt = v => v) => PH + arr.map(v => `<option value="${esc(v)}"${String(v) === String(cur) ? ' selected' : ''}>${esc(fmt(v))}</option>`).join('');
+  $('e_date').innerHTML = optHtml(Array.from({ length: WEEKS }, (_, i) => wkLbl(i)));
+  $('e_type').innerHTML = optHtml(TYPES);
+  $('e_divs').innerHTML = optHtml(['All', ...Array.from({ length: DIVS.length - 1 }, (_, i) => i + 1)]);
+  let editId = null, opener = null, cross = false, ents = [], editAll = false, notes0 = '', openE = new Set();   // openE = which sections of the all-resets dialog are expanded
+  const newEnt = () => ({ dept: '', comm: '', cm: '', pm: '', size: '', hours: '', comments: '' });
+  const shownEnts = () => cross ? ents : ents.slice(0, 1);
+  const commList = (dept, cur) => { const n = dept ? Object.keys(COMMS[dept] || {}) : Object.keys(COMM_DEPT); if (cur && !n.includes(cur)) n.push(cur); return n.sort(); };   // no department yet: every commodity
+  const sizeList = cur => cur && !SIZES.includes(+cur) ? [...SIZES, +cur].sort((a, b) => a - b) : SIZES;
+  const LOCKTXT = f => `${f} cannot be changed once a reset is created - it's part of the reset's identity.`;
+  const isPublished = id => PUBROWS.some(x => x.id === id);          // a reset that has gone out in a published version. Department and commodity are fixed from then on
+  function entryHtml(en, i, n) {
+    const cur = !!en.rid, lock = cur && isPublished(en.rid);      // an existing reset keeps its department and commodity once published, so its scope can't shift
+    const id = k => `x${i}_${k}`, err = k => `<div class="ferr" id="${id(k)}_err" role="alert" hidden></div>`;
+    const open = !editAll || openE.has(i), edited = editAll && cur && entChanged(en);
+    const sum = editAll ? [en.dept, en.size ? 'Core ' + en.size : '', en.hours ? en.hours + ' hrs' : '', (en.comments || '').trim() ? 'has comment' : ''].filter(Boolean).join(' · ') : '';
+    const rm = editAll && !cur ? `<button type="button" class="link-btn erm" data-xcrm="${i}" aria-label="Remove ${esc(en.comm || 'commodity ' + (i + 1))}">Remove</button>` : '';
+    const head = !cross ? '' : editAll ? `<div class="ehrow"><button type="button" class="ehead btn" data-etoggle="${i}" aria-expanded="${open}" aria-controls="eb${i}"><span class="chev" aria-hidden="true">${CH('M6 9l6 6 6-6')}</span><span class="etl"><span class="etitle">${esc(en.comm || 'Commodity ' + (i + 1))}</span>${open ? '' : `<span class="sum">${esc(sum)}</span>`}${edited ? '<span class="tag">Modified</span>' : ''}<span class="tag err" id="eerr${i}" hidden>Needs attention</span></span></button>${rm}</div>`
+      : `<div class="ehead"><span class="etitle">${esc(en.comm || 'Commodity ' + (i + 1))}</span>${!cur && (n > 2 || inSet()) ? `<button type="button" class="link-btn" data-xcrm="${i}" aria-label="Remove commodity ${i + 1}">Remove</button>` : ''}</div>`;
+    return `<div class="entry${cross ? ' x' : ''}${open ? '' : ' coll'}"${cross ? ` role="group" aria-label="${esc(en.comm || 'Commodity ' + (i + 1))}"` : ''}>${head}<div class="ebodyx" id="eb${i}"${open ? '' : ' hidden'}>${lock ? `<span class="xsr2" id="x${i}_lockd_d">${LOCKTXT('Department')}</span><span class="xsr2" id="x${i}_lockd_c">${LOCKTXT('Commodity')}</span>` : ''}
+      <div class="g12">
+        <div class="fg s3"${lock ? ' data-locktip="Department"' : ''}><label for="${id('dept')}">Department</label><select class="fin" id="${id('dept')}" required ${lock ? `disabled aria-describedby="x${i}_lockd_d"` : `aria-describedby="${id('dept')}_err"`}>${optHtml(DEPTS, en.dept)}</select>${err('dept')}</div>
+        <div class="fg s3"${lock ? ' data-locktip="Commodity"' : ''}><label for="${id('comm')}">Commodity</label><select class="fin" id="${id('comm')}" required ${lock ? 'disabled' : ''} ${lock ? `aria-describedby="x${i}_lockd_c"` : `aria-describedby="${id('comm')}_err"`}>${optHtml(commList(en.dept, en.comm), en.comm)}</select>${err('comm')}</div>
+        <div class="fg s3"><label for="${id('cm')}">CM</label><input class="fin ro" id="${id('cm')}" readonly value="${esc(en.cm || '—')}" aria-label="Category Manager, filled in from the commodity"></div>
+        <div class="fg s3"><label for="${id('pm')}">PM</label><input class="fin ro" id="${id('pm')}" readonly value="${esc(en.pm || '—')}" aria-label="Process Manager, filled in from the commodity"></div>
+        <div class="fg s6"><label for="${id('size')}">Core Size</label><select class="fin" id="${id('size')}" required aria-describedby="${id('size')}_err">${optHtml(sizeList(en.size), en.size)}</select>${err('size')}</div>
+        <div class="fg s6"><label for="${id('hours')}">Hours</label><input class="fin" id="${id('hours')}" type="text" inputmode="numeric" placeholder="Enter a value" value="${esc(en.hours)}" aria-describedby="${id('hours')}_err">${err('hours')}</div>
+      </div>
+      <div class="fg"><label for="${id('comments')}">Comments</label><textarea class="fin" id="${id('comments')}" rows="2" placeholder="Comments">${esc(en.comments)}</textarea></div>
+    </div></div>`;
+  }
+  const entKey = en => [en.dept, en.comm, en.size, en.hours, (en.comments || '').trim()].join('|');
+  const entChanged = en => en.rid && en.k0 !== undefined && en.k0 !== entKey(en);
+  /* Version 1: pending edits across the resets of a set.
+     Switching to another reset (pills) keeps what you typed as a pending edit. Nothing is applied until "Save changes", which saves every pending edit together.
+     sess.shared = Date / Type / Division / Internal Notes (one value for the whole set), sess.edits = pending per-reset edits, sess.added = commodities added but not saved. */
+  let sess = null;
+  const newSess = e => { const sh = { date: e.start, type: e.type, divs: String(e.divs), notes: e.notes || '' }; return { shared: { ...sh }, edits: new Map(), added: [] }; };
+  function stash() {                                         // copy the form into the pending state
+    readEntries(); const cur = ents[0];
+    sess.shared = { date: $('e_date').value, type: $('e_type').value, divs: $('e_divs').value, notes: $('e_notes').value.trim() };
+    entChanged(cur) ? sess.edits.set(cur.rid, { ...cur }) : sess.edits.delete(cur.rid);
+    sess.added = ents.slice(1).map(en => ({ ...en }));
+  }
+  const entValid = en => !!en.dept && !!en.comm && !!en.size && /^\d+$/.test(String(en.hours)) && +en.hours >= 1 && +en.hours <= 40;
+  const pendingCount = () => { if (!sess) return 0; readEntries(); const ids = new Set([...sess.edits.keys()].filter(k => k !== editId)); if (entChanged(ents[0])) ids.add(editId); return ids.size; };
+  function updateSaveLabel() { const e = editId == null ? null : rowById(editId); if (!e) return; const n = sess ? pendingCount() : 0; $('eSave').textContent = n > 1 ? `Save changes to ${n} resets` : 'Save changes'; }
+  $('eForm').addEventListener('input', () => { if (sess) updateSaveLabel(); }); $('eForm').addEventListener('change', () => { if (sess) updateSaveLabel(); });
+  function gotoReset(id) { const keep = opener; stash(); openEntry(id, keep, true); }
+  $('xcMembers').addEventListener('click', ev => { const b = ev.target.closest('[data-gotoreset]'); if (b && rowById(+b.dataset.gotoreset)) gotoReset(+b.dataset.gotoreset); });
+  const mates = () => { const e = editId == null ? null : rowById(editId); return e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed') : []; };
+  const inSet = () => editId != null && !!(rowById(editId) || {}).xset;     // editing a reset that already belongs to a cross-commodity set
+  function renderMembers() {
+    const e = editId == null ? null : rowById(editId), box = $('xcMembers');
+    const info = $('e_date_info'), n = e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed').length + 1 : 0;
+    const msg = `Applies to all ${n} resets in this cross-commodity reset.`;
+    info.hidden = n < 2; info.dataset.infotip = n < 2 ? '' : msg; info.setAttribute('aria-label', n < 2 ? '' : `About the date. ${msg}`);
+    if (!e || !e.xset || editAll) { box.hidden = true; box.innerHTML = ''; return; }
+    const others = DRAFTROWS.filter(x => x.xset === e.xset && x !== e);
+    box.hidden = false;
+    box.innerHTML = `<span class="lbl" id="xmemL">Also in this cross-commodity reset</span><ul aria-labelledby="xmemL">${others.map(x => x.status === 'Removed'
+      ? `<li><span class="pill off">${esc(x.comm)}<small>marked for removal</small></span></li>`
+      : `<li><button type="button" class="pill" data-gotoreset="${x.id}" aria-label="Edit ${esc(x.comm)}${sess && sess.edits.has(x.id) ? ', has unsaved changes' : ''}">${esc(x.comm)}${sess && sess.edits.has(x.id) ? '<small class="pe">Modified</small>' : ''}</button></li>`).join('')}</ul>`;
+  }
+  function renderEntries() { $('ebar').hidden = !editAll || ents.length < 2; $('eAll').textContent = allOpen() ? 'Collapse all' : 'Expand all'; renderMembers(); const sh = shownEnts(); $('entries').innerHTML = sh.map((en, i) => entryHtml(en, i, sh.length)).join(''); $('xcAdd').hidden = !cross; }
+  function readEntries() { shownEnts().forEach((en, i) => { const v = k => $(`x${i}_${k}`).value; en.dept = v('dept'); en.comm = v('comm'); en.size = v('size'); en.hours = v('hours').trim(); en.comments = v('comments'); }); }
+  $('e_xc').addEventListener('change', () => { readEntries(); cross = $('e_xc').checked; while (cross && ents.length < 2) ents.push(newEnt()); renderEntries(); });
+  $('xcAdd').addEventListener('click', () => { readEntries(); ents.push(newEnt()); if (editAll) openE.add(ents.length - 1); renderEntries(); $(`x${ents.length - 1}_dept`).focus(); });
+  $('entries').addEventListener('click', ev => {
+    const t = ev.target.closest('[data-etoggle]'); if (!t) return;
+    const i = +t.dataset.etoggle; readEntries(); openE.has(i) ? openE.delete(i) : openE.add(i); renderEntries(); document.querySelector(`[data-etoggle="${i}"]`).focus();
+  });
+  const allOpen = () => ents.length > 0 && ents.every((_, i) => openE.has(i));
+  $('eAll').addEventListener('click', () => { readEntries(); allOpen() ? openE.clear() : ents.forEach((_, i) => openE.add(i)); renderEntries(); $('eAll').focus(); });
+  $('entries').addEventListener('change', ev => {
+    const m = /^x(\d+)_(dept|comm)$/.exec(ev.target.id); if (!m) return;
+    const i = +m[1]; readEntries(); const en = ents[i];
+    if (m[2] === 'dept') { en.comm = ''; en.cm = ''; en.pm = ''; }
+    else if (en.comm) { const d = COMM_DEPT[en.comm], f = d && COMMS[d][en.comm]; if (d) en.dept = d; en.cm = f ? f.cm : ''; en.pm = f ? f.pm : ''; }   // the commodity decides the department, CM and PM
+    else { en.cm = ''; en.pm = ''; }
+    renderEntries(); $(ev.target.id).focus();
+  });
+  $('entries').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-xcrm]'); if (!b) return;
+    const i = +b.dataset.xcrm; readEntries(); ents.splice(i, 1); openE = new Set([...openE].filter(k => k !== i).map(k => k > i ? k - 1 : k)); renderEntries(); { const k = Math.min(i, ents.length - 1), d = document.getElementById(`x${k}_dept`); (d && !d.disabled ? d : document.querySelector(`[data-etoggle="${k}"]`) || $('xcAdd')).focus(); }
+  });
+  const setErr = (id, m) => { const el = $(id), er = $(id + '_err'); if (!er) return null; er.hidden = !m; er.textContent = m || ''; m ? el.setAttribute('aria-invalid', 'true') : el.removeAttribute('aria-invalid'); return m ? id : null; };
+  function checkForm() {
+    const bad = [], int = x => /^\d+$/.test(String(x)), add = b => { if (b) bad.push(b); };
+    ['date:Select a date.', 'type:Select a type.', 'divs:Select a division.'].forEach(t => { const [k, m] = t.split(':'); add(setErr('e_' + k, $('e_' + k).value ? '' : m)); });
+    if ($('e_date').value && editId != null) {
+      const e = rowById(editId), group = e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed') : [e], longest = Math.max(...group.map(x => x.dur), e.dur);
+      if (wkIdx($('e_date').value) + longest > WEEKS) add(setErr('e_date', group.length > 1 ? 'This would run past P13 W4 for at least one reset in the set.' : 'This would run past P13 W4.'));
+    }
+    const seen = {};
+    if (inSet() && !editAll) { const e = rowById(editId); DRAFTROWS.filter(x => x.xset === e.xset && x !== e).forEach(x => { seen[x.dept + '|' + x.comm] = 1; }); }   // commodities already in the set can't be added again
+    shownEnts().forEach((en, i) => {
+      add(setErr(`x${i}_dept`, en.dept ? '' : 'Select a department.'));
+      let cm = en.comm ? '' : 'Select a commodity.'; const key = en.dept + '|' + en.comm;
+      if (!cm && cross && seen[key]) cm = 'This commodity is already in the set.'; seen[key] = 1;
+      add(setErr(`x${i}_comm`, cm));
+      add(setErr(`x${i}_size`, en.size ? '' : 'Select a core size.'));
+      add(setErr(`x${i}_hours`, !int(en.hours) || +en.hours < 1 || +en.hours > 40 ? 'Enter a whole number from 1 to 40.' : ''));
+    });
+    return bad;
+  }
+  function openEntry(id, from, carry) {
+    editId = id; opener = from || null;
+    const e = id == null ? null : rowById(id); if (id != null && !e) return;
+    cross = !!(e && e.xset); $('e_xc').checked = false; $('xcRow').hidden = !!(e && e.xset);   // a reset already in a set opens in set mode: no checkbox
+    editAll = !!(e && e.xset && EV === 2);                  // version 2: show every reset in the set
+    const entOf = r => ({ k0: [r.dept, r.comm, String(r.size), String(r.hours), (r.comments || '').trim()].join('|'), rid: r.id, dept: r.dept, comm: r.comm, cm: r.cm, pm: r.pm, size: String(r.size), hours: String(r.hours), comments: r.comments || '' });
+    if (editAll) {                                           // the reset you clicked comes first, then the rest in table order. Resets marked for removal aren't editable
+      const mates = DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed');
+      ents = [entOf(e), ...mates.map(entOf)]; openE = new Set([0]);                // the reset you clicked starts open, the rest collapsed
+    } else { ents = [e ? entOf(e) : newEnt()]; openE = new Set(); }
+    if (!(carry && sess)) sess = e && e.xset && !editAll ? newSess(e) : null;      // Version 1 on a reset in a set: start collecting pending edits (switching keeps them)
+    if (sess) { const st = sess.edits.get(e.id); if (st) ents[0] = { ...st }; ents.push(...sess.added.map(x => ({ ...x }))); }
+    $('eTitle').textContent = editAll ? `Edit cross-commodity reset · ${ents.length} resets` : e ? `Edit reset · ${e.comm}` : 'Add New Entry'; $('eSave').textContent = e ? 'Save changes' : 'Submit';
+    const sv = sess ? sess.shared : null;      // shared fields come from the pending state, so they stay the same as you move between resets
+    $('e_date').value = sv ? sv.date : e ? e.start : ''; $('e_type').value = sv ? sv.type : e ? e.type : ''; $('e_divs').value = sv ? sv.divs : e ? String(e.divs) : ''; $('e_notes').value = sv ? sv.notes : e ? (e.notes || '') : '';
+    ['e_date', 'e_type', 'e_divs'].forEach(k => setErr(k, ''));
+    renderEntries(); updateSaveLabel();
+    document.querySelector('.topbar').inert = true; document.querySelector('.app').inert = true;
+    $('eScrim').hidden = false; const f0 = e ? $('x0_dept') : null; (f0 && !f0.disabled ? f0 : $('e_date')).focus();
+  }
+  function closeEntry() {
+    hideLockTip(); sess = null; $('eScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
+    if (opener && opener.isConnected) opener.focus(); opener = null; editId = null;
+  }
+  $('eForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    readEntries(); if (sess) stash();
+    if (sess) {                                              // a pending edit on ANOTHER reset that is invalid: open that reset so its errors can be fixed
+      const other = [...sess.edits.entries()].find(([rid, en]) => rid !== editId && !entValid(en));
+      const hereOk = checkForm().length === 0;
+      if (other && hereOk) { gotoReset(other[0]); checkForm(); const f = document.querySelector('#entries [aria-invalid="true"]') || $('x0_hours'); f.focus(); return; }
+    }
+    const bad = checkForm();
+    if (bad.length) {
+      if (editAll) { const idx = new Set(bad.map(b => /^x(\d+)_/.exec(b)).filter(Boolean).map(m => +m[1])); idx.forEach(i => openE.add(i)); const keep = bad.slice(), vals = ents.map(en => ({ ...en })); renderEntries(); checkForm(); idx.forEach(i => { const t = $('eerr' + i); if (t) t.hidden = false; }); }
+      $(bad[0]).focus(); return;
+    }
+    const sh = shownEnts(), start = $('e_date').value, type = $('e_type').value, dv = $('e_divs').value, notes = $('e_notes').value.trim();
+    const divs = dv === 'All' || +dv === DIVS.length ? 'All' : +dv;
+    let msg;
+    if (editId == null) {
+      let id = Math.max(...DRAFTROWS.map(x => x.id)); const key = cross ? 'X' + Date.now().toString(36) : null;
+      sh.forEach(en => { id++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: 1, divs, notes, dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, ...(key ? { xset: key } : {}) }); });
+      msg = cross ? `Added ${sh.length} connected commodities to the draft. They stay there until you publish.` : 'Added to the draft. It stays there until you publish.';
+    } else if (editAll) {
+      /* Version 2: every reset in the set is in the dialog. Date, Type, Division and Internal Notes are shared and go to all of them.
+         Department, commodity, core size, hours and comments belong to each reset. Only resets whose values actually change are flagged. */
+      const anchor = rowById(editId); let changed = 0, off = 0, added = 0, id = Math.max(...DRAFTROWS.map(x => x.id));
+      sh.forEach(en => {
+        if (en.rid) {
+          const r = rowById(en.rid), before = { ...snap(r), notes: r.notes || '' }, hadOrig = !!r.orig; if (!r.orig && r.status !== 'Added') r.orig = snap(r);
+          Object.assign(r, { type, start, divs, dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim() }); r.notes = notes; r.divList = divListFor(r.id, r.divs);
+          const diff = FIELDS.some(k => String(before[k]) !== String(r[k])) || before.notes !== notes;
+          if (!diff) { if (!hadOrig && r.status === '' ) r.orig = null; return; }
+          changed++; if (r.sched) { r.sched = null; off++; }
+          r.status === 'Added' ? (r.by = USER) : recalc(r);
+        } else { id++; added++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: anchor.dur, divs, notes, dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, xset: anchor.xset }); }
+      });
+      const parts = []; if (changed) parts.push(`Saved changes to ${changed} ${changed === 1 ? 'reset' : 'resets'}`); if (added) parts.push(`added ${added} ${added === 1 ? 'commodity' : 'commodities'}`);
+      msg = parts.length ? parts.join(' and ') + '. The edited fields are highlighted until you publish.' : 'No changes to save.';
+      if (off) msg += ` ${off} ${off === 1 ? 'was' : 'were'} removed from the publish schedule because ${off === 1 ? 'it' : 'they'} changed. Schedule again when you're ready.`;
+    } else if (sess) {
+      /* Version 1 with pending edits: save the reset on screen and every other reset you edited, in one go.
+         Date, Type, Division and Internal Notes are one value for the whole set, so they go to every member. */
+      const e = rowById(editId), anchorStart = e.start, prevDate = { ...Object.fromEntries(DRAFTROWS.filter(x => x.xset === e.xset).map(x => [x.id, x.start])) };
+      const all = new Map(sess.edits); entChanged(ents[0]) ? all.set(editId, { ...ents[0] }) : all.delete(editId);
+      let changed = 0, off = 0, added = 0, id = Math.max(...DRAFTROWS.map(x => x.id));
+      const sharedSame = r => r.type === type && r.start === start && String(r.divs) === String(divs) && (r.notes || '') === notes;
+      DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed').forEach(r => {
+        const en = all.get(r.id), shared = !sharedSame(r);
+        if (!en && !shared) return;
+        const before = { ...snap(r), notes: r.notes || '' }; if (!r.orig && r.status !== 'Added') r.orig = snap(r);
+        Object.assign(r, { type, start, divs }); r.notes = notes;
+        if (en) Object.assign(r, { dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim() });
+        r.divList = divListFor(r.id, r.divs);
+        if (!(FIELDS.some(k => String(before[k]) !== String(r[k])) || before.notes !== notes)) return;
+        changed++; if (r.sched) { r.sched = null; off++; }
+        r.status === 'Added' ? (r.by = USER) : recalc(r);
+      });
+      sess.added.forEach(c => { id++; added++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: e.dur, divs, notes, dept: c.dept, comm: c.comm, cm: c.cm, pm: c.pm, size: +c.size, hours: +c.hours, comments: c.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, xset: e.xset }); });
+      const parts = []; if (changed) parts.push(`Saved changes to ${changed} ${changed === 1 ? 'reset' : 'resets'}`); if (added) parts.push(`added ${added} ${added === 1 ? 'commodity' : 'commodities'}`);
+      msg = parts.length ? parts.join(' and ') + '. The edited fields are highlighted until you publish.' : 'No changes to save.';
+      if (start !== anchorStart && changed > 1) msg += ` The date applies to all resets in the set.`;
+      if (off) msg += ` ${off} ${off === 1 ? 'was' : 'were'} removed from the publish schedule because ${off === 1 ? 'it' : 'they'} changed. Schedule again when you're ready.`;
+    } else {
+      const e = rowById(editId), wasInSet = !!e.xset, prevStart = e.start, en = sh[0], vals = { type, dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, start, dur: e.dur, hours: +en.hours, divs, comments: en.comments.trim() };
+      if (!e.orig && e.status !== 'Added') e.orig = snap(e);
+      const wasSched = e.sched; e.sched = null;
+      Object.assign(e, vals); e.notes = notes; e.divList = divListFor(e.id, e.divs);
+      if (e.status === 'Added') e.by = USER;
+      else recalc(e);
+      msg = e.status === 'Modified' ? 'Saved. The edited fields are highlighted until you publish.' : e.status === 'Added' ? 'Saved changes to the new entry.' : 'No changes from the published version.';
+      if (wasInSet && sh.length > 1) {                     // add more commodities to the set this reset already belongs to
+        let id = Math.max(...DRAFTROWS.map(x => x.id));
+        sh.slice(1).forEach(c => { id++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: e.dur, divs, notes, dept: c.dept, comm: c.comm, cm: c.cm, pm: c.pm, size: +c.size, hours: +c.hours, comments: c.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, xset: e.xset }); });
+        const n = sh.length - 1; msg = `Added ${n} ${n === 1 ? 'commodity' : 'commodities'} to the cross-commodity reset. ${n === 1 ? 'It stays' : 'They stay'} in the draft until you publish.`;
+      } else if (cross && !wasInSet) {                     // connect the reset being edited with the new commodities. They share its schedule
+        const key = 'X' + Date.now().toString(36); let id = Math.max(...DRAFTROWS.map(x => x.id));
+        e.xset = key;
+        if (e.status !== 'Added') { if (!e.chg.includes('xset')) e.chg.push('xset'); e.status = 'Modified'; e.by = USER; }
+        sh.slice(1).forEach(c => { id++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: e.dur, divs, notes, dept: c.dept, comm: c.comm, cm: c.cm, pm: c.pm, size: +c.size, hours: +c.hours, comments: c.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, xset: key }); });
+        msg = `Connected ${e.comm} with ${sh.length - 1} more ${sh.length === 2 ? 'commodity' : 'commodities'}. The change stays in the draft until you publish.`;
+      }
+      if (wasInSet && start !== prevStart) {               // the date belongs to the whole set
+        const r = moveSetStart(e, start);
+        if (r.moved) msg += ` Moved ${r.moved} other ${r.moved === 1 ? 'reset' : 'resets'} in the set to ${start} too.` + (r.unscheduled ? ` ${r.unscheduled} had been scheduled to publish, so ${r.unscheduled === 1 ? 'it was' : 'they were'} taken off the schedule. Schedule again when you're ready.` : '');
+      }
+      if (wasSched) msg += reschedNote(wasSched);
+    }
+    const keep = opener; closeEntry(); resetOrder(); render(); opener = keep; toast(msg);
+  });
+  $('eCancel').addEventListener('click', closeEntry); $('eClose').addEventListener('click', closeEntry);
+  $('eScrim').addEventListener('keydown', ev => {                          // keep Tab inside the dialog
+    if (ev.key !== 'Tab') return;
+    const f = [...$('eForm').querySelectorAll('input, select, textarea, button')].filter(x => !x.disabled && x.offsetParent !== null);
+    const first = f[0], last = f[f.length - 1];
+    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('eScrim').hidden) closeEntry(); });
+  document.addEventListener('change', ev => {
+    const cb = ev.target.closest && ev.target.closest('[data-sel]');
+    if (cb) { const id = +cb.dataset.sel; cb.checked ? sel.add(id) : sel.delete(id); render(); focusAfter(`[data-sel="${id}"]`); return; }
+    if (ev.target.id === 'selAll') { const ch = tableRows.filter(e => e.status); ev.target.checked ? ch.forEach(e => sel.add(e.id)) : ch.forEach(e => sel.delete(e.id)); render(); focusAfter('#selAll'); }
+  });
+
+  /* Panel open / close — selections are kept while collapsed */
+  const panel = $('panel'), body = $('panelBody'), collapseBtn = $('collapseBtn'), expandBtn = $('expandBtn');
+  function setPanel(open) {
+    if (!open) setOpen(false);
+    panel.classList.add('animating'); setTimeout(() => panel.classList.remove('animating'), 300);
+    panel.classList.toggle('collapsed', !open); body.inert = !open; expandBtn.tabIndex = open ? -1 : 0;
+    collapseBtn.setAttribute('aria-expanded', open); expandBtn.setAttribute('aria-expanded', open);
+    (open ? collapseBtn : expandBtn).focus();
+  }
+  collapseBtn.addEventListener('click', () => setPanel(false)); expandBtn.addEventListener('click', () => setPanel(true));
+
+  /* ---------- Events ---------- */
+  document.addEventListener('click', e => {
+    const dv = e.target.closest('[data-divs]'); if (dv) { openDivs(+dv.dataset.divs, dv); return; }
+    const so = e.target.closest('[data-sort]');
+    if (so) { const k = so.dataset.sort; if (sortKey !== k) { sortKey = k; sortDir = 'asc'; } else if (sortDir === 'asc') sortDir = 'desc'; else sortKey = null;
+      if (sortKey) applySort(); else rowOrder = null;
+      render(); $('thead').querySelector(`[data-sort="${k}"]`)?.focus(); toast(sortKey ? `Sorted by ${FSORT[k]}, ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort cleared. Back to the default order, with changed resets first.'); return; }
+    if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
+    const cm = e.target.closest('[data-cmore]'); if (cm) { const id = +cm.dataset.cmore; openCom.has(id) ? openCom.delete(id) : openCom.add(id); render(); document.querySelector(`[data-cmore="${id}"]`)?.focus(); return; }
+    const ev2 = e.target.closest('[data-ev]'); if (ev2) { EV = +ev2.dataset.ev; applyEV(); try { const u = new URL(location.href); u.searchParams.set('ev', EV); history.replaceState(null, '', u); } catch (er) {} return; }
+    const rl = e.target.closest('[data-role]'); if (rl) { setRole(rl.dataset.role); return; }
+    if (e.target.closest('#viewSwitch')) { draftView = !draftView; clearToasts(); useData(); render(); return; }
+    if (e.target.closest('#newBtn')) { openEntry(null, e.target.closest('#newBtn')); return; }
+    const ed = e.target.closest('[data-edit]'); if (ed) { if (ed.getAttribute('aria-disabled') !== 'true') openEntry(+ed.dataset.edit, ed); return; }
+    const rmv = e.target.closest('[data-remove]'); if (rmv) { removeRow(+rmv.dataset.remove); return; }
+    const rst = e.target.closest('[data-restore]'); if (rst) { restoreRow(+rst.dataset.restore); return; }
+    const us = e.target.closest('[data-unsched]'); if (us) { unschedule(+us.dataset.unsched); return; }
+    const pf = e.target.closest('[data-pf]'); if (pf) { applyPstate(pf.dataset.pf); return; }
+    if (e.target.closest('[data-mine]')) { applyMine(); return; }
+    const pb = e.target.closest('#publishBtn'); if (pb) { openPublish(pb); return; }
+    const tc = e.target.closest('[data-tclose]'); if (tc) { closeToast(tc.closest('.gtoast')); return; }
+    const tl2 = e.target.closest('[data-tlink]'); if (tl2) { const t = tl2.closest('.gtoast'); if (tl2.dataset.tlink === 'viewPub') { closeToast(t); goPublished(); } return; }
+    const sx = e.target.closest('[data-startx]'); if (sx) { startOpen = !startOpen; render(); $('thead').querySelector('[data-startx]')?.focus(); if (startOpen) bringGrid(); return; }
+    if (e.target.closest('[data-clearall]')) { clearEverything(); return; }
+  });
+
+  /* Hovering or focusing a member highlights every member of its set, wherever they sit in the table. */
+  const xhl = (on, tr) => { document.querySelectorAll('#tbody tr.xhl').forEach(r => r.classList.remove('xhl')); document.body.classList.toggle('xhl', !!(on && tr && tr.dataset.xs)); if (on && tr && tr.dataset.xs) document.querySelectorAll(`#tbody tr[data-xs="${tr.dataset.xs}"]`).forEach(r => r.classList.add('xhl')); };
+  $('tbody').addEventListener('mouseover', e => xhl(true, e.target.closest('tr')));
+  $('tbody').addEventListener('mouseleave', () => xhl(false));
+  $('tbody').addEventListener('focusin', e => xhl(true, e.target.closest('tr')));
+  $('tbody').addEventListener('focusout', () => xhl(false));
+  /* Bracket tooltip: shows on hover and on keyboard focus, hides on leave, blur, Escape or scroll */
+  const xtip = $('xtip');
+  const TIPTXT = xtip.textContent;
+  const showTip = el => { const r = el.getBoundingClientRect(); xtip.textContent = TIPTXT; xtip.hidden = false; xtip.style.left = Math.min(r.right + 8, innerWidth - xtip.offsetWidth - 8) + 'px'; xtip.style.top = Math.max(8, r.top + r.height / 2 - xtip.offsetHeight / 2) + 'px'; el.setAttribute('aria-describedby', 'xtip'); };
+  /* Tooltip on the locked Department / Commodity fields in the edit dialog (shown below the field, since the dialog sits above the page) */
+  let lockTipOn = false;
+  const showLockTip = (box, text) => { const r = box.getBoundingClientRect(); lockTipOn = true; xtip.textContent = text || LOCKTXT(box.dataset.locktip); xtip.style.maxWidth = '300px'; xtip.style.whiteSpace = 'normal'; xtip.hidden = false; xtip.style.zIndex = 200;
+    xtip.style.left = Math.max(8, Math.min(r.left, innerWidth - xtip.offsetWidth - 8)) + 'px'; const below = r.bottom + 6; xtip.style.top = (below + xtip.offsetHeight > innerHeight - 8 ? Math.max(8, r.top - xtip.offsetHeight - 6) : below) + 'px'; };
+  const hideLockTip = () => { if (lockTipOn) { lockTipOn = false; xtip.hidden = true; xtip.style.maxWidth = ''; xtip.style.whiteSpace = ''; xtip.style.zIndex = ''; xtip.textContent = TIPTXT; } };
+  /* one handler for both tooltips in the dialog: the locked Department / Commodity fields, and the info icon next to Date */
+  const dlgTip = e => { const b = e.target.closest('[data-locktip], [data-infotip]'); b && (b.dataset.infotip || b.dataset.locktip) ? showLockTip(b, b.dataset.infotip) : hideLockTip(); };
+  $('eForm').addEventListener('mouseover', dlgTip); $('eForm').addEventListener('mouseleave', hideLockTip);
+  $('eForm').addEventListener('focusin', e => { if (e.target.closest('[data-infotip]')) dlgTip(e); }); $('eForm').addEventListener('focusout', e => { if (e.target.closest('[data-infotip]')) hideLockTip(); });
+  $('eScrim').addEventListener('scroll', hideLockTip, true);
+  const hideTip = () => { lockTipOn = false; xtip.hidden = true; xtip.style.maxWidth = ''; xtip.style.whiteSpace = ''; xtip.style.zIndex = ''; xtip.textContent = TIPTXT; document.querySelectorAll('.xw[aria-describedby]').forEach(x => x.removeAttribute('aria-describedby')); };
+  $('tbody').addEventListener('mouseover', e => { const w = e.target.closest('.xw'); w ? showTip(w) : hideTip(); });
+  $('tbody').addEventListener('mouseleave', hideTip);
+  $('tbody').addEventListener('focusin', e => { const w = e.target.closest('.xw'); if (w) showTip(w); });
+  $('tbody').addEventListener('focusout', hideTip);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+  document.querySelector('.tablewrap').addEventListener('scroll', hideTip, { passive: true });
+  applyEV(); render();
+  document.title = 'Cross-commodity Connection';
+  useData(); render();
+})();
+</script>
+</body>
+</html>
