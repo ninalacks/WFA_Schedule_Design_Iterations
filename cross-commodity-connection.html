@@ -302,9 +302,11 @@
   #rForm header { padding: 18px 26px 12px; }
   .rbody { padding: 16px 26px 8px; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
   .rq { margin: 0; font-size: 15px; line-height: 1.4; color: var(--text); }
-  .rinfo { background: #d2eafa; border-radius: 6px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; font-size: 14px; color: #000; }
-  .rinfo[hidden] { display: none; }
-  .rinfo svg { flex: none; }
+  #rChoice { margin: 0; }
+  #rChoice legend { font-weight: 400; font-size: 15px; line-height: 1.4; margin-bottom: 8px; color: var(--text); }
+  #rChoice .opt { margin: 0 -12px; }
+  #rChoice .opt b { font-size: 14px; }
+  #rChoice .opt small { font-size: 13px; }
   .rnotes { display: flex; flex-direction: column; gap: 6px; }
   .rnotes label { font-weight: 600; font-size: 13px; color: var(--text); }
   .rnotes label .sub { font-weight: 400; color: var(--muted); }
@@ -522,11 +524,11 @@
   </form>
 </div>
 <div class="scrim" id="rScrim" hidden>
-  <form class="dlg" id="rForm" role="alertdialog" aria-modal="true" aria-labelledby="rTitle" aria-describedby="rQ rInfo" novalidate>
+  <form class="dlg" id="rForm" role="alertdialog" aria-modal="true" aria-labelledby="rTitle" aria-describedby="rQ" novalidate>
     <header><h2 id="rTitle">Remove</h2><button type="button" class="xclose" id="rClose" aria-label="Close">✕</button></header>
     <div class="rbody">
       <p class="rq" id="rQ">Are you sure you want to remove 1 reset from the draft?</p>
-      <div class="rinfo" id="rInfo" hidden></div>
+      <fieldset class="pchoice" id="rChoice" hidden><legend id="rQ2"></legend><div id="rOpts"></div></fieldset>
       <div class="rnotes"><label for="r_notes">Internal Notes <span class="sub">(only visible in the history)</span></label><textarea class="fin" id="r_notes" rows="2" placeholder="Internal notes (ex. explaining why the change is happening)"></textarea></div>
     </div>
     <footer><button type="button" class="tbtext" id="rCancel">Cancel</button><button type="submit" class="tb pub" id="rGo">Submit</button></footer>
@@ -1307,35 +1309,40 @@
   }
   /* A reset left alone by a removal ("leftover") becomes a single commodity reset when published. Until then it stays in the bracket, is marked Modified
      (its connection changes) and has to be published together with the removal(s), so the published schedule never holds half of a change. */
+  const DETACH = {};                                       // set key -> ids of the removed resets that asked to detach the rest ("Remove this reset and detach the others")
   const bundleOf = e => {
     if (!e || !e.xset) return [e];
-    const g = DRAFTROWS.filter(x => x.xset === e.xset), live = g.filter(x => x.status !== 'Removed');
-    if (live.length !== 1 || !live[0].unlinked) return [e];
+    const g = DRAFTROWS.filter(x => x.xset === e.xset), ul = g.filter(x => x.status !== 'Removed' && x.unlinked);
+    if (!ul.length) return [e];
     const gone = g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id));
-    return e === live[0] || gone.includes(e) ? [live[0], ...gone] : [e];
+    return ul.includes(e) || gone.includes(e) ? [...ul, ...gone] : [e];
   };
   function syncSets() {                                    // returns how many resets had to be taken off the publish schedule to keep a bundle together
     let off = 0; const bySet = {};
     DRAFTROWS.forEach(r => { if (r.xset) (bySet[r.xset] = bySet[r.xset] || []).push(r); });
-    Object.values(bySet).forEach(g => {
-      const live = g.filter(x => x.status !== 'Removed'), only = live.length === 1 ? live[0] : null;
-      if (only) {
-        const pub = PUBROWS.find(x => x.id === only.id);
-        if (!pub || !pub.xset) { delete only.xset; if (only.unlinked) only.unlinked = false; if (only.orig && only.status !== 'Added') recalc(only); return; }   // it never was in a set as published, so nothing to disconnect
-      }
+    Object.entries(bySet).forEach(([key, g]) => {
+      const live = g.filter(x => x.status !== 'Removed'), detaching = !!(DETACH[key] && DETACH[key].size);
+      const ul = detaching || live.length === 1 ? live : [];                // who leaves the set: everyone left when detaching, or the one reset left alone
+      ul.forEach(r => {                                                      // never connected as published, so there is nothing to disconnect
+        const pub = PUBROWS.find(x => x.id === r.id);
+        if (!pub || !pub.xset) { delete r.xset; r.unlinked = false; if (r.orig && r.status !== 'Added') recalc(r); }
+      });
+      const leaving = ul.filter(r => r.xset);
       g.forEach(r => {
-        const want = !!only && r === only;
+        if (!r.xset) return;
+        const want = leaving.includes(r);
         if (want === !!r.unlinked) return;
         r.unlinked = want;
         if (r.status === 'Removed') return;
         if (want) { if (!r.orig) r.orig = snap(r); if (!r.chg.includes('xset')) r.chg.push('xset'); r.status = 'Modified'; r.by = USER; if (r.sched) { r.sched = null; off++; } }
         else if (r.orig) recalc(r);
       });
-      if (only && only.unlinked) {                          // all-or-nothing scheduling for the bundle
-        const b = [only, ...g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id))], n = b.filter(x => x.sched).length;
+      if (leaving.length) {                                 // all-or-nothing scheduling for the bundle
+        const b = [...leaving, ...g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id))], n = b.filter(x => x.sched).length;
         if (n && n < b.length) b.forEach(x => { if (x.sched) { x.sched = null; off++; } });
       }
     });
+    Object.keys(DETACH).forEach(k => { if (!DRAFTROWS.some(r => r.xset === k && r.unlinked)) delete DETACH[k]; });
     return off;
   }
   const bundleNote = (e, n) => n ? ` ${n} connected ${n === 1 ? 'reset was' : 'resets were'} taken off the publish schedule. Schedule them together again when you're ready.` : '';
@@ -1347,10 +1354,17 @@
   function openRemove(id, from) {
     const e = rowById(id); if (!e) return;
     rmId = id; rmOpener = from || null;
-    const two = liveMates(e).length === 1;                  // a set of two: the other reset is left on its own
-    $('rInfo').hidden = !two;
-    $('rInfo').innerHTML = two ? '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#0b5cad"/><rect x="11" y="10.5" width="2" height="7" rx="1" fill="#fff"/><circle cx="12" cy="7.2" r="1.3" fill="#fff"/></svg><span>The remaining commodity will become a single commodity reset.</span>' : '';
+    const mates = liveMates(e), n = mates.length, inSetNow = n >= 1;       // a reset in a set gets a choice about what happens to the others
     $('rTitle').textContent = `Remove ${e.comm}`; $('r_notes').value = '';
+    $('rQ').hidden = inSetNow; $('rChoice').hidden = !inSetNow;
+    $('rForm').setAttribute('aria-describedby', inSetNow ? 'rQ2' : 'rQ');
+    if (inSetNow) {
+      $('rQ2').textContent = `The reset you selected is part of a cross-commodity reset. What would you like to do with the other ${n === 1 ? 'reset' : n + ' resets'} in it?`;
+      const opt = (v, t, d, on) => `<label class="opt"><input type="radio" name="rmode" value="${v}"${on ? ' checked' : ''}><span><b>${t}</b><small>${d}</small></span></label>`;
+      $('rOpts').innerHTML = n === 1
+        ? opt('one', 'Remove only this reset', `${esc(mates[0].comm)} becomes a single commodity reset.`, true) + opt('all', 'Remove all resets', `Removes this reset and ${esc(mates[0].comm)}.`)
+        : opt('one', 'Remove only this reset', `The other ${n} stay together as a cross-commodity reset.`, true) + opt('detach', 'Remove this reset and detach the others', `The other ${n} become single commodity resets.`) + opt('all', 'Remove all resets', `Removes all ${n + 1} resets in this cross-commodity reset.`);
+    }
     document.querySelector('.topbar').inert = true; document.querySelector('.app').inert = true;
     $('rScrim').hidden = false; $('rCancel').focus();
   }
@@ -1358,20 +1372,33 @@
     $('rScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
     if (restoreFocus && rmOpener && rmOpener.isConnected) rmOpener.focus(); rmOpener = null; rmId = null;
   }
-  function removeRow(id, note) {
+  function removeRow(id, note, mode = 'one') {
     const e = rowById(id); if (!e) return;
-    if (e.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); resetOrder(); render(); toast('Discarded the new entry'); return; }
-    const was = unsched(e); e.prev = { status: e.status, chg: e.chg, by: e.by, notes: e.notes || '' }; e.status = 'Removed'; e.chg = []; e.by = USER; if (note) e.notes = note;
-    const off = syncSets(), left = DRAFTROWS.find(x => x.xset && x.xset === e.xset && x.unlinked);
-    resetOrder(); render(); focusAfter(`[data-restore="${id}"]`);
-    toast('Marked for removal. It stays in the draft until you publish.' + (left ? ` ${left.comm} will become a single commodity reset, so it is marked Modified and publishes together with this removal.` : '') + (was ? reschedNote(was) : '') + bundleNote(e, off));
+    const key = e.xset, mates = liveMates(e), targets = mode === 'all' ? [e, ...mates] : [e];
+    let marked = 0, discarded = 0, schedNote = '';
+    targets.forEach(r => {
+      if (r.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(r), 1); discarded++; return; }
+      const was = unsched(r); if (was) schedNote = reschedNote(was);
+      r.prev = { status: r.status, chg: r.chg, by: r.by, notes: r.notes || '' }; r.status = 'Removed'; r.chg = []; r.by = USER; if (note) r.notes = note; marked++;
+    });
+    if (mode === 'detach' && mates.length >= 2) { (DETACH[key] = DETACH[key] || new Set()).add(id); e.detachKey = key; }
+    const off = syncSets(), leaving = key ? DRAFTROWS.filter(x => x.xset === key && x.unlinked) : [];
+    resetOrder(); render(); if (marked) focusAfter(`[data-restore="${id}"]`);
+    if (!marked && discarded === 1) { toast('Discarded the new entry'); return; }
+    const together = ' They publish together with the removal.';
+    let msg = mode === 'all' ? `Marked ${marked + discarded} ${marked + discarded === 1 ? 'reset' : 'resets'} for removal. ${marked ? (discarded ? `${discarded} new ${discarded === 1 ? 'reset was' : 'resets were'} discarded from the draft instead. ` : '') + 'They stay in the draft until you publish.' : 'They were new, so they are discarded from the draft.'}`
+      : 'Marked for removal. It stays in the draft until you publish.';
+    if (leaving.length === 1) msg += ` ${leaving[0].comm} will become a single commodity reset, so it is marked Modified and publishes together with this removal.`;
+    else if (leaving.length > 1) msg += ` ${leaving.length} commodities will become single commodity resets, so they are marked Modified.${together}`;
+    toast(msg.trim() + (schedNote && mode !== 'all' ? schedNote : '') + bundleNote(e, off));
   }
-  $('rForm').addEventListener('submit', ev => { ev.preventDefault(); const id = rmId, note = $('r_notes').value.trim(); closeRemove(false); removeRow(id, note); });
+  $('rForm').addEventListener('submit', ev => { ev.preventDefault(); const id = rmId, note = $('r_notes').value.trim(), pick = document.querySelector('#rChoice input[name="rmode"]:checked'), mode = $('rChoice').hidden || !pick ? 'one' : pick.value; closeRemove(false); removeRow(id, note, mode); });
   $('rCancel').addEventListener('click', () => closeRemove()); $('rClose').addEventListener('click', () => closeRemove());
   $('rScrim').addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.stopPropagation(); closeRemove(); return; } trapTab(ev, $('rForm')); });
   function restoreRow(id) {
     const e = rowById(id); if (!e) return;
     const was = unsched(e); const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; if (p.notes !== undefined) e.notes = p.notes; e.prev = null;
+    if (e.detachKey) { const d = DETACH[e.detachKey]; if (d) { d.delete(e.id); if (!d.size) delete DETACH[e.detachKey]; } e.detachKey = null; }   // undoing the removal also undoes the detach
     if (e.orig && e.status !== 'Added') { e.unlinked = false; recalc(e); }
     const off = syncSets();
     resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.' + (was ? reschedNote(was) : '') + bundleNote(e, off));
@@ -1404,12 +1431,13 @@
   function publishNow(rows) {
     const rem = rows.filter(e => e.status === 'Removed').length;
     PUBROWS.forEach(r => { r.status = ''; r.chg = []; });                       // a new version: older change flags no longer apply
+    const leaving = new Set(rows.filter(e => e.unlinked).map(e => e.id));     // resets that leave their set with this publish
     rows.forEach(e => {
       if (e.status === 'Added') PUBROWS.push({ ...e, divList: [...e.divList], status: 'Added', chg: [], by: '', sched: null });
-      else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg], xset: e.xset }); }
+      else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg], xset: e.xset }); if (leaving.has(e.id)) delete r.xset; }
       else if (e.status === 'Removed') PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1);
     });
-    rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; e.unlinked = false; } });
+    rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; if (leaving.has(e.id)) delete e.xset; e.unlinked = false; } });
     [PUBROWS, DRAFTROWS].forEach(list => { const n = {}; list.forEach(r => { if (r.xset) n[r.xset] = (n[r.xset] || 0) + 1; }); list.forEach(r => { if (r.xset && n[r.xset] < 2) delete r.xset; }); });   // a set with one reset left is a single commodity reset now
     version++; updatedAt = nowStr(); sel.clear(); resetOrder();
     const n = rows.length;
