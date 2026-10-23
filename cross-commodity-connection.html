@@ -950,9 +950,12 @@
   const dateLabel = f => `${f.year || YEAR}: ${dateText(f)}`;
   const activeKeys = f => [f.year && 'year', hasDate(f) && 'date', ...FKEYS.filter(k => f[k])].filter(Boolean);
   const clearDate = f => { f.start = null; f.end = null; f.singles = []; };
-  const baseRows = () => ROWS.filter(e => (!applied.year || +applied.year === e.year) &&
+  const matchRows = () => ROWS.filter(e => (!applied.year || +applied.year === e.year) &&
     ['dept', 'comm', 'type', 'cm', 'pm', 'status'].every(k => !applied[k] || e[k] === applied[k]) && (!applied.div || e.divList.includes(applied.div)) &&
     (!applied.pstate || (e.status && (applied.pstate === 'Scheduled' ? !!e.sched : !e.sched))) && (!applied.by || e.by === applied.by));
+  /* Cross-commodity sets are never split by a filter: if ANY reset in a set matches, the whole set is shown. */
+  const withSets = rows => { const keys = new Set(rows.filter(e => e.xset).map(e => e.xset)); if (!keys.size) return rows; const have = new Set(rows); return ROWS.filter(e => have.has(e) || (e.xset && keys.has(e.xset))); };
+  const baseRows = () => withSets(matchRows());
   const scopeWs = () => dateList(applied);
 
 
@@ -1099,7 +1102,7 @@
   function render() {
     [...sel].forEach(id => { const e = ROWS.find(x => x.id === id); if (!e || !e.status) sel.delete(id); });
     const base = baseRows(), c = calc(base.filter(e => e.status !== 'Removed'), cap), sw = scopeWs();
-    const shown = sw ? base.filter(e => sw.some(w => covers(e, w))) : base;
+    const shown = sw ? withSets(base.filter(e => sw.some(w => covers(e, w)))) : base;
     { const vis = new Set(shown.map(e => e.id)); [...sel].forEach(id => { if (!vis.has(id)) sel.delete(id); }); }
     renderChrome(); renderTable(c, shown, sw); renderPanel();
   }
@@ -1206,7 +1209,8 @@
 
   $('applyBtn').addEventListener('click', () => {
     applied = clone(draft); setOpen(false); render();
-    const n = baseRows().length; toast(activeKeys(applied).length ? `Filters applied · ${n} ${n === 1 ? 'reset' : 'resets'} match` : 'No filters applied');
+    const n = matchRows().length, extra = baseRows().length - n;
+    toast(activeKeys(applied).length ? `Filters applied · ${n} ${n === 1 ? 'reset' : 'resets'} match` + (extra ? `, plus ${extra} more shown to keep cross-commodity resets together` : '') : 'No filters applied');
   });
   function clearEverything() { applied = blank(); draft = blank(); pk.s = pk.e = pk.h = null; setOpen(false); render(); }
   clearAllBtn.addEventListener('click', clearEverything);
