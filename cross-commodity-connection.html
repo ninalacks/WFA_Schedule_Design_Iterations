@@ -280,6 +280,7 @@
   #eForm .fin { height: 34px; font-size: 13px; border-radius: 4px; border-color: #b8bec8; }
   #eForm select.fin:required:invalid { color: #6b7280; }
   #eForm select.fin option { color: var(--text); }
+  #eForm select.fin option:disabled { color: #9aa3b0; }
   #eForm select.fin:disabled { background: #eef0f3; cursor: not-allowed; }
   #eForm .fin.ro { background: #eef0f3; color: #5b6573; border-color: #d5d9df; }
   #eForm textarea.fin { height: auto; min-height: 48px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
@@ -302,6 +303,21 @@
   #rForm header { padding: 18px 26px 12px; }
   .rbody { padding: 16px 26px 8px; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
   .rq { margin: 0; font-size: 15px; line-height: 1.4; color: var(--text); }
+  .ehead .tag.det { background: #fff1cc; color: #7a5200; }
+  .dnote { background: #d2eafa; border-radius: 6px; padding: 9px 12px; font-size: 13px; line-height: 1.4; color: #000; }
+  /* Custom commodity list (so a disabled commodity can show an instant, styled tooltip) */
+  .cdd { position: fixed; z-index: 120; background: #fff; border: 1px solid #b8bec8; border-radius: 4px; box-shadow: 0 6px 18px rgba(15,31,61,.25); overflow: auto; padding: 4px 0; font-size: 13px; overscroll-behavior: contain; }
+  .cdd[hidden] { display: none; }
+  .cdd-i { padding: 7px 10px; cursor: pointer; color: var(--text); }
+  .cdd-i.ph { color: #6b7280; }
+  .cdd-i.sel { font-weight: 700; }
+  .cdd-i.act { background: #e8eef8; }
+  .cdd-i.off { color: #9aa3b0; cursor: not-allowed; }
+  .cdd-i.off.act { background: #f1f2f4; }
+  .ctip { position: fixed; z-index: 220; background: #1c1e21; color: #fff; font-size: 15px; line-height: 1.5; padding: 12px 16px; border-radius: 6px; max-width: 250px; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+  .ctip[hidden] { display: none; }
+  .ctip::before { content: ""; position: absolute; top: -8px; left: 14px; border-style: solid; border-width: 0 8px 8px 8px; border-color: transparent transparent #1c1e21 transparent; }
+  .ctip.up::before { top: auto; bottom: -8px; border-width: 8px 8px 0 8px; border-color: #1c1e21 transparent transparent transparent; }
   #rChoice { margin: 0; }
   #rChoice legend { font-weight: 400; font-size: 15px; line-height: 1.4; margin-bottom: 8px; color: var(--text); }
   #rChoice .opt { margin: 0 -12px; }
@@ -343,6 +359,7 @@
   .xmem button.pill:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .xmem .pill small { color: var(--muted); margin-left: 6px; }
   .xmem .pill.off { opacity: .65; }
+  .xmem .pill small.pe.det { background: #fff1cc; color: #7a5200; }
   .xmem .pill small.pe { background: #e1eafb; color: var(--blue); font-weight: 700; font-size: 11px; padding: 0 7px; border-radius: 999px; margin-left: 8px; }
   #xcAdd { align-self: flex-start; padding: 4px 2px; font-size: 14px; text-decoration: none; font-weight: 600; }
   #xcAdd:hover { text-decoration: underline; }
@@ -515,7 +532,7 @@
       </div>
       <div class="fg" id="xcRow"><label class="chk"><input type="checkbox" id="e_xc"> This is a cross-commodity reset</label></div>
       <div class="xmem" id="xcMembers" hidden></div>
-      <div class="ebar" id="ebar" hidden><button type="button" class="link-btn" id="eAll">Expand all</button></div>
+      <div class="ebar" id="ebar" hidden><button type="button" class="link-btn" id="eDet" hidden>Detach all</button><button type="button" class="link-btn" id="eAll">Expand all</button></div>
       <div id="entries"></div>
       <button type="button" class="link-btn" id="xcAdd" hidden>+ Add another commodity</button>
       <div class="fg"><label for="e_notes">Internal Notes <span class="sub">(only visible in the history)</span></label><textarea class="fin" id="e_notes" rows="2" placeholder="Internal notes (ex. explaining why the change is happening)"></textarea></div>
@@ -559,6 +576,8 @@
   </div>
 </div>
 <div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+<div class="cdd" id="cdd" role="listbox" aria-label="Commodity" hidden></div>
+<div class="ctip" id="ctip" role="tooltip" hidden></div>
 <div class="xtip" id="xtip" role="tooltip" hidden>Part of a cross-commodity reset</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -1309,11 +1328,12 @@
   }
   /* A reset left alone by a removal ("leftover") becomes a single commodity reset when published. Until then it stays in the bracket, is marked Modified
      (its connection changes) and has to be published together with the removal(s), so the published schedule never holds half of a change. */
+  const DETACH1 = new Set();                               // ids of resets the user asked to detach from their set (one-way once published)
   const DETACH = {};                                       // set key -> ids of the removed resets that asked to detach the rest ("Remove this reset and detach the others")
   const bundleOf = e => {
     if (!e || !e.xset) return [e];
-    const g = DRAFTROWS.filter(x => x.xset === e.xset), ul = g.filter(x => x.status !== 'Removed' && x.unlinked);
-    if (!ul.length) return [e];
+    const g = DRAFTROWS.filter(x => x.xset === e.xset), live = g.filter(x => x.status !== 'Removed'), ul = live.filter(x => x.unlinked);
+    if (!ul.length || ul.length !== live.length) return [e];          // only a set that is breaking up completely has to go out together
     const gone = g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id));
     return ul.includes(e) || gone.includes(e) ? [...ul, ...gone] : [e];
   };
@@ -1322,7 +1342,8 @@
     DRAFTROWS.forEach(r => { if (r.xset) (bySet[r.xset] = bySet[r.xset] || []).push(r); });
     Object.entries(bySet).forEach(([key, g]) => {
       const live = g.filter(x => x.status !== 'Removed'), detaching = !!(DETACH[key] && DETACH[key].size);
-      const ul = detaching || live.length === 1 ? live : [];                // who leaves the set: everyone left when detaching, or the one reset left alone
+      const R = live.filter(x => DETACH1.has(x.id));                         // resets asked to detach. A set can't keep a single reset, so then the rest leave too
+      const ul = detaching || live.length === 1 ? live : (R.length && live.length - R.length <= 1 ? live : R);   // who leaves the set
       ul.forEach(r => {                                                      // never connected as published, so there is nothing to disconnect
         const pub = PUBROWS.find(x => x.id === r.id);
         if (!pub || !pub.xset) { delete r.xset; r.unlinked = false; if (r.orig && r.status !== 'Added') recalc(r); }
@@ -1337,12 +1358,13 @@
         if (want) { if (!r.orig) r.orig = snap(r); if (!r.chg.includes('xset')) r.chg.push('xset'); r.status = 'Modified'; r.by = USER; if (r.sched) { r.sched = null; off++; } }
         else if (r.orig) recalc(r);
       });
-      if (leaving.length) {                                 // all-or-nothing scheduling for the bundle
+      if (leaving.length && leaving.length === live.length) {   // a set breaking up completely: all-or-nothing scheduling for the bundle
         const b = [...leaving, ...g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id))], n = b.filter(x => x.sched).length;
         if (n && n < b.length) b.forEach(x => { if (x.sched) { x.sched = null; off++; } });
       }
     });
     Object.keys(DETACH).forEach(k => { if (!DRAFTROWS.some(r => r.xset === k && r.unlinked)) delete DETACH[k]; });
+    [...DETACH1].forEach(id => { const r = rowById(id); if (!r || r.status === 'Removed' || !r.xset) DETACH1.delete(id); });
     return off;
   }
   const bundleNote = (e, n) => n ? ` ${n} connected ${n === 1 ? 'reset was' : 'resets were'} taken off the publish schedule. Schedule them together again when you're ready.` : '';
@@ -1509,10 +1531,18 @@
   $('e_date').innerHTML = optHtml(Array.from({ length: WEEKS }, (_, i) => wkLbl(i)));
   $('e_type').innerHTML = optHtml(TYPES);
   $('e_divs').innerHTML = optHtml(['All', ...Array.from({ length: DIVS.length - 1 }, (_, i) => i + 1)]);
-  let editId = null, opener = null, cross = false, ents = [], editAll = false, notes0 = '', openE = new Set();   // openE = which sections of the all-resets dialog are expanded
+  let editId = null, opener = null, cross = false, ents = [], editAll = false, notes0 = '', openE = new Set(), detPend = new Set();   // openE = which sections of the all-resets dialog are expanded
   const newEnt = () => ({ dept: '', comm: '', cm: '', pm: '', size: '', hours: '', comments: '' });
   const shownEnts = () => cross ? ents : ents.slice(0, 1);
   const commList = (dept, cur) => { const n = dept ? Object.keys(COMMS[dept] || {}) : Object.keys(COMM_DEPT); if (cur && !n.includes(cur)) n.push(cur); return n.sort(); };   // no department yet: every commodity
+  const TAKENTIP = 'Already selected in this cross-commodity reset.';
+  const takenFor = i => {                                                  // commodities already used by the other cards, or already in the set being edited
+    if (!cross) return new Set();
+    const t = new Set(shownEnts().filter((_, j) => j !== i).map(en => en.comm).filter(Boolean));
+    if (editId != null && !editAll) { const e = rowById(editId); if (e && e.xset) DRAFTROWS.filter(x => x.xset === e.xset && x.id !== editId).forEach(x => t.add(x.comm)); }
+    return t;
+  };
+  const commOpts = (dept, cur, taken) => PH + commList(dept, cur).map(v => { const off = taken.has(v) && v !== cur; return `<option value="${esc(v)}"${v === cur ? ' selected' : ''}${off ? ' disabled' : ''}>${esc(v)}</option>`; }).join('');
   const sizeList = cur => cur && !SIZES.includes(+cur) ? [...SIZES, +cur].sort((a, b) => a - b) : SIZES;
   const LOCKTXT = f => `${f} cannot be changed once a reset is created - it's part of the reset's identity.`;
   const isPublished = id => PUBROWS.some(x => x.id === id);          // a reset that has gone out in a published version. Department and commodity are fixed from then on
@@ -1521,13 +1551,17 @@
     const id = k => `x${i}_${k}`, err = k => `<div class="ferr" id="${id(k)}_err" role="alert" hidden></div>`;
     const open = !editAll || openE.has(i), edited = editAll && cur && entChanged(en);
     const sum = editAll ? [en.dept, en.size ? 'Core ' + en.size : '', en.hours ? en.hours + ' hrs' : '', (en.comments || '').trim() ? 'has comment' : ''].filter(Boolean).join(' · ') : '';
+    const rr = cur ? rowById(en.rid) : null, inS = !!(rr && rr.xset && cross), eff = inS ? effDet() : new Set(), isDet = inS && (eff.has(en.rid) || removalDet(rr));
+    const detLink = inS && !removalDet(rr) ? `<button type="button" class="link-btn erm" data-xdet="${en.rid}" aria-label="${isDet ? 'Undo detach' : 'Detach'} ${esc(en.comm)}">${isDet ? 'Undo' : 'Detach'}</button>` : '';
+    const detTag = isDet ? '<span class="tag det">Will be detached</span>' : '';
+    const detNote = isDet ? `<div class="dnote">${detLive().length === 2 || (eff.size >= detLive().length) ? 'A cross-commodity reset needs at least two resets, so every reset in it becomes a single commodity reset.' : 'This becomes a single commodity reset when you save. It keeps its current date, but changes to the set no longer apply to it.'}</div>` : '';
     const rm = editAll && !cur ? `<button type="button" class="link-btn erm" data-xcrm="${i}" aria-label="Remove ${esc(en.comm || 'commodity ' + (i + 1))}">Remove</button>` : '';
-    const head = !cross ? '' : editAll ? `<div class="ehrow"><button type="button" class="ehead btn" data-etoggle="${i}" aria-expanded="${open}" aria-controls="eb${i}"><span class="chev" aria-hidden="true">${CH('M6 9l6 6 6-6')}</span><span class="etl"><span class="etitle">${esc(en.comm || 'Commodity ' + (i + 1))}</span>${open ? '' : `<span class="sum">${esc(sum)}</span>`}${edited ? '<span class="tag">Modified</span>' : ''}<span class="tag err" id="eerr${i}" hidden>Needs attention</span></span></button>${rm}</div>`
-      : `<div class="ehead"><span class="etitle">${esc(en.comm || 'Commodity ' + (i + 1))}</span>${!cur && (n > 2 || inSet()) ? `<button type="button" class="link-btn" data-xcrm="${i}" aria-label="Remove commodity ${i + 1}">Remove</button>` : ''}</div>`;
-    return `<div class="entry${cross ? ' x' : ''}${open ? '' : ' coll'}"${cross ? ` role="group" aria-label="${esc(en.comm || 'Commodity ' + (i + 1))}"` : ''}>${head}<div class="ebodyx" id="eb${i}"${open ? '' : ' hidden'}>${lock ? `<span class="xsr2" id="x${i}_lockd_d">${LOCKTXT('Department')}</span><span class="xsr2" id="x${i}_lockd_c">${LOCKTXT('Commodity')}</span>` : ''}
+    const head = !cross ? '' : editAll ? `<div class="ehrow"><button type="button" class="ehead btn" data-etoggle="${i}" aria-expanded="${open}" aria-controls="eb${i}"><span class="chev" aria-hidden="true">${CH('M6 9l6 6 6-6')}</span><span class="etl"><span class="etitle">${esc(en.comm || 'Commodity ' + (i + 1))}</span>${open ? '' : `<span class="sum">${esc(sum)}</span>`}${edited ? '<span class="tag">Modified</span>' : ''}${detTag}<span class="tag err" id="eerr${i}" hidden>Needs attention</span></span></button>${detLink}${rm}</div>`
+      : `<div class="ehead"><span class="etitle">${esc(en.comm || 'Commodity ' + (i + 1))}${detTag}</span>${detLink}${!cur && (n > 2 || inSet()) ? `<button type="button" class="link-btn" data-xcrm="${i}" aria-label="Remove commodity ${i + 1}">Remove</button>` : ''}</div>`;
+    return `<div class="entry${cross ? ' x' : ''}${open ? '' : ' coll'}"${cross ? ` role="group" aria-label="${esc(en.comm || 'Commodity ' + (i + 1))}"` : ''}>${head}<div class="ebodyx" id="eb${i}"${open ? '' : ' hidden'}>${detNote}${lock ? `<span class="xsr2" id="x${i}_lockd_d">${LOCKTXT('Department')}</span><span class="xsr2" id="x${i}_lockd_c">${LOCKTXT('Commodity')}</span>` : ''}
       <div class="g12">
         <div class="fg s3"${lock ? ' data-locktip="Department"' : ''}><label for="${id('dept')}">Department</label><select class="fin" id="${id('dept')}" required ${lock ? `disabled aria-describedby="x${i}_lockd_d"` : `aria-describedby="${id('dept')}_err"`}>${optHtml(DEPTS, en.dept)}</select>${err('dept')}</div>
-        <div class="fg s3"${lock ? ' data-locktip="Commodity"' : ''}><label for="${id('comm')}">Commodity</label><select class="fin" id="${id('comm')}" required ${lock ? 'disabled' : ''} ${lock ? `aria-describedby="x${i}_lockd_c"` : `aria-describedby="${id('comm')}_err"`}>${optHtml(commList(en.dept, en.comm), en.comm)}</select>${err('comm')}</div>
+        <div class="fg s3"${lock ? ' data-locktip="Commodity"' : ''}><label for="${id('comm')}">Commodity</label><select class="fin" id="${id('comm')}" required ${lock ? 'disabled' : ''} ${lock ? `aria-describedby="x${i}_lockd_c"` : `aria-describedby="${id('comm')}_err"`}>${commOpts(en.dept, en.comm, takenFor(i))}</select>${err('comm')}</div>
         <div class="fg s3"><label for="${id('cm')}">CM</label><input class="fin ro" id="${id('cm')}" readonly value="${esc(en.cm || '—')}" aria-label="Category Manager, filled in from the commodity"></div>
         <div class="fg s3"><label for="${id('pm')}">PM</label><input class="fin ro" id="${id('pm')}" readonly value="${esc(en.pm || '—')}" aria-label="Process Manager, filled in from the commodity"></div>
         <div class="fg s6"><label for="${id('size')}">Core Size</label><select class="fin" id="${id('size')}" required aria-describedby="${id('size')}_err">${optHtml(sizeList(en.size), en.size)}</select>${err('size')}</div>
@@ -1555,11 +1589,68 @@
   $('eForm').addEventListener('input', () => { if (sess) updateSaveLabel(); }); $('eForm').addEventListener('change', () => { if (sess) updateSaveLabel(); });
   function gotoReset(id) { const keep = opener; stash(); openEntry(id, keep, true); }
   $('xcMembers').addEventListener('click', ev => { const b = ev.target.closest('[data-gotoreset]'); if (b && rowById(+b.dataset.gotoreset)) gotoReset(+b.dataset.gotoreset); });
+  /* Commodity list. The real <select> stays in the form (value, validation, saving) but opens this list instead of the browser's own,
+     so a commodity that is already taken can show an instant, styled tooltip when hovered or reached with the arrow keys. */
+  const cdd = $('cdd'), ctip = $('ctip'); let cddFor = null, cddAct = -1, cddItems = [];
+  const isComm = el => !!el && el.tagName === 'SELECT' && /^x\d+_comm$/.test(el.id) && !el.disabled;
+  function cddTipHide() { ctip.hidden = true; }
+  function cddTipShow(item) {
+    const r = item.getBoundingClientRect(); ctip.textContent = TAKENTIP; ctip.classList.remove('up'); ctip.hidden = false;
+    const w = ctip.offsetWidth, h = ctip.offsetHeight; ctip.style.left = Math.max(8, Math.min(r.left + 8, innerWidth - w - 8)) + 'px';
+    if (r.bottom + 10 + h > innerHeight - 8) { ctip.classList.add('up'); ctip.style.top = Math.max(8, r.top - 10 - h) + 'px'; } else ctip.style.top = (r.bottom + 10) + 'px';
+  }
+  function cddClose(refocus) {
+    if (!cddFor) return; const sel = cddFor; cddFor = null; cdd.hidden = true; cddTipHide();
+    sel.setAttribute('aria-expanded', 'false'); sel.removeAttribute('aria-activedescendant'); if (refocus) sel.focus();
+  }
+  function cddSetAct(i, scroll) {
+    cddAct = i; [...cdd.children].forEach((c, k) => c.classList.toggle('act', k === i));
+    const el = cdd.children[i]; if (!el) return; cddFor && cddFor.setAttribute('aria-activedescendant', el.id);
+    if (scroll) { const top = el.offsetTop, bot = top + el.offsetHeight; if (top < cdd.scrollTop) cdd.scrollTop = top; else if (bot > cdd.scrollTop + cdd.clientHeight) cdd.scrollTop = bot - cdd.clientHeight; }   // scroll the list only, never the dialog behind it
+    cddItems[i] && cddItems[i].off ? cddTipShow(el) : cddTipHide();
+  }
+  function cddOpen(sel) {
+    cddClose(false); cddFor = sel; cddOpenedAt = performance.now();
+    cddItems = [...sel.options].map(o => ({ v: o.value, t: o.textContent, off: o.disabled, sel: o.selected && o.value !== '' }));
+    cdd.innerHTML = cddItems.map((it, i) => `<div class="cdd-i${it.v === '' ? ' ph' : ''}${it.sel ? ' sel' : ''}${it.off ? ' off' : ''}" role="option" id="cdd${i}" data-i="${i}" aria-selected="${it.sel}"${it.off ? ` aria-disabled="true" aria-label="${esc(it.t)}, unavailable. ${esc(TAKENTIP)}"` : ''}>${esc(it.t)}</div>`).join('');
+    const r = sel.getBoundingClientRect(), below = innerHeight - r.bottom - 10, above = r.top - 10, up = below < 170 && above > below, mh = Math.max(120, Math.min(280, up ? above : below));
+    cdd.hidden = false; cdd.style.width = r.width + 'px'; cdd.style.left = r.left + 'px'; cdd.style.maxHeight = mh + 'px';
+    cdd.style.top = (up ? Math.max(8, r.top - Math.min(cdd.scrollHeight + 2, mh) - 2) : r.bottom + 2) + 'px';
+    sel.setAttribute('aria-expanded', 'true'); sel.setAttribute('aria-haspopup', 'listbox'); cdd.scrollTop = 0;
+    const cur = cddItems.findIndex(x => x.sel); cddSetAct(cur >= 0 ? cur : Math.max(0, cddItems.findIndex(x => !x.off && x.v !== '')), true);
+  }
+  function cddPick(i) {
+    const it = cddItems[i]; if (!it || it.off) return;                      // a taken commodity can't be chosen
+    const sel = cddFor; cddClose(false); sel.value = it.v; sel.dispatchEvent(new Event('change', { bubbles: true }));
+    const again = document.getElementById(sel.id); if (again) again.focus();
+  }
+  cdd.addEventListener('mousedown', ev => ev.preventDefault());                   // keep focus on the field
+  cdd.addEventListener('mouseover', ev => { const it = ev.target.closest('.cdd-i'); if (it) cddSetAct(+it.dataset.i, false); else cddTipHide(); });
+  cdd.addEventListener('mouseleave', cddTipHide);
+  cdd.addEventListener('click', ev => { const it = ev.target.closest('.cdd-i'); if (it) cddPick(+it.dataset.i); });
+  cdd.addEventListener('scroll', cddTipHide);
+  $('entries').addEventListener('mousedown', ev => { const sel = ev.target.closest('select'); if (ev.button !== 0 || !isComm(sel)) return; ev.preventDefault(); sel.focus({ preventScroll: true }); cddFor === sel ? cddClose(false) : cddOpen(sel); });
+  $('entries').addEventListener('keydown', ev => {
+    const sel = ev.target.closest('select'); if (!isComm(sel)) return; const k = ev.key;
+    if (cddFor !== sel) { if (k === 'ArrowDown' || k === 'ArrowUp' || k === ' ') { ev.preventDefault(); cddOpen(sel); } return; }
+    if (k === 'ArrowDown' || k === 'ArrowUp') { ev.preventDefault(); cddSetAct(Math.max(0, Math.min(cddItems.length - 1, cddAct + (k === 'ArrowDown' ? 1 : -1))), true); }   // disabled ones can be reached so their reason is shown
+    else if (k === 'Home' || k === 'End') { ev.preventDefault(); cddSetAct(k === 'Home' ? 0 : cddItems.length - 1, true); }
+    else if (k === 'Enter' || k === ' ') { ev.preventDefault(); cddPick(cddAct); }
+    else if (k === 'Escape') { ev.preventDefault(); ev.stopPropagation(); cddClose(true); }
+    else if (k === 'Tab') cddClose(false);
+  });
+  $('entries').addEventListener('focusout', ev => { if (cddFor && ev.target === cddFor) cddClose(false); });
+  document.addEventListener('mousedown', ev => { if (cddFor && !cdd.contains(ev.target) && ev.target !== cddFor) cddClose(false); });
+  let cddOpenedAt = 0; document.querySelector('#eForm .ebody').addEventListener('scroll', () => { if (performance.now() - cddOpenedAt > 250) cddClose(false); }); let cddW = innerWidth; addEventListener('resize', () => { if (innerWidth !== cddW) { cddW = innerWidth; cddClose(false); } });   // phones fire resize while scrolling, so only a width change closes the list
+  /* Detach: resets marked in the dialog to leave the set. A set can't keep a single reset, so if only one would be left, every reset leaves. */
+  const removalDet = r => !!r && r.unlinked && !DETACH1.has(r.id);          // already leaving because of a removal (can't be undone here)
+  const detLive = () => { const e = editId == null ? null : rowById(editId); return e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed' && !removalDet(x)) : []; };
+  const effDet = () => { const live = detLive(), D = new Set([...detPend].filter(id => live.some(x => x.id === id))); return D.size && live.length - D.size <= 1 ? new Set(live.map(x => x.id)) : D; };
   const mates = () => { const e = editId == null ? null : rowById(editId); return e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed') : []; };
   const inSet = () => editId != null && !!(rowById(editId) || {}).xset;     // editing a reset that already belongs to a cross-commodity set
   function renderMembers() {
     const e = editId == null ? null : rowById(editId), box = $('xcMembers');
-    const info = $('e_date_info'), n = e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed').length + 1 : 0;
+    const info = $('e_date_info'), n = e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed').length + 1 - (e.xset ? effDet().size + DRAFTROWS.filter(x => x.xset === e.xset && removalDet(x) && x.status !== 'Removed').length : 0) : 0;
     const msg = `Applies to all ${n} resets in this cross-commodity reset.`;
     info.hidden = n < 2; info.dataset.infotip = n < 2 ? '' : msg; info.setAttribute('aria-label', n < 2 ? '' : `About the date. ${msg}`);
     if (!e || !e.xset || editAll) { box.hidden = true; box.innerHTML = ''; return; }
@@ -1567,12 +1658,19 @@
     box.hidden = false;
     box.innerHTML = `<span class="lbl" id="xmemL">Also in this cross-commodity reset</span><ul aria-labelledby="xmemL">${others.map(x => x.status === 'Removed'
       ? `<li><span class="pill off">${esc(x.comm)}<small>marked for removal</small></span></li>`
-      : `<li><button type="button" class="pill" data-gotoreset="${x.id}" aria-label="Edit ${esc(x.comm)}${sess && sess.edits.has(x.id) ? ', has unsaved changes' : ''}">${esc(x.comm)}${sess && sess.edits.has(x.id) ? '<small class="pe">Modified</small>' : ''}</button></li>`).join('')}</ul>`;
+      : `<li><button type="button" class="pill" data-gotoreset="${x.id}" aria-label="Edit ${esc(x.comm)}${sess && sess.edits.has(x.id) ? ', has unsaved changes' : ''}">${esc(x.comm)}${sess && sess.edits.has(x.id) ? '<small class="pe">Modified</small>' : ''}${effDet().has(x.id) || removalDet(x) ? '<small class="pe det">Detaching</small>' : ''}</button></li>`).join('')}</ul>`;
   }
-  function renderEntries() { $('ebar').hidden = !editAll || ents.length < 2; $('eAll').textContent = allOpen() ? 'Collapse all' : 'Expand all'; renderMembers(); const sh = shownEnts(); $('entries').innerHTML = sh.map((en, i) => entryHtml(en, i, sh.length)).join(''); $('xcAdd').hidden = !cross; }
+  function renderEntries() { cddClose(false); { const dl = editAll ? detLive() : []; $('eDet').hidden = dl.length < 3; $('eDet').textContent = dl.length && effDet().size === dl.length ? 'Undo detach all' : 'Detach all'; } $('ebar').hidden = !editAll || ents.length < 2; $('eAll').textContent = allOpen() ? 'Collapse all' : 'Expand all'; renderMembers(); const sh = shownEnts(); $('entries').innerHTML = sh.map((en, i) => entryHtml(en, i, sh.length)).join(''); $('xcAdd').hidden = !cross; }
   function readEntries() { shownEnts().forEach((en, i) => { const v = k => $(`x${i}_${k}`).value; en.dept = v('dept'); en.comm = v('comm'); en.size = v('size'); en.hours = v('hours').trim(); en.comments = v('comments'); }); }
   $('e_xc').addEventListener('change', () => { readEntries(); cross = $('e_xc').checked; while (cross && ents.length < 2) ents.push(newEnt()); renderEntries(); });
   $('xcAdd').addEventListener('click', () => { readEntries(); ents.push(newEnt()); if (editAll) openE.add(ents.length - 1); renderEntries(); $(`x${ents.length - 1}_dept`).focus(); });
+  function toggleDet(rid) {
+    readEntries(); const eff = effDet();
+    if (eff.has(rid)) { detPend.has(rid) ? detPend.delete(rid) : detPend.clear(); } else detPend.add(rid);     // undo on a reset pulled in by "a set can't keep one reset" cancels the whole request
+    renderEntries(); (document.querySelector(`[data-xdet="${rid}"]`) || $('xcAdd')).focus();
+  }
+  $('entries').addEventListener('click', ev => { const d = ev.target.closest('[data-xdet]'); if (d) toggleDet(+d.dataset.xdet); });
+  $('eDet').addEventListener('click', () => { readEntries(); const live = detLive(); effDet().size === live.length ? detPend.clear() : live.forEach(x => detPend.add(x.id)); renderEntries(); $('eDet').focus(); });
   $('entries').addEventListener('click', ev => {
     const t = ev.target.closest('[data-etoggle]'); if (!t) return;
     const i = +t.dataset.etoggle; readEntries(); openE.has(i) ? openE.delete(i) : openE.add(i); renderEntries(); document.querySelector(`[data-etoggle="${i}"]`).focus();
@@ -1621,7 +1719,7 @@
       const mates = DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed');
       ents = [entOf(e), ...mates.map(entOf)]; openE = new Set([0]);                // the reset you clicked starts open, the rest collapsed
     } else { ents = [e ? entOf(e) : newEnt()]; openE = new Set(); }
-    if (!(carry && sess)) sess = e && e.xset && !editAll ? newSess(e) : null;      // Version 1 on a reset in a set: start collecting pending edits (switching keeps them)
+    if (!(carry && sess)) { sess = e && e.xset && !editAll ? newSess(e) : null; detPend = new Set(e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && DETACH1.has(x.id)).map(x => x.id) : []); }      // Version 1 on a reset in a set: start collecting pending edits (switching keeps them)
     if (sess) { const st = sess.edits.get(e.id); if (st) ents[0] = { ...st }; ents.push(...sess.added.map(x => ({ ...x }))); }
     $('eTitle').textContent = editAll ? `Edit cross-commodity reset · ${ents.length} resets` : e ? `Edit reset · ${e.comm}` : 'Add New Entry'; $('eSave').textContent = e ? 'Save changes' : 'Submit';
     const sv = sess ? sess.shared : null;      // shared fields come from the pending state, so they stay the same as you move between resets
@@ -1632,7 +1730,7 @@
     $('eScrim').hidden = false; const f0 = e ? $('x0_dept') : null; (f0 && !f0.disabled ? f0 : $('e_date')).focus();
   }
   function closeEntry() {
-    hideLockTip(); sess = null; $('eScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
+    hideLockTip(); cddClose(false); sess = null; detPend = new Set(); $('eScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
     if (opener && opener.isConnected) opener.focus(); opener = null; editId = null;
   }
   $('eForm').addEventListener('submit', ev => {
@@ -1659,11 +1757,14 @@
       /* Version 2: every reset in the set is in the dialog. Date, Type, Division and Internal Notes are shared and go to all of them.
          Department, commodity, core size, hours and comments belong to each reset. Only resets whose values actually change are flagged. */
       const anchor = rowById(editId); let changed = 0, off = 0, added = 0, id = Math.max(...DRAFTROWS.map(x => x.id));
+      const effDet2 = effDet();
       sh.forEach(en => {
         if (en.rid) {
-          const r = rowById(en.rid), before = { ...snap(r), notes: r.notes || '' }, hadOrig = !!r.orig; if (!r.orig && r.status !== 'Added') r.orig = snap(r);
-          Object.assign(r, { type, start, divs, dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim() }); r.notes = notes; r.divList = divListFor(r.id, r.divs);
-          const diff = FIELDS.some(k => String(before[k]) !== String(r[k])) || before.notes !== notes;
+          const r = rowById(en.rid), keepSet = !effDet2.has(en.rid) && !removalDet(rowById(en.rid)), before = { ...snap(r), notes: r.notes || '' }, hadOrig = !!r.orig; if (!r.orig && r.status !== 'Added') r.orig = snap(r);
+          if (keepSet) Object.assign(r, { type, start, divs });
+          Object.assign(r, { dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim() }); r.divList = divListFor(r.id, r.divs);
+          if (keepSet) r.notes = notes;
+          const diff = FIELDS.some(k => String(before[k]) !== String(r[k])) || (keepSet && before.notes !== notes);
           if (!diff) { if (!hadOrig && r.status === '' ) r.orig = null; return; }
           changed++; if (r.sched) { r.sched = null; off++; }
           r.status === 'Added' ? (r.by = USER) : recalc(r);
@@ -1678,8 +1779,9 @@
       const e = rowById(editId), anchorStart = e.start, prevDate = { ...Object.fromEntries(DRAFTROWS.filter(x => x.xset === e.xset).map(x => [x.id, x.start])) };
       const all = new Map(sess.edits); entChanged(ents[0]) ? all.set(editId, { ...ents[0] }) : all.delete(editId);
       let changed = 0, off = 0, added = 0, id = Math.max(...DRAFTROWS.map(x => x.id));
+      const effDetS = effDet();
       const sharedSame = r => r.type === type && r.start === start && String(r.divs) === String(divs) && (r.notes || '') === notes;
-      DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed').forEach(r => {
+      DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed' && !effDetS.has(x.id) && !removalDet(x)).forEach(r => {
         const en = all.get(r.id), shared = !sharedSame(r);
         if (!en && !shared) return;
         const before = { ...snap(r), notes: r.notes || '' }; if (!r.orig && r.status !== 'Added') r.orig = snap(r);
@@ -1719,6 +1821,20 @@
         if (r.moved) msg += ` Moved ${r.moved} other ${r.moved === 1 ? 'reset' : 'resets'} in the set to ${start} too.` + (r.unscheduled ? ` ${r.unscheduled} had been scheduled to publish, so ${r.unscheduled === 1 ? 'it was' : 'they were'} taken off the schedule. Schedule again when you're ready.` : '');
       }
       if (wasSched) msg += reschedNote(wasSched);
+    }
+    if (editId != null && (editAll || sess)) {                               // apply the detach requests made in this dialog
+      const key = rowById(editId).xset, want = new Set(effDet()), had = new Set(DRAFTROWS.filter(x => x.xset === key && DETACH1.has(x.id)).map(x => x.id));
+      const newly = [...want].filter(id => !had.has(id)), undone = [...had].filter(id => !want.has(id));
+      newly.forEach(id => DETACH1.add(id)); undone.forEach(id => { DETACH1.delete(id); const r = rowById(id); if (r && r.orig) { r.unlinked = false; recalc(r); } });
+      const off = syncSets();
+      if (newly.length) {
+        if (msg === 'No changes to save.') msg = '';
+        const stay = DRAFTROWS.filter(x => x.xset === key && x.status !== 'Removed' && !x.unlinked).length, names = newly.map(id => rowById(id).comm);
+        msg += stay === 0 ? ` Every reset in the set becomes a single commodity reset when published, so they are marked Modified and publish together.` : ` ${names.join(', ')} will become ${names.length === 1 ? 'a single commodity reset' : 'single commodity resets'} when published, so ${names.length === 1 ? 'it is' : 'they are'} marked Modified.`;
+      }
+      msg = msg.trim();
+      if (undone.length) msg += ` Detach undone for ${undone.map(id => rowById(id).comm).join(', ')}.`;
+      if (off) msg += ` ${off} connected ${off === 1 ? 'reset was' : 'resets were'} also taken off the publish schedule so they stay together.`;
     }
     { const off = syncSets(); if (off) msg += ` ${off} connected ${off === 1 ? 'reset was' : 'resets were'} also taken off the publish schedule so they stay together.`; }
     const keep = opener; closeEntry(); resetOrder(); render(); opener = keep; toast(msg);
