@@ -1057,7 +1057,8 @@
     const ck = (k, e, extra = '') => cl(k, ((e.chg && e.chg.includes(k)) ? 'chg ' : '') + extra);
     const cellHtml = (k, e) => {
       switch (k) {
-        case 'sel': return `<td class="act"><input type="checkbox" data-sel="${e.id}" ${sel.has(e.id) ? 'checked' : ''} ${e.status ? '' : 'disabled'} aria-label="Select ${esc(e.comm)}"></td>`;
+        case 'sel': { const tog = e.status ? bundleOf(e).filter(x => x !== e).map(x => x.comm) : [], tip = tog.length ? `Publishes together with ${tog.join(', ')}` : '';
+          return `<td class="act"><input type="checkbox" data-sel="${e.id}" ${sel.has(e.id) ? 'checked' : ''} ${e.status ? '' : 'disabled'} ${tip ? `title="${esc(tip)}"` : ''} aria-label="Select ${esc(e.comm)}${tip ? '. ' + esc(tip) : ''}"></td>`; }
         case 'edit': return `<td class="act"><button type="button" class="ib" data-edit="${e.id}" ${e.status === 'Removed' ? 'aria-disabled="true"' : ''} aria-label="Edit ${esc(e.comm)}">${ICON.edit}</button></td>`;
         case 'remove': return e.status === 'Removed'
           ? `<td class="act"><button type="button" class="ib" data-restore="${e.id}" aria-label="Restore ${esc(e.comm)}">${ICON.restore}</button></td>`
@@ -1124,6 +1125,7 @@
     document.querySelectorAll('[data-role]').forEach(b => b.setAttribute('aria-pressed', b.dataset.role === role));
   }
   function render() {
+    syncSets();
     [...sel].forEach(id => { const e = ROWS.find(x => x.id === id); if (!e || !e.status) sel.delete(id); });
     const base = baseRows(), c = calc(base.filter(e => e.status !== 'Removed'), cap), sw = scopeWs();
     const shown = sw ? withSets(base.filter(e => sw.some(w => covers(e, w)))) : base;
@@ -1289,7 +1291,7 @@
   }
   const recalc = e => {                      // which fields differ from the published version (the connection to a set counts too)
     e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k]));
-    const p = PUBROWS.find(x => x.id === e.id); if (p && (p.xset || '') !== (e.xset || '')) e.chg.push('xset');
+    const p = PUBROWS.find(x => x.id === e.id); if ((p && (p.xset || '') !== (e.xset || '')) || e.unlinked) e.chg.push('xset');
     e.status = e.chg.length ? 'Modified' : ''; e.by = e.chg.length ? USER : '';
   };
   /* A cross-commodity set has ONE start date. Changing it on any member moves every other member too. */
@@ -1303,6 +1305,40 @@
     });
     return { moved, unscheduled };
   }
+  /* A reset left alone by a removal ("leftover") becomes a single commodity reset when published. Until then it stays in the bracket, is marked Modified
+     (its connection changes) and has to be published together with the removal(s), so the published schedule never holds half of a change. */
+  const bundleOf = e => {
+    if (!e || !e.xset) return [e];
+    const g = DRAFTROWS.filter(x => x.xset === e.xset), live = g.filter(x => x.status !== 'Removed');
+    if (live.length !== 1 || !live[0].unlinked) return [e];
+    const gone = g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id));
+    return e === live[0] || gone.includes(e) ? [live[0], ...gone] : [e];
+  };
+  function syncSets() {                                    // returns how many resets had to be taken off the publish schedule to keep a bundle together
+    let off = 0; const bySet = {};
+    DRAFTROWS.forEach(r => { if (r.xset) (bySet[r.xset] = bySet[r.xset] || []).push(r); });
+    Object.values(bySet).forEach(g => {
+      const live = g.filter(x => x.status !== 'Removed'), only = live.length === 1 ? live[0] : null;
+      if (only) {
+        const pub = PUBROWS.find(x => x.id === only.id);
+        if (!pub || !pub.xset) { delete only.xset; if (only.unlinked) only.unlinked = false; if (only.orig && only.status !== 'Added') recalc(only); return; }   // it never was in a set as published, so nothing to disconnect
+      }
+      g.forEach(r => {
+        const want = !!only && r === only;
+        if (want === !!r.unlinked) return;
+        r.unlinked = want;
+        if (r.status === 'Removed') return;
+        if (want) { if (!r.orig) r.orig = snap(r); if (!r.chg.includes('xset')) r.chg.push('xset'); r.status = 'Modified'; r.by = USER; if (r.sched) { r.sched = null; off++; } }
+        else if (r.orig) recalc(r);
+      });
+      if (only && only.unlinked) {                          // all-or-nothing scheduling for the bundle
+        const b = [only, ...g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id))], n = b.filter(x => x.sched).length;
+        if (n && n < b.length) b.forEach(x => { if (x.sched) { x.sched = null; off++; } });
+      }
+    });
+    return off;
+  }
+  const bundleNote = (e, n) => n ? ` ${n} connected ${n === 1 ? 'reset was' : 'resets were'} taken off the publish schedule. Schedule them together again when you're ready.` : '';
   const unsched = (e, why) => { const was = e.sched; e.sched = null; return was; };
   const reschedNote = was => ` Removed from the ${was.label} publish because it changed. Schedule it again when you're ready.`;
   /* Removing asks for confirmation first (with an optional internal note). A set of only two resets turns the other one into a single commodity reset */
@@ -1326,7 +1362,9 @@
     const e = rowById(id); if (!e) return;
     if (e.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); resetOrder(); render(); toast('Discarded the new entry'); return; }
     const was = unsched(e); e.prev = { status: e.status, chg: e.chg, by: e.by, notes: e.notes || '' }; e.status = 'Removed'; e.chg = []; e.by = USER; if (note) e.notes = note;
-    resetOrder(); render(); focusAfter(`[data-restore="${id}"]`); toast('Marked for removal. It stays in the draft until you publish.' + (was ? reschedNote(was) : ''));
+    const off = syncSets(), left = DRAFTROWS.find(x => x.xset && x.xset === e.xset && x.unlinked);
+    resetOrder(); render(); focusAfter(`[data-restore="${id}"]`);
+    toast('Marked for removal. It stays in the draft until you publish.' + (left ? ` ${left.comm} will become a single commodity reset, so it is marked Modified and publishes together with this removal.` : '') + (was ? reschedNote(was) : '') + bundleNote(e, off));
   }
   $('rForm').addEventListener('submit', ev => { ev.preventDefault(); const id = rmId, note = $('r_notes').value.trim(); closeRemove(false); removeRow(id, note); });
   $('rCancel').addEventListener('click', () => closeRemove()); $('rClose').addEventListener('click', () => closeRemove());
@@ -1334,9 +1372,11 @@
   function restoreRow(id) {
     const e = rowById(id); if (!e) return;
     const was = unsched(e); const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; if (p.notes !== undefined) e.notes = p.notes; e.prev = null;
-    resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.' + (was ? reschedNote(was) : ''));
+    if (e.orig && e.status !== 'Added') { e.unlinked = false; recalc(e); }
+    const off = syncSets();
+    resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.' + (was ? reschedNote(was) : '') + bundleNote(e, off));
   }
-  const selectedRows = () => DRAFTROWS.filter(e => sel.has(e.id) && e.status);
+  const selectedRows = () => { const out = new Set(); DRAFTROWS.filter(e => sel.has(e.id) && e.status).forEach(e => bundleOf(e).forEach(x => out.add(x))); return [...out].filter(e => e.status); };   // a bundle always goes together
   function applyPstate(v) {
     const nv = applied.pstate === v ? '' : v;
     for (const f of [applied, draft]) f.pstate = nv;
@@ -1349,8 +1389,8 @@
   }
   function unschedule(id) {
     const e = rowById(id); if (!e || !e.sched) return;
-    const was = e.sched; e.sched = null;
-    render(); focusAfter(`[data-edit="${id}"]`); toast(`Removed from the ${was.label} publish. It is not scheduled anymore.`);
+    const was = e.sched, b = bundleOf(e); b.forEach(x => { x.sched = null; });
+    render(); focusAfter(`[data-edit="${id}"]`); toast(b.length > 1 ? `Removed ${b.length} resets from the ${was.label} publish. They go out together, so none of them is scheduled anymore.` : `Removed from the ${was.label} publish. It is not scheduled anymore.`);
   }
   function scheduleRows(rows) {
     const nx = nextPublish(), lbl = shortDate(nx), fresh = rows.filter(e => !e.sched);
@@ -1369,7 +1409,7 @@
       else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg], xset: e.xset }); }
       else if (e.status === 'Removed') PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1);
     });
-    rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; } });
+    rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; e.unlinked = false; } });
     [PUBROWS, DRAFTROWS].forEach(list => { const n = {}; list.forEach(r => { if (r.xset) n[r.xset] = (n[r.xset] || 0) + 1; }); list.forEach(r => { if (r.xset && n[r.xset] < 2) delete r.xset; }); });   // a set with one reset left is a single commodity reset now
     version++; updatedAt = nowStr(); sel.clear(); resetOrder();
     const n = rows.length;
@@ -1652,6 +1692,7 @@
       }
       if (wasSched) msg += reschedNote(wasSched);
     }
+    { const off = syncSets(); if (off) msg += ` ${off} connected ${off === 1 ? 'reset was' : 'resets were'} also taken off the publish schedule so they stay together.`; }
     const keep = opener; closeEntry(); resetOrder(); render(); opener = keep; toast(msg);
   });
   $('eCancel').addEventListener('click', closeEntry); $('eClose').addEventListener('click', closeEntry);
@@ -1665,7 +1706,13 @@
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('eScrim').hidden) closeEntry(); });
   document.addEventListener('change', ev => {
     const cb = ev.target.closest && ev.target.closest('[data-sel]');
-    if (cb) { const id = +cb.dataset.sel; cb.checked ? sel.add(id) : sel.delete(id); render(); focusAfter(`[data-sel="${id}"]`); return; }
+    if (cb) {
+      const id = +cb.dataset.sel, b = bundleOf(rowById(id)); b.forEach(x => cb.checked ? sel.add(x.id) : sel.delete(x.id));
+      const others = b.filter(x => x.id !== id).map(x => x.comm);
+      render(); focusAfter(`[data-sel="${id}"]`);
+      if (cb.checked && others.length) toast(`${rowById(id).comm} publishes together with ${others.join(', ')}, so ${others.length === 1 ? 'it is' : 'they are'} selected too.`);
+      return;
+    }
     if (ev.target.id === 'selAll') { const ch = tableRows.filter(e => e.status); ev.target.checked ? ch.forEach(e => sel.add(e.id)) : ch.forEach(e => sel.delete(e.id)); render(); focusAfter('#selAll'); }
   });
 
