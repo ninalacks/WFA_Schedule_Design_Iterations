@@ -297,6 +297,19 @@
   .infob:hover, .infob:focus-visible { border-color: var(--blue); color: var(--blue); }
   .infob:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .infob[hidden] { display: none; }
+  #rForm { width: min(640px, 100%); }
+  #rForm h2 { font-size: 22px; }
+  #rForm header { padding: 18px 26px 12px; }
+  .rbody { padding: 16px 26px 8px; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
+  .rq { margin: 0; font-size: 15px; line-height: 1.4; color: var(--text); }
+  .rinfo { background: #d2eafa; border-radius: 6px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; font-size: 14px; color: #000; }
+  .rinfo[hidden] { display: none; }
+  .rinfo svg { flex: none; }
+  .rnotes { display: flex; flex-direction: column; gap: 6px; }
+  .rnotes label { font-weight: 600; font-size: 13px; color: var(--text); }
+  .rnotes label .sub { font-weight: 400; color: var(--muted); }
+  #rForm .rnotes .fin { height: auto; min-height: 48px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; border-radius: 4px; border-color: #b8bec8; padding: 8px 10px; resize: vertical; }
+  #rForm footer { justify-content: space-between; align-items: center; padding: 14px 26px 18px; }
   .evsw { display: inline-flex; align-items: center; background: rgba(255,255,255,.12); border-radius: 999px; padding: 3px; }
   .evopt { border: 0; background: transparent; color: #fff; font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
   .evopt[aria-pressed="true"] { background: #fff; color: var(--navy); }
@@ -506,6 +519,17 @@
       <div class="fg"><label for="e_notes">Internal Notes <span class="sub">(only visible in the history)</span></label><textarea class="fin" id="e_notes" rows="2" placeholder="Internal notes (ex. explaining why the change is happening)"></textarea></div>
     </div>
     <footer><button type="button" class="tbtext" id="eCancel">Cancel</button><button type="submit" class="tb pub" id="eSave">Submit</button></footer>
+  </form>
+</div>
+<div class="scrim" id="rScrim" hidden>
+  <form class="dlg" id="rForm" role="alertdialog" aria-modal="true" aria-labelledby="rTitle" aria-describedby="rQ rInfo" novalidate>
+    <header><h2 id="rTitle">Remove</h2><button type="button" class="xclose" id="rClose" aria-label="Close">✕</button></header>
+    <div class="rbody">
+      <p class="rq" id="rQ">Are you sure you want to remove 1 reset from the draft?</p>
+      <div class="rinfo" id="rInfo" hidden></div>
+      <div class="rnotes"><label for="r_notes">Internal Notes <span class="sub">(only visible in the history)</span></label><textarea class="fin" id="r_notes" rows="2" placeholder="Internal notes (ex. explaining why the change is happening)"></textarea></div>
+    </div>
+    <footer><button type="button" class="tbtext" id="rCancel">Cancel</button><button type="submit" class="tb pub" id="rGo">Submit</button></footer>
   </form>
 </div>
 <div class="scrim" id="pScrim" hidden>
@@ -1281,15 +1305,35 @@
   }
   const unsched = (e, why) => { const was = e.sched; e.sched = null; return was; };
   const reschedNote = was => ` Removed from the ${was.label} publish because it changed. Schedule it again when you're ready.`;
-  function removeRow(id) {
+  /* Removing asks for confirmation first (with an optional internal note). A set of only two resets turns the other one into a single commodity reset */
+  let rmId = null, rmOpener = null;
+  const liveMates = e => e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed') : [];
+  function openRemove(id, from) {
+    const e = rowById(id); if (!e) return;
+    rmId = id; rmOpener = from || null;
+    const two = liveMates(e).length === 1;                  // a set of two: the other reset is left on its own
+    $('rInfo').hidden = !two;
+    $('rInfo').innerHTML = two ? '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#0b5cad"/><rect x="11" y="10.5" width="2" height="7" rx="1" fill="#fff"/><circle cx="12" cy="7.2" r="1.3" fill="#fff"/></svg><span>The remaining commodity will become a single commodity reset.</span>' : '';
+    $('rTitle').textContent = `Remove ${e.comm}`; $('r_notes').value = '';
+    document.querySelector('.topbar').inert = true; document.querySelector('.app').inert = true;
+    $('rScrim').hidden = false; $('rCancel').focus();
+  }
+  function closeRemove(restoreFocus = true) {
+    $('rScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
+    if (restoreFocus && rmOpener && rmOpener.isConnected) rmOpener.focus(); rmOpener = null; rmId = null;
+  }
+  function removeRow(id, note) {
     const e = rowById(id); if (!e) return;
     if (e.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); resetOrder(); render(); toast('Discarded the new entry'); return; }
-    const was = unsched(e); e.prev = { status: e.status, chg: e.chg, by: e.by }; e.status = 'Removed'; e.chg = []; e.by = USER;
+    const was = unsched(e); e.prev = { status: e.status, chg: e.chg, by: e.by, notes: e.notes || '' }; e.status = 'Removed'; e.chg = []; e.by = USER; if (note) e.notes = note;
     resetOrder(); render(); focusAfter(`[data-restore="${id}"]`); toast('Marked for removal. It stays in the draft until you publish.' + (was ? reschedNote(was) : ''));
   }
+  $('rForm').addEventListener('submit', ev => { ev.preventDefault(); const id = rmId, note = $('r_notes').value.trim(); closeRemove(false); removeRow(id, note); });
+  $('rCancel').addEventListener('click', () => closeRemove()); $('rClose').addEventListener('click', () => closeRemove());
+  $('rScrim').addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.stopPropagation(); closeRemove(); return; } trapTab(ev, $('rForm')); });
   function restoreRow(id) {
     const e = rowById(id); if (!e) return;
-    const was = unsched(e); const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; e.prev = null;
+    const was = unsched(e); const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; if (p.notes !== undefined) e.notes = p.notes; e.prev = null;
     resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.' + (was ? reschedNote(was) : ''));
   }
   const selectedRows = () => DRAFTROWS.filter(e => sel.has(e.id) && e.status);
@@ -1326,6 +1370,7 @@
       else if (e.status === 'Removed') PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1);
     });
     rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; } });
+    [PUBROWS, DRAFTROWS].forEach(list => { const n = {}; list.forEach(r => { if (r.xset) n[r.xset] = (n[r.xset] || 0) + 1; }); list.forEach(r => { if (r.xset && n[r.xset] < 2) delete r.xset; }); });   // a set with one reset left is a single commodity reset now
     version++; updatedAt = nowStr(); sel.clear(); resetOrder();
     const n = rows.length;
     render();
@@ -1649,7 +1694,7 @@
     if (e.target.closest('#viewSwitch')) { draftView = !draftView; clearToasts(); useData(); render(); return; }
     if (e.target.closest('#newBtn')) { openEntry(null, e.target.closest('#newBtn')); return; }
     const ed = e.target.closest('[data-edit]'); if (ed) { if (ed.getAttribute('aria-disabled') !== 'true') openEntry(+ed.dataset.edit, ed); return; }
-    const rmv = e.target.closest('[data-remove]'); if (rmv) { removeRow(+rmv.dataset.remove); return; }
+    const rmv = e.target.closest('[data-remove]'); if (rmv) { openRemove(+rmv.dataset.remove, rmv); return; }
     const rst = e.target.closest('[data-restore]'); if (rst) { restoreRow(+rst.dataset.restore); return; }
     const us = e.target.closest('[data-unsched]'); if (us) { unschedule(+us.dataset.unsched); return; }
     const pf = e.target.closest('[data-pf]'); if (pf) { applyPstate(pf.dataset.pf); return; }
