@@ -437,6 +437,11 @@
     </div>
   </div>
   <div class="topright">
+    <div class="evsw" role="group" aria-label="How a recently detached reset looks in the published view (prototype)">
+      <span class="vlabel">Detached, published</span>
+      <button type="button" class="evopt" data-vd="1" aria-pressed="true">Version 1: continuous</button>
+      <button type="button" class="evopt" data-vd="2" aria-pressed="false">Version 2: closed off</button>
+    </div>
     <div class="evsw" role="group" aria-label="Editing a cross-commodity set (prototype)">
       <span class="vlabel">Editing a set</span>
       <button type="button" class="evopt" data-ev="1" aria-pressed="true">Version 1: one reset</button>
@@ -915,6 +920,7 @@
      PUBROWS = the published calendar (what Viewers see). DRAFTROWS = the Creator's working copy with unpublished changes.
      Per draft row: status 'Added' | 'Modified' | 'Removed' ('' = unchanged), chg = fields edited, by = who changed it,
      pub = marked ready to publish, orig = values at the last publish (to detect edits that are undone). */
+  const maxId = () => Math.max(...DRAFTROWS.map(x => x.id), ...PUBROWS.map(x => x.id));       // new rows must not reuse the id of a removed row that is still shown in the published list
   const USER = 'Jane Doe';                   // the signed-in Creator in this demo ("me")
   const nowStr = () => { const d = new Date(); return d.toLocaleDateString('en-US') + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); };
   const FIELDS = ['type', 'dept', 'comm', 'cm', 'pm', 'size', 'start', 'dur', 'hours', 'divs', 'comments'];
@@ -932,7 +938,7 @@
     const find = (c, st) => { const e = DRAFTROWS.find(x => x.comm === c && x.start === st); if (!e) throw new Error('demo row missing: ' + c); return e; };
     const edit = (c, st, vals, by) => { const e = find(c, st); e.orig = snap(e); Object.assign(e, vals); e.divList = divListFor(e.id, e.divs); e.status = 'Modified'; e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k])); e.by = by; };
     const drop = (c, st, by) => { const e = find(c, st); e.status = 'Removed'; e.by = by; };
-    const add = vals => { const id = Math.max(...DRAFTROWS.map(x => x.id)) + 1; DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: 'John Doe', sched: null }); };
+    const add = vals => { const id = maxId() + 1; DRAFTROWS.push({ id, year: DATA_YEAR, ...vals, divList: divListFor(id, vals.divs), status: 'Added', chg: [], by: 'John Doe', sched: null }); };
     edit('677 - NF Baking Mixes', 'P1 W3', { hours: 5 }, 'Jane Doe');
     edit('071 - Cheese', 'P2 W1', { hours: 10 }, 'Jane Doe');
     edit('102 - Coffee', 'P4 W1', { start: 'P4 W3' }, 'John Doe');
@@ -952,6 +958,8 @@
   const openCom = new Set();               // ids of rows whose comment is shown in full
   const inDraft = () => role === 'creator' && draftView;
   let EV = +new URLSearchParams(location.search).get('ev') === 2 ? 2 : 1;      // how editing a reset inside a cross-commodity set works: 1 = the reset you opened, 2 = every reset in the set
+  let VD = +new URLSearchParams(location.search).get('vd') === 2 ? 2 : 1;      // how a recently detached reset looks in the published view: 1 = dashed, continuing the set's bracket, 2 = dashed and closed off on its own
+  const applyVD = () => document.querySelectorAll('[data-vd]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.vd === VD));
   const applyEV = () => document.querySelectorAll('[data-ev]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.ev === EV));
   function useData() {                      // which data set the page shows
     ROWS = inDraft() ? DRAFTROWS : PUBROWS;
@@ -1017,13 +1025,14 @@
      if ANY member has a change, and it is placed by its earliest start week. Inside the set, members go by start week. */
   /* A reset that is about to be detached stays in its set until publish. If every live reset in a set is detaching, the whole set is dissolving. */
   let DIS = {};
-  const buildDis = () => { DIS = {}; const g = {}; ROWS.forEach(e => { if (e.xset && e.status !== 'Removed') (g[e.xset] = g[e.xset] || []).push(e); }); Object.entries(g).forEach(([k, l]) => { DIS[k] = l.length > 0 && l.every(x => x.unlinked); }); };
-  const fades = e => !!e && !!e.xset && e.status !== 'Removed' && (!!e.unlinked || !!DIS[e.xset]);   // version 3: part of the bracket, but drawn light and dashed
+  const buildDis = () => { DIS = {}; const g = {}; ROWS.forEach(e => { if (e.xset && e.status !== 'Removed') (g[e.xset] = g[e.xset] || []).push(e); }); Object.entries(g).forEach(([k, l]) => { DIS[k] = l.length > 0 && l.every(x => x.unlinked || x.recentDet); }); };
+  const leaveKey = e => VD === 2 && !!e && !!e.xset && !!e.recentDet && !DIS[e.xset] ? 1 : 0;   // version 2: a recently detached reset goes after the resets that stay
+  const fades = e => !!e && !!e.xset && e.status !== 'Removed' && (!!e.unlinked || !!e.recentDet || !!DIS[e.xset]);   // version 3: part of the bracket, but drawn light and dashed
   let GK = {};
   const buildGK = () => { buildDis(); GK = {}; ROWS.forEach(e => { if (!e.xset) return; const g = GK[e.xset] = GK[e.xset] || { ch: 1, st: 1e9 }; if (e.status) g.ch = 0; g.st = Math.min(g.st, wkIdx(e.start)); }); };
   const gk = e => e.xset ? GK[e.xset] : { ch: e.status ? 0 : 1, st: wkIdx(e.start) };
   const gid = e => e.xset ? 'x' + e.xset : 'y' + String(e.id).padStart(6, '0');
-  const dflt = (a, b) => { const x = gk(a), y = gk(b); return x.ch - y.ch || x.st - y.st || gid(a).localeCompare(gid(b)) || wkIdx(a.start) - wkIdx(b.start) || a.id - b.id; };
+  const dflt = (a, b) => { const x = gk(a), y = gk(b); return x.ch - y.ch || x.st - y.st || gid(a).localeCompare(gid(b)) || leaveKey(a) - leaveKey(b) || wkIdx(a.start) - wkIdx(b.start) || a.id - b.id; };
   const SORTV = { status: e => e.status, type: e => e.type, dept: e => e.dept, comm: e => e.comm, cm: e => e.cm, pm: e => e.pm, size: e => e.size,
     start: e => wkIdx(e.start), dur: e => e.dur, hours: e => e.hours, divs: e => e.divList.length, comments: e => e.comments, mod: e => e.by, pub: e => e.status ? (e.sched ? 'Scheduled' : 'Not scheduled') : '', xc: e => e.xset || '' };
   let rowOrder = null;
@@ -1045,7 +1054,7 @@
       if (!bySet[e.xset]) units.push(bySet[e.xset] = []);
       bySet[e.xset].push(e);
     });
-    units.forEach(u => u.sort(cmp));
+    buildDis(); units.forEach(u => { u.sort(cmp); u.sort((a, b) => leaveKey(a) - leaveKey(b)); });
     units.sort((u, v) => cmp(u[0], v[0]));
     rowOrder = units.flat().map(e => e.id);
   }
@@ -1067,14 +1076,17 @@
     const ARR = { asc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor"/><path d="M5 11L1 6h8z" fill="currentColor" opacity=".25"/></svg>', desc: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1z" fill="currentColor" opacity=".25"/><path d="M5 11L1 6h8z" fill="currentColor"/></svg>', none: '<svg width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1l4 5H1zM5 11L1 6h8z" fill="currentColor"/></svg>' };
     const sortBtn = (k, l) => { const on = sortKey === k; return `<button type="button" class="sorth${on ? ' on' : ''}" data-sort="${k}" title="Sort by ${l}"><span>${l}</span><i class="sa">${on ? ARR[sortDir] : ARR.none}</i></button>`; };
     const NOSORT = { sel: 1, edit: 1, remove: 1 };
-    const xInfo = e => { const m = ROWS.filter(x => x.xset === e.xset), o = m.filter(x => x !== e).map(x => x.comm); return `Cross-commodity reset, ${m.length} resets in this set. Linked with ${o.join(', ')}`; };
+    const xInfo = e => { const m = ROWS.filter(x => x.xset === e.xset && !x.removedRow), o = m.filter(x => x !== e).map(x => x.comm); return `Cross-commodity reset, ${m.length} resets in this set. Linked with ${o.join(', ')}`; };
     buildDis();
     const xcMark = (e, i) => {
       if (!e.xset) return '';
-      const same = (a, b) => !!a && !!b && a.xset === b.xset;
-      const pv = same(rows[i - 1], e), nx = same(e, rows[i + 1]), pos = pv && nx ? 'm' : pv ? 'b' : nx ? 't' : 's', f = fades(e);
-      const tip = f ? 'Will be detached from this cross-commodity reset when published.' : '';
-      return `<span class="xw ${pos}${f ? ' fade' : ''}" tabindex="0" role="img"${f ? ` data-tip="${esc(tip)}"` : ''} aria-label="${esc((f ? tip + ' ' : '') + xInfo(e))}"><i class="l"></i><i class="k a"></i><i class="k e"></i></span>`;
+      const same = (a, b) => !!a && !!b && a.xset === b.xset && (VD !== 2 || (!a.recentDet && !b.recentDet));   // version 2: a recently detached reset is not joined to its neighbours
+      const pv = same(rows[i - 1], e), nx = same(e, rows[i + 1]), pos = pv && nx ? 'm' : pv ? 'b' : nx ? 't' : 's', f = fades(e), pub = !inDraft();
+      const tip = e.removedRow ? 'Removed from this cross-commodity reset in the latest published version.' : !f ? '' : pub ? 'Detached from this cross-commodity reset in the latest published version.' : 'Will be detached from this cross-commodity reset when published.';
+      const note = pub && !f && !e.removedRow ? (() => { const d = ROWS.filter(x => x.xset === e.xset && x.recentDet).map(x => x.comm), g = ROWS.filter(x => x.xset === e.xset && x.removedRow).map(x => x.comm), p = [];
+        if (d.length) p.push(`${d.join(', ')} ${d.length === 1 ? 'was' : 'were'} detached from this cross-commodity reset in the latest published version.`); if (g.length) p.push(`${g.join(', ')} ${g.length === 1 ? 'was' : 'were'} removed from it in the latest published version.`); return p.join(' '); })() : '';
+      const t = tip || note;
+      return `<span class="xw ${pos}${f ? ' fade' : ''}" tabindex="0" role="img"${t ? ` data-tip="${esc(t)}"` : ''} aria-label="${esc((t ? t + ' ' : '') + xInfo(e))}"><i class="l"></i><i class="k a"></i><i class="k e"></i></span>`;
     };
     const th = ([k, l]) => {
       const aria = sortKey === k ? ` aria-sort="${sortDir === 'asc' ? 'ascending' : 'descending'}"` : '';
@@ -1102,7 +1114,7 @@
         case 'dur': return `<td${ck(k, e)}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
         case 'comments': { if (!e.comments) return `<td${ck(k, e, 'com')}></td>`; const open = openCom.has(e.id);
           return `<td${ck(k, e, 'com' + (open ? ' open' : ''))}><div class="cwrap"><span class="ctext">${esc(e.comments)}</span><button type="button" class="cmore" data-cmore="${e.id}" aria-expanded="${open}" aria-label="${open ? 'Display less' : 'Display more'} of the comment for ${esc(e.comm)}"${open ? '' : ' hidden'}>${open ? '(less)' : '(more)'}</button></div></td>`; }
-        case 'status': return `<td>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;
+        case 'status': return `<td${!inDraft() && e.recentDet ? ' class="chg"' : ''}>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;   // published view: a reset just detached from its set has a changed Status cell (the bracket sits in this cell)
         case 'divs': return e.divs === 'All' ? `<td${ck(k, e)}>All</td>`
           : `<td${ck(k, e)}><button type="button" class="divbtn" data-divs="${e.id}" aria-haspopup="dialog" aria-label="${e.divs} ${e.divs === 1 ? 'division' : 'divisions'}, view list for ${esc(e.comm)}">${e.divs}</button></td>`;
         default: return `<td${ck(k, e)}>${esc(e[k])}</td>`;
@@ -1323,7 +1335,7 @@
   }
   const recalc = e => {                      // which fields differ from the published version (the connection to a set counts too)
     e.chg = FIELDS.filter(k => String(e[k]) !== String(e.orig[k]));
-    const p = PUBROWS.find(x => x.id === e.id); if ((p && (p.xset || '') !== (e.xset || '')) || e.unlinked) e.chg.push('xset');
+    const p = PUBROWS.find(x => x.id === e.id); if ((p && (pubSet(p) || '') !== (e.xset || '')) || e.unlinked) e.chg.push('xset');
     e.status = e.chg.length ? 'Modified' : ''; e.by = e.chg.length ? USER : '';
   };
   /* A cross-commodity set has ONE start date. Changing it on any member moves every other member too. */
@@ -1357,7 +1369,7 @@
       const ul = detaching || live.length === 1 ? live : (R.length && live.length - R.length <= 1 ? live : R);   // who leaves the set
       ul.forEach(r => {                                                      // never connected as published, so there is nothing to disconnect
         const pub = PUBROWS.find(x => x.id === r.id);
-        if (!pub || !pub.xset) { delete r.xset; r.unlinked = false; if (r.orig && r.status !== 'Added') recalc(r); }
+        if (!pubSet(pub)) { delete r.xset; r.unlinked = false; if (r.orig && r.status !== 'Added') recalc(r); }
       });
       const leaving = ul.filter(r => r.xset);
       g.forEach(r => {
@@ -1461,21 +1473,31 @@
     pushToast({ kind: 'success', title: `${n} ${n === 1 ? 'change' : 'changes'} scheduled`, body: `${n === 1 ? "It'll" : "They'll"} go live ${longDate(nx)}. You can unschedule ${n === 1 ? 'it' : 'them'} until then.` });
     refocusAfterPublish();
   }
+  /* Viewers see what the latest publish did to cross-commodity sets, for ONE version (the next publish clears it):
+     - a reset that was detached keeps its set key and is flagged recentDet, so it is still drawn in the bracket, light and dashed
+     - a removed member of a set stays in the list, marked Removed (removedRow) */
+  const pubSet = p => p && !p.recentDet && !p.removedRow ? p.xset : undefined;      // the set a published reset really belongs to now
   function publishNow(rows) {
-    const rem = rows.filter(e => e.status === 'Removed').length;
-    PUBROWS.forEach(r => { r.status = ''; r.chg = []; });                       // a new version: older change flags no longer apply
+    const remMembers = rows.filter(e => e.status === 'Removed' && (PUBROWS.find(x => x.id === e.id) || {}).xset).length, rem = rows.filter(e => e.status === 'Removed').length;
+    PUBROWS.splice(0, PUBROWS.length, ...PUBROWS.filter(r => !r.removedRow));        // last version's removed rows leave the list now
+    PUBROWS.forEach(r => { r.status = ''; r.chg = []; if (r.recentDet) { delete r.xset; r.recentDet = false; } });   // a new version: older flags and markers no longer apply
     const leaving = new Set(rows.filter(e => e.unlinked).map(e => e.id));     // resets that leave their set with this publish
     rows.forEach(e => {
       if (e.status === 'Added') PUBROWS.push({ ...e, divList: [...e.divList], status: 'Added', chg: [], by: '', sched: null });
-      else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg], xset: e.xset }); if (leaving.has(e.id)) delete r.xset; }
-      else if (e.status === 'Removed') PUBROWS.splice(PUBROWS.findIndex(x => x.id === e.id), 1);
+      else if (e.status === 'Modified') { const r = PUBROWS.find(x => x.id === e.id); Object.assign(r, snap(e), { divList: [...e.divList], status: 'Modified', chg: [...e.chg], xset: e.xset }); if (leaving.has(e.id)) r.recentDet = true; }
+      else if (e.status === 'Removed') {
+        const i = PUBROWS.findIndex(x => x.id === e.id), r = PUBROWS[i];
+        if (r && r.xset) { r.status = 'Removed'; r.removedRow = true; r.chg = []; r.by = ''; }     // a removed member of a set stays visible for this version
+        else PUBROWS.splice(i, 1);
+      }
     });
     rows.forEach(e => { if (e.status === 'Removed') DRAFTROWS.splice(DRAFTROWS.indexOf(e), 1); else { e.status = ''; e.chg = []; e.by = ''; e.sched = null; e.orig = null; if (leaving.has(e.id)) delete e.xset; e.unlinked = false; } });
-    [PUBROWS, DRAFTROWS].forEach(list => { const n = {}; list.forEach(r => { if (r.xset) n[r.xset] = (n[r.xset] || 0) + 1; }); list.forEach(r => { if (r.xset && n[r.xset] < 2) delete r.xset; }); });   // a set with one reset left is a single commodity reset now
+    { const n = {}; DRAFTROWS.forEach(r => { if (r.xset) n[r.xset] = (n[r.xset] || 0) + 1; }); DRAFTROWS.forEach(r => { if (r.xset && n[r.xset] < 2) delete r.xset; }); }   // a set with one reset left is a single commodity reset now
+    { const n = {}; PUBROWS.forEach(r => { if (r.xset && !r.removedRow && !r.recentDet) n[r.xset] = (n[r.xset] || 0) + 1; }); PUBROWS.forEach(r => { if (r.xset && !r.removedRow && !r.recentDet && n[r.xset] < 2) delete r.xset; }); }   // the same in the published copy
     version++; updatedAt = nowStr(); sel.clear(); resetOrder();
     const n = rows.length;
     render();
-    pushToast({ kind: 'success', title: `${n} ${n === 1 ? 'change' : 'changes'} published`, body: `Published as version 2026.0${version}.` + (rem ? ` ${rem} removed ${rem === 1 ? 'reset no longer appears' : 'resets no longer appear'} in the Published view.` : ''), link: { label: 'View in Published', act: 'viewPub' } });
+    pushToast({ kind: 'success', title: `${n} ${n === 1 ? 'change' : 'changes'} published`, body: `Published as version 2026.0${version}.` + (rem - remMembers ? ` ${rem - remMembers} removed ${rem - remMembers === 1 ? 'reset no longer appears' : 'resets no longer appear'} in the Published view.` : '') + (remMembers ? ` ${remMembers} removed ${remMembers === 1 ? 'reset' : 'resets'} from a cross-commodity reset ${remMembers === 1 ? 'stays' : 'stay'} visible, marked Removed, until the next publish.` : ''), link: { label: 'View in Published', act: 'viewPub' } });
     refocusAfterPublish();
   }
   function goPublished() {
@@ -1761,13 +1783,13 @@
     const divs = dv === 'All' || +dv === DIVS.length ? 'All' : +dv;
     let msg;
     if (editId == null) {
-      let id = Math.max(...DRAFTROWS.map(x => x.id)); const key = cross ? 'X' + Date.now().toString(36) : null;
+      let id = maxId(); const key = cross ? 'X' + Date.now().toString(36) : null;
       sh.forEach(en => { id++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: 1, divs, notes, dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, ...(key ? { xset: key } : {}) }); });
       msg = cross ? `Added ${sh.length} connected commodities to the draft. They stay there until you publish.` : 'Added to the draft. It stays there until you publish.';
     } else if (editAll) {
       /* Version 2: every reset in the set is in the dialog. Date, Type, Division and Internal Notes are shared and go to all of them.
          Department, commodity, core size, hours and comments belong to each reset. Only resets whose values actually change are flagged. */
-      const anchor = rowById(editId); let changed = 0, off = 0, added = 0, id = Math.max(...DRAFTROWS.map(x => x.id));
+      const anchor = rowById(editId); let changed = 0, off = 0, added = 0, id = maxId();
       const effDet2 = effDet();
       sh.forEach(en => {
         if (en.rid) {
@@ -1789,7 +1811,7 @@
          Date, Type, Division and Internal Notes are one value for the whole set, so they go to every member. */
       const e = rowById(editId), anchorStart = e.start, prevDate = { ...Object.fromEntries(DRAFTROWS.filter(x => x.xset === e.xset).map(x => [x.id, x.start])) };
       const all = new Map(sess.edits); entChanged(ents[0]) ? all.set(editId, { ...ents[0] }) : all.delete(editId);
-      let changed = 0, off = 0, added = 0, id = Math.max(...DRAFTROWS.map(x => x.id));
+      let changed = 0, off = 0, added = 0, id = maxId();
       const effDetS = effDet();
       const sharedSame = r => r.type === type && r.start === start && String(r.divs) === String(divs) && (r.notes || '') === notes;
       DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed' && !effDetS.has(x.id) && !removalDet(x)).forEach(r => {
@@ -1817,11 +1839,11 @@
       else recalc(e);
       msg = e.status === 'Modified' ? 'Saved. The edited fields are highlighted until you publish.' : e.status === 'Added' ? 'Saved changes to the new entry.' : 'No changes from the published version.';
       if (wasInSet && sh.length > 1) {                     // add more commodities to the set this reset already belongs to
-        let id = Math.max(...DRAFTROWS.map(x => x.id));
+        let id = maxId();
         sh.slice(1).forEach(c => { id++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: e.dur, divs, notes, dept: c.dept, comm: c.comm, cm: c.cm, pm: c.pm, size: +c.size, hours: +c.hours, comments: c.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, xset: e.xset }); });
         const n = sh.length - 1; msg = `Added ${n} ${n === 1 ? 'commodity' : 'commodities'} to the cross-commodity reset. ${n === 1 ? 'It stays' : 'They stay'} in the draft until you publish.`;
       } else if (cross && !wasInSet) {                     // connect the reset being edited with the new commodities. They share its schedule
-        const key = 'X' + Date.now().toString(36); let id = Math.max(...DRAFTROWS.map(x => x.id));
+        const key = 'X' + Date.now().toString(36); let id = maxId();
         e.xset = key;
         if (e.status !== 'Added') { if (!e.chg.includes('xset')) e.chg.push('xset'); e.status = 'Modified'; e.by = USER; }
         sh.slice(1).forEach(c => { id++; DRAFTROWS.push({ id, year: DATA_YEAR, type, start, dur: e.dur, divs, notes, dept: c.dept, comm: c.comm, cm: c.cm, pm: c.pm, size: +c.size, hours: +c.hours, comments: c.comments.trim(), divList: divListFor(id, divs), status: 'Added', chg: [], by: USER, sched: null, xset: key }); });
@@ -1891,6 +1913,7 @@
       render(); $('thead').querySelector(`[data-sort="${k}"]`)?.focus(); toast(sortKey ? `Sorted by ${FSORT[k]}, ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort cleared. Back to the default order, with changed resets first.'); return; }
     if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
     const cm = e.target.closest('[data-cmore]'); if (cm) { const id = +cm.dataset.cmore; openCom.has(id) ? openCom.delete(id) : openCom.add(id); render(); document.querySelector(`[data-cmore="${id}"]`)?.focus(); return; }
+    const vd2 = e.target.closest('[data-vd]'); if (vd2) { VD = +vd2.dataset.vd; applyVD(); rowOrder = null; if (sortKey) applySort(); render(); try { const u = new URL(location.href); u.searchParams.set('vd', VD); history.replaceState(null, '', u); } catch (er) {} return; }
     const ev2 = e.target.closest('[data-ev]'); if (ev2) { EV = +ev2.dataset.ev; applyEV(); try { const u = new URL(location.href); u.searchParams.set('ev', EV); history.replaceState(null, '', u); } catch (er) {} return; }
     const rl = e.target.closest('[data-role]'); if (rl) { setRole(rl.dataset.role); return; }
     if (e.target.closest('#viewSwitch')) { draftView = !draftView; clearToasts(); useData(); render(); return; }
@@ -1935,7 +1958,7 @@
   $('tbody').addEventListener('focusout', hideTip);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
   document.querySelector('.tablewrap').addEventListener('scroll', hideTip, { passive: true });
-  applyEV(); render();
+  applyVD(); applyEV(); render();
   document.title = 'Cross-commodity Connection';
   useData(); render();
 })();
