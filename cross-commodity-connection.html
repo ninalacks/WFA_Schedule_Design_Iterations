@@ -1356,6 +1356,7 @@
   const bundleOf = e => {
     if (!e || !e.xset) return [e];
     const g = DRAFTROWS.filter(x => x.xset === e.xset), live = g.filter(x => x.status !== 'Removed'), ul = live.filter(x => x.unlinked);
+    if (!live.length) { const gone = g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id)); return gone.includes(e) ? gone : [e]; }   // every reset in the set is removed ("Remove all"): one decision, so they go out together
     if (!ul.length || ul.length !== live.length) return [e];          // only a set that is breaking up completely has to go out together
     const gone = g.filter(x => x.status === 'Removed' && PUBROWS.some(p => p.id === x.id));
     return ul.includes(e) || gone.includes(e) ? [...ul, ...gone] : [e];
@@ -1431,7 +1432,7 @@
     resetOrder(); render(); if (marked) focusAfter(`[data-restore="${id}"]`);
     if (!marked && discarded === 1) { toast('Discarded the new entry'); return; }
     const together = ' They publish together with the removal.';
-    let msg = mode === 'all' ? `Marked ${marked + discarded} ${marked + discarded === 1 ? 'reset' : 'resets'} for removal. ${marked ? (discarded ? `${discarded} new ${discarded === 1 ? 'reset was' : 'resets were'} discarded from the draft instead. ` : '') + 'They stay in the draft until you publish.' : 'They were new, so they are discarded from the draft.'}`
+    let msg = mode === 'all' ? `Marked ${marked} ${marked === 1 ? 'reset' : 'resets'} for removal. ${marked ? (discarded ? `${discarded} new ${discarded === 1 ? 'reset was' : 'resets were'} discarded from the draft instead. ` : '') + 'They stay in the draft until you publish, and publish together.' : 'They were new, so they are discarded from the draft.'}`
       : 'Marked for removal. It stays in the draft until you publish.';
     if (leaving.length === 1) msg += ` ${leaving[0].comm} will become a single commodity reset, so it is marked Modified and publishes together with this removal.`;
     else if (leaving.length > 1) msg += ` ${leaving.length} commodities will become single commodity resets, so they are marked Modified.${together}`;
