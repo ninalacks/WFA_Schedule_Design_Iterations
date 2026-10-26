@@ -412,6 +412,10 @@
   .xw i.l { top: 0; bottom: 0; }
   .xw i.k.a { top: 0; } .xw i.k.e { bottom: 0; }
   .xw.t i.k.a, .xw.s i.k.a, .xw.b i.k.e, .xw.s i.k.e { display: block; }
+  /* A reset that is about to be detached: it stays in the bracket, and its stretch of the bracket is a lighter, dashed blue. */
+  .xw.fade { --xh: #5987bf; }
+  .xw.fade i.l { background: none; width: 0; border-left: 3px dashed var(--xh); }
+  .xw.fade i.k { background: none; height: 0; border-top: 3px dashed var(--xh); }
   .xw.t i.l, .xw.t i.k.a, .xw.s i.l, .xw.s i.k.a { top: 2px; } .xw.b i.l, .xw.b i.k.e, .xw.s i.l, .xw.s i.k.e { bottom: 2px; }
   /* Tooltip on the bracket */
   .xtip { position: fixed; z-index: 60; background: #1c2430; color: #fff; font-size: 13px; font-weight: 500; line-height: 1.3; padding: 6px 10px; border-radius: 6px; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 8px rgba(15,31,61,.25); }
@@ -1011,8 +1015,12 @@
      then everything else, each group by start week. */
   /* Cross-commodity members always stay together by default. A set sorts as one unit: it moves up to the changed block
      if ANY member has a change, and it is placed by its earliest start week. Inside the set, members go by start week. */
+  /* A reset that is about to be detached stays in its set until publish. If every live reset in a set is detaching, the whole set is dissolving. */
+  let DIS = {};
+  const buildDis = () => { DIS = {}; const g = {}; ROWS.forEach(e => { if (e.xset && e.status !== 'Removed') (g[e.xset] = g[e.xset] || []).push(e); }); Object.entries(g).forEach(([k, l]) => { DIS[k] = l.length > 0 && l.every(x => x.unlinked); }); };
+  const fades = e => !!e && !!e.xset && e.status !== 'Removed' && (!!e.unlinked || !!DIS[e.xset]);   // version 3: part of the bracket, but drawn light and dashed
   let GK = {};
-  const buildGK = () => { GK = {}; ROWS.forEach(e => { if (!e.xset) return; const g = GK[e.xset] = GK[e.xset] || { ch: 1, st: 1e9 }; if (e.status) g.ch = 0; g.st = Math.min(g.st, wkIdx(e.start)); }); };
+  const buildGK = () => { buildDis(); GK = {}; ROWS.forEach(e => { if (!e.xset) return; const g = GK[e.xset] = GK[e.xset] || { ch: 1, st: 1e9 }; if (e.status) g.ch = 0; g.st = Math.min(g.st, wkIdx(e.start)); }); };
   const gk = e => e.xset ? GK[e.xset] : { ch: e.status ? 0 : 1, st: wkIdx(e.start) };
   const gid = e => e.xset ? 'x' + e.xset : 'y' + String(e.id).padStart(6, '0');
   const dflt = (a, b) => { const x = gk(a), y = gk(b); return x.ch - y.ch || x.st - y.st || gid(a).localeCompare(gid(b)) || wkIdx(a.start) - wkIdx(b.start) || a.id - b.id; };
@@ -1060,10 +1068,13 @@
     const sortBtn = (k, l) => { const on = sortKey === k; return `<button type="button" class="sorth${on ? ' on' : ''}" data-sort="${k}" title="Sort by ${l}"><span>${l}</span><i class="sa">${on ? ARR[sortDir] : ARR.none}</i></button>`; };
     const NOSORT = { sel: 1, edit: 1, remove: 1 };
     const xInfo = e => { const m = ROWS.filter(x => x.xset === e.xset), o = m.filter(x => x !== e).map(x => x.comm); return `Cross-commodity reset, ${m.length} resets in this set. Linked with ${o.join(', ')}`; };
+    buildDis();
     const xcMark = (e, i) => {
       if (!e.xset) return '';
-      const pv = rows[i - 1] && rows[i - 1].xset === e.xset, nx = rows[i + 1] && rows[i + 1].xset === e.xset, pos = pv && nx ? 'm' : pv ? 'b' : nx ? 't' : 's';
-      return `<span class="xw ${pos}" tabindex="0" role="img" aria-label="${esc(xInfo(e))}"><i class="l"></i><i class="k a"></i><i class="k e"></i></span>`;
+      const same = (a, b) => !!a && !!b && a.xset === b.xset;
+      const pv = same(rows[i - 1], e), nx = same(e, rows[i + 1]), pos = pv && nx ? 'm' : pv ? 'b' : nx ? 't' : 's', f = fades(e);
+      const tip = f ? 'Will be detached from this cross-commodity reset when published.' : '';
+      return `<span class="xw ${pos}${f ? ' fade' : ''}" tabindex="0" role="img"${f ? ` data-tip="${esc(tip)}"` : ''} aria-label="${esc((f ? tip + ' ' : '') + xInfo(e))}"><i class="l"></i><i class="k a"></i><i class="k e"></i></span>`;
     };
     const th = ([k, l]) => {
       const aria = sortKey === k ? ` aria-sort="${sortDir === 'asc' ? 'ascending' : 'descending'}"` : '';
@@ -1643,7 +1654,7 @@
   document.addEventListener('mousedown', ev => { if (cddFor && !cdd.contains(ev.target) && ev.target !== cddFor) cddClose(false); });
   let cddOpenedAt = 0; document.querySelector('#eForm .ebody').addEventListener('scroll', () => { if (performance.now() - cddOpenedAt > 250) cddClose(false); }); let cddW = innerWidth; addEventListener('resize', () => { if (innerWidth !== cddW) { cddW = innerWidth; cddClose(false); } });   // phones fire resize while scrolling, so only a width change closes the list
   /* Detach: resets marked in the dialog to leave the set. A set can't keep a single reset, so if only one would be left, every reset leaves. */
-  const removalDet = r => !!r && r.unlinked && !DETACH1.has(r.id);          // already leaving because of a removal (can't be undone here)
+  const removalDet = r => !!r && r.unlinked && !DETACH1.has(r.id) && !DRAFTROWS.some(x => x.xset === r.xset && x.status !== 'Removed' && DETACH1.has(x.id));          // already leaving because of a removal (can't be undone here)
   const detLive = () => { const e = editId == null ? null : rowById(editId); return e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed' && !removalDet(x)) : []; };
   const effDet = () => { const live = detLive(), D = new Set([...detPend].filter(id => live.some(x => x.id === id))); return D.size && live.length - D.size <= 1 ? new Set(live.map(x => x.id)) : D; };
   const mates = () => { const e = editId == null ? null : rowById(editId); return e && e.xset ? DRAFTROWS.filter(x => x.xset === e.xset && x !== e && x.status !== 'Removed') : []; };
@@ -1823,7 +1834,7 @@
       if (wasSched) msg += reschedNote(wasSched);
     }
     if (editId != null && (editAll || sess)) {                               // apply the detach requests made in this dialog
-      const key = rowById(editId).xset, want = new Set(effDet()), had = new Set(DRAFTROWS.filter(x => x.xset === key && DETACH1.has(x.id)).map(x => x.id));
+      const key = rowById(editId).xset, liveIds = new Set(detLive().map(x => x.id)), want = new Set([...detPend].filter(id => liveIds.has(id))), had = new Set(DRAFTROWS.filter(x => x.xset === key && DETACH1.has(x.id)).map(x => x.id));
       const newly = [...want].filter(id => !had.has(id)), undone = [...had].filter(id => !want.has(id));
       newly.forEach(id => DETACH1.add(id)); undone.forEach(id => { DETACH1.delete(id); const r = rowById(id); if (r && r.orig) { r.unlinked = false; recalc(r); } });
       const off = syncSets();
@@ -1906,7 +1917,7 @@
   /* Bracket tooltip: shows on hover and on keyboard focus, hides on leave, blur, Escape or scroll */
   const xtip = $('xtip');
   const TIPTXT = xtip.textContent;
-  const showTip = el => { const r = el.getBoundingClientRect(); xtip.textContent = TIPTXT; xtip.hidden = false; xtip.style.left = Math.min(r.right + 8, innerWidth - xtip.offsetWidth - 8) + 'px'; xtip.style.top = Math.max(8, r.top + r.height / 2 - xtip.offsetHeight / 2) + 'px'; el.setAttribute('aria-describedby', 'xtip'); };
+  const showTip = el => { const r = el.getBoundingClientRect(); xtip.textContent = el.dataset.tip || TIPTXT; xtip.hidden = false; xtip.style.left = Math.min(r.right + 8, innerWidth - xtip.offsetWidth - 8) + 'px'; xtip.style.top = Math.max(8, r.top + r.height / 2 - xtip.offsetHeight / 2) + 'px'; el.setAttribute('aria-describedby', 'xtip'); };
   /* Tooltip on the locked Department / Commodity fields in the edit dialog (shown below the field, since the dialog sits above the page) */
   let lockTipOn = false;
   const showLockTip = (box, text) => { const r = box.getBoundingClientRect(); lockTipOn = true; xtip.textContent = text || LOCKTXT(box.dataset.locktip); xtip.style.maxWidth = '300px'; xtip.style.whiteSpace = 'normal'; xtip.hidden = false; xtip.style.zIndex = 200;
