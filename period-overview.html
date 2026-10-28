@@ -1184,7 +1184,7 @@
     $('pList').hidden = true; $('pReview').setAttribute('aria-expanded', 'false'); $('pReview').textContent = 'Review';
     $('pWeeklyTxt').textContent = already === n ? (n === 1 ? `Already scheduled for ${shortDate(nx)}` : `All ${n} are already scheduled for ${shortDate(nx)}`)
       : `Goes live ${shortDate(nx)} at 1:00 PM EST · Add ${n - already} ${n - already === 1 ? 'change' : 'changes'}` + (already ? ` · ${already} already scheduled` : '');
-    $('pNowTxt').textContent = 'Goes live right away' + (already ? ` · ${already} already scheduled will go live now instead` : '');
+    $('pNowTxt').textContent = `Goes live right away · Publish ${n} ${n === 1 ? 'change' : 'changes'}` + (already ? ` · ${already} already scheduled will go live now instead` : '');
     document.querySelector('input[name="pmode"][value="weekly"]').checked = true;
     syncPublishMode(); lockPage(true); $('pScrim').hidden = false;
     (document.querySelector('input[name="pmode"]:checked')).focus();
