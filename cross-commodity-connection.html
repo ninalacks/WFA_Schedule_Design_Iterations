@@ -145,6 +145,10 @@
   tfoot td.wk { vertical-align: top; }
   tfoot td.wk.over { color: var(--over); }
   .st { display: inline-block; box-sizing: border-box; width: 84px; padding: 2px 0; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 15px; text-align: center; white-space: nowrap; }
+  .stc { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }
+  .st2 { display: inline-flex; align-items: center; justify-content: center; gap: 4px; box-sizing: border-box; min-width: 28px; height: 19px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 15px; background: #fff1cc; color: #7a5200; cursor: default; }
+  .st2 svg { flex: none; width: 14px; height: 14px; }
+  .st2:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .st.Added { background: #d7efdd; color: #17653a; } .st.Modified { background: #e1eafb; color: #1f4e9c; }
   tr.add td { background: #e9f6ec; } td.chg { background: #dbe8fe !important; }
   th.wk.pg { font-size: 12px; padding: 6px 2px; }
@@ -365,6 +369,10 @@
   #xcAdd:hover { text-decoration: underline; }
   #eForm footer { justify-content: space-between; align-items: center; padding: 14px 26px 18px; }
   .tbtext { border: 0; background: none; font: inherit; font-size: 15px; color: var(--text); cursor: pointer; padding: 8px 4px; border-radius: 4px; }
+  #eForm footer .fl { display: inline-flex; align-items: center; gap: 14px; }
+  .tbtext.rst { display: inline-flex; align-items: center; gap: 6px; color: var(--blue); font-weight: 600; }
+  .tbtext.rst:disabled { color: #9aa3b0; cursor: default; text-decoration: none; }
+  .tbtext:hover:not(:disabled) { text-decoration: underline; }
   .tbtext:hover { text-decoration: underline; }
   .tbtext:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   @media (max-width: 760px) { .s3, .s4 { grid-column: span 6; } .s6 { grid-column: 1 / -1; } }
@@ -437,11 +445,6 @@
     </div>
   </div>
   <div class="topright">
-    <div class="evsw" role="group" aria-label="How a recently detached reset looks in the published view (prototype)">
-      <span class="vlabel">Detached, published</span>
-      <button type="button" class="evopt" data-vd="1" aria-pressed="true">Version 1: continuous</button>
-      <button type="button" class="evopt" data-vd="2" aria-pressed="false">Version 2: closed off</button>
-    </div>
     <div class="evsw" role="group" aria-label="Editing a cross-commodity set (prototype)">
       <span class="vlabel">Editing a set</span>
       <button type="button" class="evopt" data-ev="1" aria-pressed="true">Version 1: one reset</button>
@@ -546,7 +549,7 @@
       <button type="button" class="link-btn" id="xcAdd" hidden>+ Add another commodity</button>
       <div class="fg"><label for="e_notes">Internal Notes <span class="sub">(only visible in the history)</span></label><textarea class="fin" id="e_notes" rows="2" placeholder="Internal notes (ex. explaining why the change is happening)"></textarea></div>
     </div>
-    <footer><button type="button" class="tbtext" id="eCancel">Cancel</button><button type="submit" class="tb pub" id="eSave">Submit</button></footer>
+    <footer><span class="fl"><button type="button" class="tb" id="eCancel">Cancel</button><button type="button" class="tbtext rst" id="eReset" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg><span>Reset changes</span></button></span><button type="submit" class="tb pub" id="eSave">Submit</button></footer>
   </form>
 </div>
 <div class="scrim" id="rScrim" hidden>
@@ -958,8 +961,6 @@
   const openCom = new Set();               // ids of rows whose comment is shown in full
   const inDraft = () => role === 'creator' && draftView;
   let EV = +new URLSearchParams(location.search).get('ev') === 2 ? 2 : 1;      // how editing a reset inside a cross-commodity set works: 1 = the reset you opened, 2 = every reset in the set
-  let VD = +new URLSearchParams(location.search).get('vd') === 2 ? 2 : 1;      // how a recently detached reset looks in the published view: 1 = dashed, continuing the set's bracket, 2 = dashed and closed off on its own
-  const applyVD = () => document.querySelectorAll('[data-vd]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.vd === VD));
   const applyEV = () => document.querySelectorAll('[data-ev]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.ev === EV));
   function useData() {                      // which data set the page shows
     ROWS = inDraft() ? DRAFTROWS : PUBROWS;
@@ -1026,7 +1027,8 @@
   /* A reset that is about to be detached stays in its set until publish. If every live reset in a set is detaching, the whole set is dissolving. */
   let DIS = {};
   const buildDis = () => { DIS = {}; const g = {}; ROWS.forEach(e => { if (e.xset && e.status !== 'Removed') (g[e.xset] = g[e.xset] || []).push(e); }); Object.entries(g).forEach(([k, l]) => { DIS[k] = l.length > 0 && l.every(x => x.unlinked || x.recentDet); }); };
-  const leaveKey = e => VD === 2 && !!e && !!e.xset && !!e.recentDet && !DIS[e.xset] ? 1 : 0;   // version 2: a recently detached reset goes after the resets that stay
+  const leaveKey = e => !!e && !!e.xset && !!e.recentDet && !DIS[e.xset] ? 1 : 0;   // a recently detached reset goes after the resets that stay, so it can close off on its own
+  const detached = e => !!e && !!e.xset && e.status !== 'Removed' && (!!e.unlinked || !!e.recentDet || !!DIS[e.xset]);   // pending in the draft, or detached in the latest published version
   const fades = e => !!e && !!e.xset && e.status !== 'Removed' && (!!e.unlinked || !!e.recentDet || !!DIS[e.xset]);   // version 3: part of the bracket, but drawn light and dashed
   let GK = {};
   const buildGK = () => { buildDis(); GK = {}; ROWS.forEach(e => { if (!e.xset) return; const g = GK[e.xset] = GK[e.xset] || { ch: 1, st: 1e9 }; if (e.status) g.ch = 0; g.st = Math.min(g.st, wkIdx(e.start)); }); };
@@ -1080,7 +1082,7 @@
     buildDis();
     const xcMark = (e, i) => {
       if (!e.xset) return '';
-      const same = (a, b) => !!a && !!b && a.xset === b.xset && (VD !== 2 || (!a.recentDet && !b.recentDet));   // version 2: a recently detached reset is not joined to its neighbours
+      const same = (a, b) => !!a && !!b && a.xset === b.xset && !a.recentDet && !b.recentDet;   // a recently detached reset is not joined to its neighbours: its bracket closes off on its own
       const pv = same(rows[i - 1], e), nx = same(e, rows[i + 1]), pos = pv && nx ? 'm' : pv ? 'b' : nx ? 't' : 's', f = fades(e), pub = !inDraft();
       const tip = e.removedRow ? 'Removed from this cross-commodity reset in the latest published version.' : !f ? '' : pub ? 'Detached from this cross-commodity reset in the latest published version.' : 'Will be detached from this cross-commodity reset when published.';
       const note = pub && !f && !e.removedRow ? (() => { const d = ROWS.filter(x => x.xset === e.xset && x.recentDet).map(x => x.comm), g = ROWS.filter(x => x.xset === e.xset && x.removedRow).map(x => x.comm), p = [];
@@ -1114,7 +1116,10 @@
         case 'dur': return `<td${ck(k, e)}>${e.dur} ${e.dur === 1 ? 'week' : 'weeks'}</td>`;
         case 'comments': { if (!e.comments) return `<td${ck(k, e, 'com')}></td>`; const open = openCom.has(e.id);
           return `<td${ck(k, e, 'com' + (open ? ' open' : ''))}><div class="cwrap"><span class="ctext">${esc(e.comments)}</span><button type="button" class="cmore" data-cmore="${e.id}" aria-expanded="${open}" aria-label="${open ? 'Display less' : 'Display more'} of the comment for ${esc(e.comm)}"${open ? '' : ' hidden'}>${open ? '(less)' : '(more)'}</button></div></td>`; }
-        case 'status': return `<td${!inDraft() && e.recentDet ? ' class="chg"' : ''}>${e.status ? `<span class="st ${e.status}">${e.status}</span>` : ''}</td>`;   // published view: a reset just detached from its set has a changed Status cell (the bracket sits in this cell)
+        case 'status': { const pill = e.status ? `<span class="st ${e.status}">${e.status}</span>` : '';
+          if (!detached(e)) return `<td>${pill}</td>`;
+          const tip = inDraft() ? 'Will be detached from this cross-commodity reset when published.' : 'Detached from this cross-commodity reset in the latest published version.';
+          return `<td><span class="stc">${pill}<span class="st2" tabindex="0" role="img" data-tip="${esc(tip)}" aria-label="${esc('Detached. ' + tip)}"><svg aria-hidden="true" focusable="false" width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M3.99463 3.61023C4.09402 3.61023 4.18997 3.64933 4.26025 3.7196L12.2603 11.7196C12.2956 11.7541 12.3231 11.7962 12.3423 11.8417C12.3614 11.8871 12.3716 11.9359 12.3716 11.9852C12.3716 12.0345 12.3615 12.0833 12.3423 12.1288C12.3231 12.1742 12.2955 12.2155 12.2603 12.2499C12.2266 12.2848 12.1858 12.313 12.1411 12.3319C12.0965 12.3508 12.048 12.3604 11.9995 12.3602C11.899 12.3587 11.8028 12.3191 11.73 12.2499L3.72998 4.24988C3.65976 4.17965 3.62067 4.08453 3.62061 3.98523C3.62061 3.88584 3.6597 3.78989 3.72998 3.7196C3.80018 3.64953 3.89544 3.6103 3.99463 3.61023ZM3.68994 5.4657C3.7371 5.47026 3.7829 5.48442 3.82471 5.50671C3.86635 5.52893 3.90311 5.55914 3.93311 5.59558C3.96306 5.63208 3.98578 5.67444 3.99951 5.7196C4.01505 5.76621 4.02175 5.81613 4.01807 5.86511C4.01435 5.914 4.00033 5.96207 3.97803 6.00574C3.95573 6.04925 3.92552 6.08842 3.88818 6.12C3.85073 6.15165 3.80702 6.17556 3.76025 6.19031C3.32447 6.32124 2.94993 6.60467 2.70654 6.98914C2.4632 7.37359 2.36697 7.83321 2.43506 8.28308C2.50318 8.73292 2.73142 9.14317 3.07764 9.43835C3.42386 9.7335 3.86489 9.8934 4.31982 9.88953H6.60986C6.96063 9.89536 7.30635 9.8057 7.60986 9.62976C7.69474 9.57756 7.79693 9.56063 7.89404 9.58289C7.99136 9.60534 8.07685 9.66556 8.13037 9.74988C8.18177 9.83612 8.19671 9.93959 8.17236 10.037C8.14799 10.1344 8.08547 10.2185 7.99951 10.2704C7.57827 10.517 7.09796 10.6441 6.60986 10.6395H4.34033C3.7089 10.6403 3.098 10.4148 2.61865 10.0038C2.1393 9.59272 1.82262 9.02349 1.72705 8.39929C1.63156 7.77518 1.7628 7.13701 2.09717 6.60144C2.43159 6.06592 2.94762 5.66854 3.55029 5.48035C3.5955 5.46654 3.64289 5.46115 3.68994 5.4657ZM11.6401 5.36023C12.2715 5.35954 12.8825 5.58496 13.3618 5.99597C13.8411 6.40702 14.1569 6.97635 14.2524 7.60046C14.348 8.22466 14.2167 8.86266 13.8823 9.39832C13.5479 9.93382 13.0328 10.3322 12.4302 10.5204L12.3296 10.5399C12.2514 10.5392 12.1756 10.5133 12.1128 10.4667C12.0499 10.42 12.0033 10.3549 11.98 10.2802C11.9513 10.186 11.9607 10.0846 12.0054 9.99695C12.0501 9.90928 12.1271 9.84243 12.2202 9.81042C12.6559 9.67947 13.0296 9.39504 13.2729 9.01062C13.5163 8.62618 13.6125 8.16653 13.5444 7.71667C13.4763 7.26695 13.248 6.85653 12.9019 6.5614C12.5557 6.26641 12.1145 6.10634 11.6597 6.11023H9.39014C9.038 6.10318 8.6909 6.19648 8.39014 6.37976C8.30328 6.42865 8.2007 6.44299 8.104 6.41882C8.0073 6.39465 7.92327 6.3339 7.86963 6.24988C7.84447 6.20801 7.82792 6.16149 7.8208 6.11316C7.81368 6.06473 7.81652 6.01509 7.82861 5.96765C7.8407 5.92036 7.86178 5.87581 7.89111 5.83679C7.92047 5.79779 7.95742 5.76483 7.99951 5.74011C8.41276 5.4906 8.88691 5.35929 9.36963 5.36023H11.6401Z" fill="currentColor"/> </svg></span></span></td>`; }
         case 'divs': return e.divs === 'All' ? `<td${ck(k, e)}>All</td>`
           : `<td${ck(k, e)}><button type="button" class="divbtn" data-divs="${e.id}" aria-haspopup="dialog" aria-label="${e.divs} ${e.divs === 1 ? 'division' : 'divisions'}, view list for ${esc(e.comm)}">${e.divs}</button></td>`;
         default: return `<td${ck(k, e)}>${esc(e[k])}</td>`;
@@ -1425,7 +1430,7 @@
     targets.forEach(r => {
       if (r.status === 'Added') { DRAFTROWS.splice(DRAFTROWS.indexOf(r), 1); discarded++; return; }
       const was = unsched(r); if (was) schedNote = reschedNote(was);
-      r.prev = { status: r.status, chg: r.chg, by: r.by, notes: r.notes || '' }; r.status = 'Removed'; r.chg = []; r.by = USER; if (note) r.notes = note; marked++;
+      r.prev = { status: r.status, chg: r.chg, by: r.by, notes: r.notes || '', req: DETACH1.has(r.id) }; r.status = 'Removed'; r.chg = []; r.by = USER; if (note) r.notes = note; marked++;
     });
     if (mode === 'detach' && mates.length >= 2) { (DETACH[key] = DETACH[key] || new Set()).add(id); e.detachKey = key; }
     const off = syncSets(), leaving = key ? DRAFTROWS.filter(x => x.xset === key && x.unlinked) : [];
@@ -1445,6 +1450,7 @@
     const e = rowById(id); if (!e) return;
     const was = unsched(e); const p = e.prev || { status: '', chg: [], by: '' }; e.status = p.status; e.chg = p.chg; e.by = p.by; if (p.notes !== undefined) e.notes = p.notes; e.prev = null;
     if (e.detachKey) { const d = DETACH[e.detachKey]; if (d) { d.delete(e.id); if (!d.size) delete DETACH[e.detachKey]; } e.detachKey = null; }   // undoing the removal also undoes the detach
+    if (p.req) DETACH1.add(e.id);                           // it was waiting to be detached before it was removed, so it still is
     if (e.orig && e.status !== 'Added') { e.unlinked = false; recalc(e); }
     const off = syncSets();
     resetOrder(); render(); focusAfter(`[data-remove="${id}"]`); toast('Restored. It will stay in the schedule.' + (was ? reschedNote(was) : '') + bundleNote(e, off));
@@ -1619,8 +1625,21 @@
   }
   const entValid = en => !!en.dept && !!en.comm && !!en.size && /^\d+$/.test(String(en.hours)) && +en.hours >= 1 && +en.hours <= 40;
   const pendingCount = () => { if (!sess) return 0; readEntries(); const ids = new Set([...sess.edits.keys()].filter(k => k !== editId)); if (entChanged(ents[0])) ids.add(editId); return ids.size; };
+  /* Reset: throws away everything changed in the dialog since it was opened (every pending edit, added commodity, detach request and shared field) and reopens it fresh. */
+  let baseline = null, baseId = null;
+  const stateKey = () => {
+    readEntries(); const e = editId == null ? null : rowById(editId);
+    const sh = [$('e_date').value, $('e_type').value, $('e_divs').value, $('e_notes').value.trim()];
+    if (!e) return JSON.stringify([sh, $('e_xc').checked, shownEnts().map(en => [en.dept, en.comm, en.size, en.hours, (en.comments || '').trim()])]);
+    const ch = new Map(); if (sess) sess.edits.forEach((v, k) => ch.set(k, entKey(v)));
+    ents.forEach(en => { if (en.rid) { entChanged(en) ? ch.set(en.rid, entKey(en)) : ch.delete(en.rid); } });
+    return JSON.stringify([sh, [...ch.entries()].sort(), ents.filter(en => !en.rid).map(en => [en.dept, en.comm, en.size, en.hours, (en.comments || '').trim()]), [...detPend].sort()]);
+  };
+  function updateResetBtn() { const b = $('eReset'); if (b) b.disabled = baseline === null || stateKey() === baseline; }
+  function resetEntry() { if (editId === undefined || $('eReset').disabled) return; const id = baseId != null ? baseId : editId, from = opener; openEntry(id, from); $('eForm').querySelector('.ebody').scrollTop = 0; toast('Changes reset. The dialog is back to how it was when you opened it.'); }
+  $('eReset').addEventListener('click', resetEntry);
   function updateSaveLabel() { const e = editId == null ? null : rowById(editId); if (!e) return; const n = sess ? pendingCount() : 0; $('eSave').textContent = n > 1 ? `Save changes to ${n} resets` : 'Save changes'; }
-  $('eForm').addEventListener('input', () => { if (sess) updateSaveLabel(); }); $('eForm').addEventListener('change', () => { if (sess) updateSaveLabel(); });
+  $('eForm').addEventListener('input', () => { if (sess) updateSaveLabel(); updateResetBtn(); }); $('eForm').addEventListener('change', () => { if (sess) updateSaveLabel(); updateResetBtn(); });
   function gotoReset(id) { const keep = opener; stash(); openEntry(id, keep, true); }
   $('xcMembers').addEventListener('click', ev => { const b = ev.target.closest('[data-gotoreset]'); if (b && rowById(+b.dataset.gotoreset)) gotoReset(+b.dataset.gotoreset); });
   /* Commodity list. The real <select> stays in the form (value, validation, saving) but opens this list instead of the browser's own,
@@ -1694,7 +1713,7 @@
       ? `<li><span class="pill off">${esc(x.comm)}<small>marked for removal</small></span></li>`
       : `<li><button type="button" class="pill" data-gotoreset="${x.id}" aria-label="Edit ${esc(x.comm)}${sess && sess.edits.has(x.id) ? ', has unsaved changes' : ''}">${esc(x.comm)}${sess && sess.edits.has(x.id) ? '<small class="pe">Modified</small>' : ''}${effDet().has(x.id) || removalDet(x) ? '<small class="pe det">Detaching</small>' : ''}</button></li>`).join('')}</ul>`;
   }
-  function renderEntries() { cddClose(false); { const dl = editAll ? detLive() : []; $('eDet').hidden = dl.length < 3; $('eDet').textContent = dl.length && effDet().size === dl.length ? 'Undo detach all' : 'Detach all'; } $('ebar').hidden = !editAll || ents.length < 2; $('eAll').textContent = allOpen() ? 'Collapse all' : 'Expand all'; renderMembers(); const sh = shownEnts(); $('entries').innerHTML = sh.map((en, i) => entryHtml(en, i, sh.length)).join(''); $('xcAdd').hidden = !cross; }
+  function renderEntries() { setTimeout(() => updateResetBtn(), 0); cddClose(false); { const dl = editAll ? detLive() : []; $('eDet').hidden = dl.length < 3; $('eDet').textContent = dl.length && effDet().size === dl.length ? 'Undo detach all' : 'Detach all'; } $('ebar').hidden = !editAll || ents.length < 2; $('eAll').textContent = allOpen() ? 'Collapse all' : 'Expand all'; renderMembers(); const sh = shownEnts(); $('entries').innerHTML = sh.map((en, i) => entryHtml(en, i, sh.length)).join(''); $('xcAdd').hidden = !cross; }
   function readEntries() { shownEnts().forEach((en, i) => { const v = k => $(`x${i}_${k}`).value; en.dept = v('dept'); en.comm = v('comm'); en.size = v('size'); en.hours = v('hours').trim(); en.comments = v('comments'); }); }
   $('e_xc').addEventListener('change', () => { readEntries(); cross = $('e_xc').checked; while (cross && ents.length < 2) ents.push(newEnt()); renderEntries(); });
   $('xcAdd').addEventListener('click', () => { readEntries(); ents.push(newEnt()); if (editAll) openE.add(ents.length - 1); renderEntries(); $(`x${ents.length - 1}_dept`).focus(); });
@@ -1760,11 +1779,12 @@
     $('e_date').value = sv ? sv.date : e ? e.start : ''; $('e_type').value = sv ? sv.type : e ? e.type : ''; $('e_divs').value = sv ? sv.divs : e ? String(e.divs) : ''; $('e_notes').value = sv ? sv.notes : e ? (e.notes || '') : '';
     ['e_date', 'e_type', 'e_divs'].forEach(k => setErr(k, ''));
     renderEntries(); updateSaveLabel();
+    if (!(carry && sess)) { baseline = stateKey(); baseId = id; } updateResetBtn();      // the state Reset goes back to (kept while hopping between resets with the pills)
     document.querySelector('.topbar').inert = true; document.querySelector('.app').inert = true;
     $('eScrim').hidden = false; const f0 = e ? $('x0_dept') : null; (f0 && !f0.disabled ? f0 : $('e_date')).focus();
   }
   function closeEntry() {
-    hideLockTip(); cddClose(false); sess = null; detPend = new Set(); $('eScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
+    hideLockTip(); cddClose(false); baseline = null; baseId = null; sess = null; detPend = new Set(); $('eScrim').hidden = true; document.querySelector('.topbar').inert = false; document.querySelector('.app').inert = false;
     if (opener && opener.isConnected) opener.focus(); opener = null; editId = null;
   }
   $('eForm').addEventListener('submit', ev => {
@@ -1813,16 +1833,18 @@
       const e = rowById(editId), anchorStart = e.start, prevDate = { ...Object.fromEntries(DRAFTROWS.filter(x => x.xset === e.xset).map(x => [x.id, x.start])) };
       const all = new Map(sess.edits); entChanged(ents[0]) ? all.set(editId, { ...ents[0] }) : all.delete(editId);
       let changed = 0, off = 0, added = 0, id = maxId();
-      const effDetS = effDet();
+      const effDetS = effDet(), leavesNow = r => effDetS.has(r.id) || removalDet(r);          // a detaching reset no longer shares the set's date, type, division or notes, but its own fields still save
+      const openedLeaves = leavesNow(e);                                                        // editing a detaching reset: the shared fields in the dialog are its own
       const sharedSame = r => r.type === type && r.start === start && String(r.divs) === String(divs) && (r.notes || '') === notes;
-      DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed' && !effDetS.has(x.id) && !removalDet(x)).forEach(r => {
-        const en = all.get(r.id), shared = !sharedSame(r);
+      DRAFTROWS.filter(x => x.xset === e.xset && x.status !== 'Removed').forEach(r => {
+        const gets = openedLeaves ? r === e : !leavesNow(r);                                    // who receives the shared fields
+        const en = all.get(r.id), shared = gets && !sharedSame(r);
         if (!en && !shared) return;
         const before = { ...snap(r), notes: r.notes || '' }; if (!r.orig && r.status !== 'Added') r.orig = snap(r);
-        Object.assign(r, { type, start, divs }); r.notes = notes;
+        if (gets) { Object.assign(r, { type, start, divs }); r.notes = notes; }
         if (en) Object.assign(r, { dept: en.dept, comm: en.comm, cm: en.cm, pm: en.pm, size: +en.size, hours: +en.hours, comments: en.comments.trim() });
         r.divList = divListFor(r.id, r.divs);
-        if (!(FIELDS.some(k => String(before[k]) !== String(r[k])) || before.notes !== notes)) return;
+        if (!(FIELDS.some(k => String(before[k]) !== String(r[k])) || (gets && before.notes !== notes))) return;
         changed++; if (r.sched) { r.sched = null; off++; }
         r.status === 'Added' ? (r.by = USER) : recalc(r);
       });
@@ -1914,7 +1936,6 @@
       render(); $('thead').querySelector(`[data-sort="${k}"]`)?.focus(); toast(sortKey ? `Sorted by ${FSORT[k]}, ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort cleared. Back to the default order, with changed resets first.'); return; }
     if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
     const cm = e.target.closest('[data-cmore]'); if (cm) { const id = +cm.dataset.cmore; openCom.has(id) ? openCom.delete(id) : openCom.add(id); render(); document.querySelector(`[data-cmore="${id}"]`)?.focus(); return; }
-    const vd2 = e.target.closest('[data-vd]'); if (vd2) { VD = +vd2.dataset.vd; applyVD(); rowOrder = null; if (sortKey) applySort(); render(); try { const u = new URL(location.href); u.searchParams.set('vd', VD); history.replaceState(null, '', u); } catch (er) {} return; }
     const ev2 = e.target.closest('[data-ev]'); if (ev2) { EV = +ev2.dataset.ev; applyEV(); try { const u = new URL(location.href); u.searchParams.set('ev', EV); history.replaceState(null, '', u); } catch (er) {} return; }
     const rl = e.target.closest('[data-role]'); if (rl) { setRole(rl.dataset.role); return; }
     if (e.target.closest('#viewSwitch')) { draftView = !draftView; clearToasts(); useData(); render(); return; }
@@ -1952,14 +1973,14 @@
   $('eForm').addEventListener('mouseover', dlgTip); $('eForm').addEventListener('mouseleave', hideLockTip);
   $('eForm').addEventListener('focusin', e => { if (e.target.closest('[data-infotip]')) dlgTip(e); }); $('eForm').addEventListener('focusout', e => { if (e.target.closest('[data-infotip]')) hideLockTip(); });
   $('eScrim').addEventListener('scroll', hideLockTip, true);
-  const hideTip = () => { lockTipOn = false; xtip.hidden = true; xtip.style.maxWidth = ''; xtip.style.whiteSpace = ''; xtip.style.zIndex = ''; xtip.textContent = TIPTXT; document.querySelectorAll('.xw[aria-describedby]').forEach(x => x.removeAttribute('aria-describedby')); };
-  $('tbody').addEventListener('mouseover', e => { const w = e.target.closest('.xw'); w ? showTip(w) : hideTip(); });
+  const hideTip = () => { lockTipOn = false; xtip.hidden = true; xtip.style.maxWidth = ''; xtip.style.whiteSpace = ''; xtip.style.zIndex = ''; xtip.textContent = TIPTXT; document.querySelectorAll('.xw[aria-describedby], .st2[aria-describedby]').forEach(x => x.removeAttribute('aria-describedby')); };
+  $('tbody').addEventListener('mouseover', e => { const w = e.target.closest('.xw, .st2'); w ? showTip(w) : hideTip(); });
   $('tbody').addEventListener('mouseleave', hideTip);
-  $('tbody').addEventListener('focusin', e => { const w = e.target.closest('.xw'); if (w) showTip(w); });
+  $('tbody').addEventListener('focusin', e => { const w = e.target.closest('.xw, .st2'); if (w) showTip(w); });
   $('tbody').addEventListener('focusout', hideTip);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
   document.querySelector('.tablewrap').addEventListener('scroll', hideTip, { passive: true });
-  applyVD(); applyEV(); render();
+  applyEV(); render();
   document.title = 'Cross-commodity Connection';
   useData(); render();
 })();
