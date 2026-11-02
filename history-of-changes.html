@@ -230,6 +230,13 @@
   .hlayout .clear-row { margin: 0 -18px 4px; padding: 0 18px 10px; border-bottom: 1px solid var(--border); }
   .hlayout .clear-row .link-btn { text-decoration: none; color: #9aa3b0; }
   .hlayout .clear-row .link-btn:not(:disabled) { color: var(--blue); text-decoration: underline; }
+  .msel .field { padding-right: 30px; }
+  .msel .field.empty { color: #666; }
+  .msel .msv { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mpop { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; background: #fff; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.18); max-height: 250px; overflow-y: auto; padding: 6px; }
+  .mopt { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 4px; font-size: 14px; cursor: pointer; }
+  .mopt:hover { background: #eef2fa; }
+  .mopt input { width: 16px; height: 16px; margin: 0; flex: none; accent-color: var(--navy); }
   .hdates { border: 0; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; min-width: 0; }
   .hdates legend { padding: 0; margin: 0 0 6px; color: var(--text); font-size: 14px; }
   .hdates label { display: block; font-size: 13px; margin: 0 0 3px; }
@@ -526,10 +533,18 @@
               </button>
             </div>
             <div class="clear-row"><button type="button" class="link-btn" id="hClear" disabled>Clear All</button></div>
-            <label class="flabel" for="hf_comm">Commodity</label>
-            <div class="sel"><select class="field empty" id="hf_comm"></select><span class="caret">▼</span></div>
-            <label class="flabel" for="hf_div">Division</label>
-            <div class="sel"><select class="field empty" id="hf_div"></select><span class="caret">▼</span></div>
+            <label class="flabel" id="hf_comm_l" for="hf_comm">Commodity</label>
+            <div class="sel msel" data-ms="comm">
+              <button type="button" class="field empty" id="hf_comm" aria-haspopup="true" aria-expanded="false" aria-controls="hf_comm_pop" aria-labelledby="hf_comm_l hf_comm_v"><span class="msv" id="hf_comm_v">--- Select a Value ---</span></button>
+              <span class="caret" aria-hidden="true">▼</span>
+              <div class="mpop" id="hf_comm_pop" role="group" aria-labelledby="hf_comm_l" hidden></div>
+            </div>
+            <label class="flabel" id="hf_div_l" for="hf_div">Division</label>
+            <div class="sel msel" data-ms="div">
+              <button type="button" class="field empty" id="hf_div" aria-haspopup="true" aria-expanded="false" aria-controls="hf_div_pop" aria-labelledby="hf_div_l hf_div_v"><span class="msv" id="hf_div_v">--- Select a Value ---</span></button>
+              <span class="caret" aria-hidden="true">▼</span>
+              <div class="mpop" id="hf_div_pop" role="group" aria-labelledby="hf_div_l" hidden></div>
+            </div>
             <fieldset class="hdates"><legend class="flabel">Date</legend>
               <div><label for="hf_from">From</label><input type="date" id="hf_from"></div>
               <div><label for="hf_to">To</label><input type="date" id="hf_to"></div>
@@ -1087,16 +1102,16 @@
     histVer = v; syncVerButtons();
     if (!$('historyPage').hidden) { renderHistorySummary(); layoutChips(); syncExpandAll(); }
   }
-  let hFilter = { comm: '', div: '', from: '', to: '' };
+  let hFilter = { comm: [], div: [], from: '', to: '' };
   function historyView() {                    // publishes (and, when scoped, the changes inside them) that match the filters
     const from = hFilter.from ? new Date(hFilter.from + 'T00:00:00') : null, to = hFilter.to ? new Date(hFilter.to + 'T23:59:59.999') : null;
-    const scoped = !!(hFilter.comm || hFilter.div);
+    const scoped = !!(hFilter.comm.length || hFilter.div.length);
     return HISTORY.map(h => {
       const at = new Date(h.at);
       if ((from && at < from) || (to && at > to)) return null;
       let changes = h.changes;
-      if (hFilter.comm) changes = changes.filter(c => c.comm === hFilter.comm);
-      if (hFilter.div) changes = changes.filter(c => c.divs.includes(hFilter.div) || (c.divBefore || []).includes(hFilter.div));
+      if (hFilter.comm.length) changes = changes.filter(c => hFilter.comm.includes(c.comm));
+      if (hFilter.div.length) changes = changes.filter(c => hFilter.div.some(d => c.divs.includes(d) || (c.divBefore || []).includes(d)));
       if (scoped && !changes.length) return null;
       if (!scoped) return { ...h, cur: h === HISTORY[0] };
       const n = st => changes.filter(x => x.status === st).length;
@@ -1466,36 +1481,51 @@
   const hPanel = $('hPanel'), hBody = $('hPanelBody'), hCollapse = $('hCollapse'), hExpand = $('hExpand');
   function setHPanel(open) {
     hPanel.classList.add('animating'); setTimeout(() => hPanel.classList.remove('animating'), 300);
+    if (!open) msCloseAll();
     hPanel.classList.toggle('collapsed', !open); hBody.inert = !open; hExpand.tabIndex = open ? -1 : 0;
     hCollapse.setAttribute('aria-expanded', open); hExpand.setAttribute('aria-expanded', open);
     (open ? hCollapse : hExpand).focus();
   }
   hCollapse.addEventListener('click', () => setHPanel(false)); hExpand.addEventListener('click', () => setHPanel(true));
   const dvLabel = d => DIVNO[d] ? `${DIVNO[d]} - ${d}` : d;
+  /* Multiselect dropdowns: a button that opens a checkbox list */
+  const MS = { comm: { btn: 'hf_comm', pop: 'hf_comm_pop', val: 'hf_comm_v' }, div: { btn: 'hf_div', pop: 'hf_div_pop', val: 'hf_div_v' } };
+  const msChecked = k => [...$(MS[k].pop).querySelectorAll('input:checked')];
+  function msSync(k) {
+    const on = msChecked(k);
+    $(MS[k].val).textContent = on.length === 0 ? '--- Select a Value ---' : on.length === 1 ? on[0].nextElementSibling.textContent : `${on.length} selected`;
+    $(MS[k].btn).classList.toggle('empty', on.length === 0);
+  }
+  function msOpen(k, open) { $(MS[k].pop).hidden = !open; $(MS[k].btn).setAttribute('aria-expanded', String(open)); }
+  const msCloseAll = except => Object.keys(MS).forEach(k => { if (k !== except) msOpen(k, false); });
   function buildHistFilters() {
-    const fill = (id, opts, cur) => { const el = $(id); el.innerHTML = '<option value="">--- Select a Value ---</option>' + opts.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(''); el.value = cur; el.classList.toggle('empty', !el.value); };
-    fill('hf_comm', [...new Set(HISTORY.flatMap(h => h.changes.map(c => c.comm)))].sort().map(c => [c, c]), hFilter.comm);
-    fill('hf_div', sortDivs(DIVS).map(d => [d, dvLabel(d)]), hFilter.div);
+    const fill = (k, opts) => { $(MS[k].pop).innerHTML = opts.map(([v, t]) => `<label class="mopt"><input type="checkbox" value="${esc(v)}"${hFilter[k].includes(v) ? ' checked' : ''}><span>${esc(t)}</span></label>`).join(''); msSync(k); msOpen(k, false); };
+    fill('comm', [...new Set(HISTORY.flatMap(h => h.changes.map(c => c.comm)))].sort().map(c => [c, c]));
+    fill('div', sortDivs(DIVS).map(d => [d, dvLabel(d)]));
     $('hf_from').value = hFilter.from; $('hf_to').value = hFilter.to; $('hDateErr').hidden = true;
     syncHClear();
   }
-  const hFields = () => ({ comm: $('hf_comm').value, div: $('hf_div').value, from: $('hf_from').value, to: $('hf_to').value });
+  const hFields = () => ({ comm: msChecked('comm').map(i => i.value), div: msChecked('div').map(i => i.value), from: $('hf_from').value, to: $('hf_to').value });
   function syncHClear() {
-    const f = hFields(), n = [hFilter.comm, hFilter.div, hFilter.from || hFilter.to].filter(Boolean).length;
-    $('hClear').disabled = !(f.comm || f.div || f.from || f.to) && !n;
+    const f = hFields(), n = [hFilter.comm.length, hFilter.div.length, hFilter.from || hFilter.to].filter(Boolean).length;
+    $('hClear').disabled = !(f.comm.length || f.div.length || f.from || f.to) && !n;
     $('hBadge').hidden = !n; $('hBadge').textContent = n;
   }
   function applyHFilters() {
     const f = hFields();
     if (f.from && f.to && f.from > f.to) { $('hDateErr').hidden = false; $('hf_from').focus(); return; }
-    $('hDateErr').hidden = true; hFilter = f;
+    $('hDateErr').hidden = true; hFilter = f; msCloseAll();
     renderHistorySummary(); layoutChips(); syncExpandAll(); syncHClear();
   }
-  function clearHFilters() { hFilter = { comm: '', div: '', from: '', to: '' }; buildHistFilters(); renderHistorySummary(); layoutChips(); syncExpandAll(); }
+  function clearHFilters() { hFilter = { comm: [], div: [], from: '', to: '' }; buildHistFilters(); renderHistorySummary(); layoutChips(); syncExpandAll(); }
   $('hApply').addEventListener('click', applyHFilters);
   $('hClear').addEventListener('click', clearHFilters); $('hClearEmpty').addEventListener('click', clearHFilters);
-  hBody.addEventListener('change', e => { if (e.target.matches('select')) e.target.classList.toggle('empty', !e.target.value); syncHClear(); });
-  hBody.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('select, input')) { e.preventDefault(); applyHFilters(); } });
+  hBody.addEventListener('click', e => { const b = e.target.closest('.msel > button'); if (!b) return; const k = b.closest('.msel').dataset.ms, open = b.getAttribute('aria-expanded') !== 'true'; msCloseAll(k); msOpen(k, open); });
+  hBody.addEventListener('change', e => { const w = e.target.closest('.msel'); if (w) msSync(w.dataset.ms); syncHClear(); });
+  hBody.addEventListener('keydown', e => { if (e.key === 'Escape') { const w = e.target.closest('.msel'); if (w && !$(MS[w.dataset.ms].pop).hidden) { e.stopPropagation(); msOpen(w.dataset.ms, false); $(MS[w.dataset.ms].btn).focus(); } } });
+  hBody.addEventListener('focusout', e => { const w = e.target.closest('.msel'); if (w && e.relatedTarget && !w.contains(e.relatedTarget)) msOpen(w.dataset.ms, false); });
+  document.addEventListener('click', e => { if (!e.target.closest('.msel')) msCloseAll(); });
+  hBody.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('input')) { e.preventDefault(); applyHFilters(); } });
   function toggleHistory(open) {
     $('main').classList.toggle('hist-open', open);
     $('historyPage').hidden = !open;
