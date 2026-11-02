@@ -217,6 +217,8 @@
   .histback:hover { background: #e6ecf6; }
   .histback:active { background: #d8e2f2; }
   .histback svg { flex: none; }
+  .histtitlerow { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 20px; }
+  .histhead { margin-bottom: 16px; }
   .histpage h1 { margin: 0; }
   .histpage h1:focus { outline: none; }
   .hsm { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 20px; }
@@ -236,13 +238,24 @@
   .hchips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 8px; }
   .hchip { display: inline-block; font-size: 13px; background: #e8edf5; color: #000; border-radius: 999px; padding: 4px 12px; }
   .hmorebtn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 2px 4px; font: inherit; font-size: 13px; color: #000; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; border-radius: 2px; }
-  .hmorebtn svg, .hdetbtn svg { transition: transform .15s ease; flex: none; }
-  .hmorebtn[aria-expanded="true"] svg, .hdetbtn[aria-expanded="true"] svg { transform: rotate(90deg); }
+  .hmorebtn svg, .hd-grp > summary svg { transition: transform .15s ease; flex: none; }
+  .hmorebtn[aria-expanded="true"] svg { transform: rotate(90deg); }
   .hsc-foot { padding: 4px 24px 14px; }
-  .hdetbtn { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 6px 4px; margin-left: -4px; font: inherit; font-size: 13px; color: #000; cursor: pointer; border-radius: 2px; }
-  .hdetpanel { margin: 10px 0 6px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 15px; }
-  .hd-grp { margin: 0 0 24px; }
-  .hd-grp > h3 { margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #000; }
+  .hsc-foot .hd-groups { margin: 0 0 0 26px; }
+  .hsc-foot .hd-groups > .hd-grp:last-child { margin-bottom: 0; }
+  .hdetbtn { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; padding: 6px 4px; margin-left: -4px; font: inherit; font-size: 14px; font-weight: 600; line-height: 1.4; color: #000; cursor: pointer; border-radius: 4px; }
+  .hdetbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .hdetbtn svg { transition: transform .15s ease; flex: none; }
+  .hdetbtn[aria-expanded="true"] svg { transform: rotate(90deg); }
+  .hd-grp { margin: 0; }
+  .hd-grp > summary { display: flex; align-items: center; gap: 8px; width: fit-content; padding: 6px 4px; margin: 0 0 0 -4px; list-style: none; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600; line-height: 1.4; color: #000; border-radius: 4px; }
+  .hd-grp > summary::-webkit-details-marker { display: none; }
+  .hd-grp > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .hd-grp > summary svg { transition: transform .15s ease; flex: none; }
+  .hd-grp[open] > summary svg { transform: rotate(90deg); }
+  .hd-grp[open] > summary { margin-bottom: 8px; }
+  .hd-grp[open] { margin-bottom: 8px; }
+  .hd-count { font-variant-numeric: tabular-nums; }
   .hd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
   .hd-item { background: #fafbfc; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; --band: #046a38; }
   .hd-item.st-modified { --band: #1f4e9c; } .hd-item.st-removed { --band: #b42318; }
@@ -454,7 +467,10 @@
     <section class="histpage" id="historyPage" aria-labelledby="histTitle" hidden>
       <div class="histhead">
         <button type="button" class="histback" id="historyBack"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H4M10 6l-6 6 6 6"/></svg>Back to schedule</button>
+      </div>
+      <div class="histtitlerow">
         <h1 id="histTitle" tabindex="-1">History of changes</h1>
+        <button type="button" class="link-btn" id="histExpandAll" aria-pressed="false">Expand All</button>
       </div>
       <ol class="hsm" id="histSummary" aria-label="Published changes, newest first"></ol>
     </section>
@@ -947,14 +963,19 @@
       return `<li class="hd-item st-${st}"><div class="hd-head"><span class="hd-chip">${c.status}</span><h4 class="hd-title">${esc(c.comm)} · ${esc(c.dept)} · ${esc(c.type)} · ${esc(c.start.replace(' ', ''))}</h4></div>
         <div class="hd-body">${body}${c.notes ? `<div class="hd-notes"><h5>Internal notes</h5><p>${esc(c.notes)}</p></div>` : ''}</div></li>`;
     };
-    return groups.map(label => { const list = h.changes.filter(c => c.status === label); return list.length ? `<section class="hd-grp"><h3>${label} (${list.length})</h3><ul class="hd-list">${list.map(entry).join('')}</ul></section>` : ''; }).join('');
+    return groups.map(label => { const list = h.changes.filter(c => c.status === label); return list.length ? `<details class="hd-grp"><summary>${CHEV}<span class="hd-count">${list.length}</span><span>${label}</span></summary><ul class="hd-list">${list.map(entry).join('')}</ul></details>` : ''; }).join('');
   }
-  function toggleDet(hd, force) {
-    const open = force ?? hd.getAttribute('aria-expanded') !== 'true';
-    hd.setAttribute('aria-expanded', String(open)); hd.querySelector('span').textContent = open ? 'Hide details' : 'Show details'; $(hd.getAttribute('aria-controls')).hidden = !open;
-    if (open) layoutChips();
+  function syncExpandAll() {
+    document.querySelectorAll('#histSummary .hsc').forEach(card => {
+      const gs = [...card.querySelectorAll('.hd-grp')], b = card.querySelector('[data-hall]');
+      const all = gs.length > 0 && gs.every(g => g.open);
+      b.setAttribute('aria-expanded', String(all)); b.querySelector('span').textContent = all ? 'Hide all details' : 'Show all details';
+    });
+    const groups = [...document.querySelectorAll('#histSummary .hd-grp')], btn = $('histExpandAll');
+    const allOpen = groups.length > 0 && groups.every(g => g.open);
+    btn.textContent = allOpen ? 'Collapse All' : 'Expand All'; btn.setAttribute('aria-pressed', String(allOpen));
   }
-  document.addEventListener('toggle', ev => { if (ev.target.closest && ev.target.closest('#histSummary')) layoutChips(); }, true);   // nested <details> open
+  document.addEventListener('toggle', ev => { if (ev.target.closest && ev.target.closest('#histSummary')) { layoutChips(); syncExpandAll(); } }, true);   // nested <details> open
   function renderHistorySummary() {
     $('histSummary').innerHTML = HISTORY.map((h, i) => {
       const total = h.added + h.modified + h.removed, all = h.divs.length === DIVS.length;
@@ -969,8 +990,8 @@
             <section><h3>Divisions affected (${all ? DIVS.length : h.divs.length})</h3>${all ? `<ul class="hchips"><li class="hchip">All ${DIVS.length} divisions</li></ul>` : pills(divLabels(h.divs), 'divisions')}</section>
           </div>
         </div>
-        <div class="hsc-foot"><button type="button" class="hdetbtn" data-hdet aria-expanded="false" aria-controls="hdet${i}">${CHEV}<span>Show details</span></button>
-          <div class="hdetpanel" id="hdet${i}" hidden>${renderDetails(h)}</div></div></li>`;
+        <div class="hsc-foot"><button type="button" class="hdetbtn" data-hall aria-expanded="false">${CHEV}<span>Show all details</span></button>
+          <div class="hd-groups">${renderDetails(h)}</div></div></li>`;
     }).join('');
   }
   /* Keep each pill list to two lines; the "show more" button takes the end of line two. */
@@ -1312,7 +1333,7 @@
   function toggleHistory(open) {
     $('main').classList.toggle('hist-open', open);
     $('historyPage').hidden = !open;
-    if (open) { renderHistorySummary(); layoutChips(); }
+    if (open) { renderHistorySummary(); layoutChips(); syncExpandAll(); }
     window.scrollTo(0, 0);
     (open ? $('histTitle') : $('historyBtn')).focus();
   }
@@ -1536,8 +1557,9 @@
     if (e.target.closest('#historyBtn')) { toggleHistory(true); return; }
     const hm = e.target.closest('[data-hmore]');
     if (hm) { const open = hm.getAttribute('aria-expanded') !== 'true'; hm.setAttribute('aria-expanded', String(open)); hm.querySelector('span').textContent = open ? 'show less' : 'show more'; layoutChips(); return; }
-    const hd = e.target.closest('[data-hdet]');
-    if (hd) { toggleDet(hd); return; }
+    const ha = e.target.closest('[data-hall]');
+    if (ha) { const open = ha.getAttribute('aria-expanded') !== 'true'; ha.closest('.hsc').querySelectorAll('.hd-grp').forEach(g => { g.open = open; }); layoutChips(); syncExpandAll(); return; }
+    if (e.target.closest('#histExpandAll')) { const open = $('histExpandAll').getAttribute('aria-pressed') !== 'true'; document.querySelectorAll('#histSummary .hd-grp').forEach(g => { g.open = open; }); layoutChips(); syncExpandAll(); return; }
     if (e.target.closest('#historyBack')) { toggleHistory(false); return; }
     if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
     const rl = e.target.closest('[data-role]'); if (rl) { setRole(rl.dataset.role); return; }
