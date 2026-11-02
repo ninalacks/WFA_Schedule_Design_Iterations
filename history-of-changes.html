@@ -221,6 +221,24 @@
   .histhead { margin-bottom: 16px; }
   .histpage h1 { margin: 0; }
   .histpage h1:focus { outline: none; }
+  #main.hist-open > .histpage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .hlayout { display: flex; align-items: stretch; gap: 16px; flex: 1; min-height: 0; }
+  .hlayout > .hmain { flex: 1; min-width: 0; overflow-y: auto; padding: 2px 6px 16px 2px; }
+  .hlayout .panel { align-self: stretch; }
+  .hlayout .panel-body { min-height: 100%; display: flex; flex-direction: column; }
+  .hlayout .pfoot { margin-top: auto; }
+  .hlayout .clear-row { margin: 0 -18px 4px; padding: 0 18px 10px; border-bottom: 1px solid var(--border); }
+  .hlayout .clear-row .link-btn { text-decoration: none; color: #9aa3b0; }
+  .hlayout .clear-row .link-btn:not(:disabled) { color: var(--blue); text-decoration: underline; }
+  .hdates { border: 0; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; min-width: 0; }
+  .hdates legend { padding: 0; margin: 0 0 6px; color: var(--text); font-size: 14px; }
+  .hdates label { display: block; font-size: 13px; margin: 0 0 3px; }
+  .hdates input { width: 100%; min-width: 0; height: 36px; border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; font: inherit; font-size: 13px; background: #fff; color: var(--text); }
+  .hdates input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .herr { grid-column: 1 / -1; margin: 8px 0 0; font-size: 13px; color: #b42318; }
+  .hcount { margin: 0 0 12px; font-size: 14px; color: var(--muted); min-height: 20px; }
+  .hempty { padding: 28px 24px; background: #fff; border: 1px dashed var(--border); border-radius: 12px; font-size: 15px; }
+  @media (max-width: 900px) { #main.hist-open > .histpage { display: block; } .hlayout { flex-direction: column; } .hlayout .panel { width: 100%; min-height: 68px; } .hlayout .panel.collapsed { width: 56px; } .hlayout > .hmain { width: 100%; overflow: visible; } }
   .hsm { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 20px; }
   .hsc { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(15,31,61,.08); }
   .hsc-top { background: #4b4f56; color: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 6px 20px; flex-wrap: wrap; }
@@ -472,7 +490,40 @@
         <h1 id="histTitle" tabindex="-1">History of changes</h1>
         <button type="button" class="link-btn" id="histExpandAll" aria-pressed="false">Expand All</button>
       </div>
-      <ol class="hsm" id="histSummary" aria-label="Published changes, newest first"></ol>
+      <div class="hlayout">
+        <aside class="panel collapsed" id="hPanel" aria-label="Filters">
+          <div class="panel-body" id="hPanelBody" inert>
+            <div class="panel-head">
+              <h2>Filters</h2>
+              <button type="button" class="icon-btn" id="hCollapse" aria-label="Collapse filters" aria-controls="hPanelBody" aria-expanded="false">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+              </button>
+            </div>
+            <div class="clear-row"><button type="button" class="link-btn" id="hClear" disabled>Clear All</button></div>
+            <label class="flabel" for="hf_comm">Commodity</label>
+            <div class="sel"><select class="field empty" id="hf_comm"></select><span class="caret">▼</span></div>
+            <label class="flabel" for="hf_div">Division</label>
+            <div class="sel"><select class="field empty" id="hf_div"></select><span class="caret">▼</span></div>
+            <fieldset class="hdates"><legend class="flabel">Date</legend>
+              <div><label for="hf_from">From</label><input type="date" id="hf_from"></div>
+              <div><label for="hf_to">To</label><input type="date" id="hf_to"></div>
+              <p class="herr" id="hDateErr" role="alert" hidden>The From date must be on or before the To date.</p>
+            </fieldset>
+            <div class="pfoot"><button type="button" class="pbtn" id="hApply">Apply</button></div>
+          </div>
+          <div class="prail">
+            <button type="button" class="icon-btn" id="hExpand" aria-label="Open filters" aria-controls="hPanelBody" aria-expanded="false">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true"><path d="M3 6h9M18 6h3M3 12h3M12 12h9M3 18h11M20 18h1"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg>
+              <span class="badge" id="hBadge" hidden></span>
+            </button>
+          </div>
+        </aside>
+        <div class="hmain">
+          <p class="hcount" id="hCount" role="status"></p>
+          <div class="hempty" id="hEmpty" hidden>No published changes match these filters. <button type="button" class="link-btn" id="hClearEmpty">Clear all filters</button></div>
+          <ol class="hsm" id="histSummary" aria-label="Published changes, newest first"></ol>
+        </div>
+      </div>
     </section>
   </main>
 </div>
@@ -976,10 +1027,30 @@
     btn.textContent = allOpen ? 'Collapse All' : 'Expand All'; btn.setAttribute('aria-pressed', String(allOpen));
   }
   document.addEventListener('toggle', ev => { if (ev.target.closest && ev.target.closest('#histSummary')) { layoutChips(); syncExpandAll(); } }, true);   // nested <details> open
+  let hFilter = { comm: '', div: '', from: '', to: '' };
+  function historyView() {                    // publishes (and, when scoped, the changes inside them) that match the filters
+    const from = hFilter.from ? new Date(hFilter.from + 'T00:00:00') : null, to = hFilter.to ? new Date(hFilter.to + 'T23:59:59.999') : null;
+    const scoped = !!(hFilter.comm || hFilter.div);
+    return HISTORY.map(h => {
+      const at = new Date(h.at);
+      if ((from && at < from) || (to && at > to)) return null;
+      let changes = h.changes;
+      if (hFilter.comm) changes = changes.filter(c => c.comm === hFilter.comm);
+      if (hFilter.div) changes = changes.filter(c => c.divs.includes(hFilter.div) || (c.divBefore || []).includes(hFilter.div));
+      if (scoped && !changes.length) return null;
+      if (!scoped) return { ...h, cur: h === HISTORY[0] };
+      const n = st => changes.filter(x => x.status === st).length;
+      return { ...h, changes, added: n('Added'), modified: n('Modified'), removed: n('Removed'), comms: [...new Set(changes.map(x => x.comm))],
+        divs: DIVS.filter(d => changes.some(x => x.divs.includes(d))), cur: h === HISTORY[0] };
+    }).filter(Boolean);
+  }
   function renderHistorySummary() {
-    $('histSummary').innerHTML = HISTORY.map((h, i) => {
+    const view = historyView();
+    $('hCount').textContent = view.length === HISTORY.length ? `Showing all ${HISTORY.length} publishes` : `Showing ${view.length} of ${HISTORY.length} publishes`;
+    $('hEmpty').hidden = view.length > 0;
+    $('histSummary').innerHTML = view.map(h => {
       const total = h.added + h.modified + h.removed, all = h.divs.length === DIVS.length;
-      return `<li class="hsc"><div class="hsc-top"><h2>Published <time datetime="${h.at}">${fmtWhen(h.at)}</time>${i === 0 ? '<span class="hcur">Current</span>' : ''}</h2>
+      return `<li class="hsc"><div class="hsc-top"><h2>Published <time datetime="${h.at}">${fmtWhen(h.at)}</time>${h.cur ? '<span class="hcur">Current</span>' : ''}</h2>
           <span class="hwhen">by ${esc(h.by)}</span></div>
         <div class="hsc-body">
           <dl class="hsc-tiles">
@@ -1330,10 +1401,44 @@
   /* ---------- Creator actions ---------- */
   const rowById = id => DRAFTROWS.find(x => x.id === id);
   const focusAfter = (selector) => { const el = document.querySelector(selector); if (el) el.focus(); };
+  /* History filter panel */
+  const hPanel = $('hPanel'), hBody = $('hPanelBody'), hCollapse = $('hCollapse'), hExpand = $('hExpand');
+  function setHPanel(open) {
+    hPanel.classList.add('animating'); setTimeout(() => hPanel.classList.remove('animating'), 300);
+    hPanel.classList.toggle('collapsed', !open); hBody.inert = !open; hExpand.tabIndex = open ? -1 : 0;
+    hCollapse.setAttribute('aria-expanded', open); hExpand.setAttribute('aria-expanded', open);
+    (open ? hCollapse : hExpand).focus();
+  }
+  hCollapse.addEventListener('click', () => setHPanel(false)); hExpand.addEventListener('click', () => setHPanel(true));
+  const dvLabel = d => DIVNO[d] ? `${DIVNO[d]} - ${d}` : d;
+  function buildHistFilters() {
+    const fill = (id, opts, cur) => { const el = $(id); el.innerHTML = '<option value="">--- Select a Value ---</option>' + opts.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(''); el.value = cur; el.classList.toggle('empty', !el.value); };
+    fill('hf_comm', [...new Set(HISTORY.flatMap(h => h.changes.map(c => c.comm)))].sort().map(c => [c, c]), hFilter.comm);
+    fill('hf_div', sortDivs(DIVS).map(d => [d, dvLabel(d)]), hFilter.div);
+    $('hf_from').value = hFilter.from; $('hf_to').value = hFilter.to; $('hDateErr').hidden = true;
+    syncHClear();
+  }
+  const hFields = () => ({ comm: $('hf_comm').value, div: $('hf_div').value, from: $('hf_from').value, to: $('hf_to').value });
+  function syncHClear() {
+    const f = hFields(), n = [hFilter.comm, hFilter.div, hFilter.from || hFilter.to].filter(Boolean).length;
+    $('hClear').disabled = !(f.comm || f.div || f.from || f.to) && !n;
+    $('hBadge').hidden = !n; $('hBadge').textContent = n;
+  }
+  function applyHFilters() {
+    const f = hFields();
+    if (f.from && f.to && f.from > f.to) { $('hDateErr').hidden = false; $('hf_from').focus(); return; }
+    $('hDateErr').hidden = true; hFilter = f;
+    renderHistorySummary(); layoutChips(); syncExpandAll(); syncHClear();
+  }
+  function clearHFilters() { hFilter = { comm: '', div: '', from: '', to: '' }; buildHistFilters(); renderHistorySummary(); layoutChips(); syncExpandAll(); }
+  $('hApply').addEventListener('click', applyHFilters);
+  $('hClear').addEventListener('click', clearHFilters); $('hClearEmpty').addEventListener('click', clearHFilters);
+  hBody.addEventListener('change', e => { if (e.target.matches('select')) e.target.classList.toggle('empty', !e.target.value); syncHClear(); });
+  hBody.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('select, input')) { e.preventDefault(); applyHFilters(); } });
   function toggleHistory(open) {
     $('main').classList.toggle('hist-open', open);
     $('historyPage').hidden = !open;
-    if (open) { renderHistorySummary(); layoutChips(); syncExpandAll(); }
+    if (open) { buildHistFilters(); renderHistorySummary(); layoutChips(); syncExpandAll(); }
     window.scrollTo(0, 0);
     (open ? $('histTitle') : $('historyBtn')).focus();
   }
