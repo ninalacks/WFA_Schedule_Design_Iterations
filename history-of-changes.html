@@ -431,11 +431,6 @@
       <button type="button" class="vopt" data-role="viewer" aria-pressed="true">Viewer</button>
       <button type="button" class="vopt" data-role="creator" aria-pressed="false">Creator</button>
     </div>
-    <div class="vsw" role="group" aria-label="History of changes version">
-      <span class="vlabel">History</span>
-      <button type="button" class="vopt" data-hver="1" aria-pressed="true">Version A</button>
-      <button type="button" class="vopt" data-hver="2" aria-pressed="false">Version B</button>
-    </div>
   </div>
   <div class="topright">
     <span class="who" id="who" hidden><span class="avatar" id="whoAv" aria-hidden="true"></span><span id="whoName"></span></span>
@@ -1058,18 +1053,12 @@
         body = `<dl class="hd-facts">${fact('Type', esc(c.type))}${fact('Start', esc(c.start.replace(' ', '')))}${fact('Duration', esc(fmtField('dur', c.dur).replace(/\bweeks?\b/, w => w[0].toUpperCase() + w.slice(1))))}${fact('Hours', esc(c.hours))}${fact('Core Size', esc(c.size))}${fact('Category Manager', esc(c.cm))}${fact('Process Manager', esc(c.pm))}${c.comments ? fact('Comments', esc(c.comments), 'txt') : ''}</dl>
           <div class="hd-sec"><h5>Divisions</h5>${all ? '<ul class="hchips"><li class="hchip">All Divisions</li></ul>' : pills(divLabels(c.divs), 'divisions')}</div>`;
       }
-      if (histVer === 2) {
-        return `<li class="hd-item st-${st}"${scopeAttrs(c)}><details class="hd-det"><summary class="hd-head">${CHEV}<span class="hd-chip">${c.status}</span><span class="hd-title">${esc(c.comm)} · ${esc(c.type)} · ${esc(c.start.replace(' ', ''))} · ${esc(fmtField('hours', c.hours))}</span></summary>
+      return `<li class="hd-item st-${st}"${scopeAttrs(c)}><details class="hd-det"><summary class="hd-head">${CHEV}<span class="hd-chip">${c.status}</span><span class="hd-title">${esc(c.comm)} · ${esc(c.type)} · ${esc(c.start.replace(' ', ''))} · ${esc(fmtField('hours', c.hours))}</span></summary>
           <div class="hd-body">${body}${c.notes ? `<div class="hd-notes"><h5>Internal notes</h5><p>${esc(c.notes)}</p></div>` : ''}</div></details></li>`;
-      }
-      return `<li class="hd-item st-${st}"${scopeAttrs(c)}><div class="hd-head"><span class="hd-chip">${c.status}</span><h4 class="hd-title">${esc(c.comm)} · ${esc(c.type)} · ${esc(c.start.replace(' ', ''))} · ${esc(fmtField('hours', c.hours))}</h4></div>
-        <div class="hd-body">${body}${c.notes ? `<div class="hd-notes"><h5>Internal notes</h5><p>${esc(c.notes)}</p></div>` : ''}</div></li>`;
     };
     return groups.map(label => { const list = h.changes.filter(c => c.status === label); if (!list.length) return '';
       const inner = `${CHEV}<span class="hd-count" data-n="${list.length}">${list.length}</span><span>${label}</span>`;
-      return histVer === 2
-        ? `<section class="hd-grp"><button type="button" class="hd-gbtn" data-gall aria-expanded="false">${inner}</button><ul class="hd-list">${list.map(entry).join('')}</ul></section>`
-        : `<details class="hd-grp"><summary>${inner}</summary><ul class="hd-list">${list.map(entry).join('')}</ul></details>`; }).join('');
+      return `<section class="hd-grp"><button type="button" class="hd-gbtn" data-gall aria-expanded="false">${inner}</button><ul class="hd-list">${list.map(entry).join('')}</ul></section>`; }).join('');
   }
   /* Clicking a commodity or division pill narrows the card's changes to that one and opens them. */
   function applyScope(card, kind, val) {
@@ -1089,24 +1078,17 @@
     layoutChips(); syncExpandAll();
   }
   function syncExpandAll() {
-    const v2 = histVer === 2, sel = v2 ? '.hd-det' : '.hd-grp';          // what each version expands
+    const sel = '.hd-det';
     const allOpen = els => els.length > 0 && els.every(g => g.open);
     document.querySelectorAll('#histSummary .hsc').forEach(card => {
       const b = card.querySelector('[data-hall]'), all = allOpen([...card.querySelectorAll(sel)]);
       b.setAttribute('aria-expanded', String(all)); b.querySelector('span').textContent = all ? 'Hide all details' : 'Show all details';
-      if (v2) card.querySelectorAll('[data-gall]').forEach(gb => gb.setAttribute('aria-expanded', String(allOpen([...gb.closest('.hd-grp').querySelectorAll('.hd-det')]))));
+      card.querySelectorAll('[data-gall]').forEach(gb => gb.setAttribute('aria-expanded', String(allOpen([...gb.closest('.hd-grp').querySelectorAll('.hd-det')]))));
     });
     const btn = $('histExpandAll'), all = allOpen([...document.querySelectorAll('#histSummary ' + sel)]);
     btn.textContent = all ? 'Collapse All' : 'Expand All'; btn.setAttribute('aria-pressed', String(all));
   }
   document.addEventListener('toggle', ev => { if (ev.target.closest && ev.target.closest('#histSummary')) { layoutChips(); syncExpandAll(); } }, true);   // nested <details> open
-  let histVer = 1;                            // 1 = Version A, 2 = Version B; the History button always opens Version A
-  function syncVerButtons() { document.querySelectorAll('[data-hver]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.hver === histVer))); }
-  function setHistVer(v) {
-    if (v === histVer) return;
-    histVer = v; syncVerButtons();
-    if (!$('historyPage').hidden) { renderHistorySummary(); layoutChips(); syncExpandAll(); }
-  }
   let hFilter = { comm: [], div: [], from: '', to: '' };
   function historyView() {                    // publishes (and, when scoped, the changes inside them) that match the filters
     const from = hFilter.from ? new Date(hFilter.from + 'T00:00:00') : null, to = hFilter.to ? new Date(hFilter.to + 'T23:59:59.999') : null;
@@ -1128,20 +1110,11 @@
     const view = historyView();
     $('hCount').textContent = view.length === HISTORY.length ? `Showing all ${HISTORY.length} publishes` : `Showing ${view.length} of ${HISTORY.length} publishes`;
     $('hEmpty').hidden = view.length > 0;
-    $('histSummary').dataset.ver = histVer;
+    $('histSummary').dataset.ver = 2;
     $('histSummary').innerHTML = view.map(h => {
       const total = h.added + h.modified + h.removed, all = h.divs.length === DIVS.length;
       return `<li class="hsc"><div class="hsc-top"><h2>Published <time datetime="${h.at}">${fmtWhen(h.at)}</time>${h.cur ? '<span class="hcur">Current</span>' : ''}</h2>
           <span class="hwhen">by ${esc(h.by)}</span></div>
-        ${histVer === 2 ? '' : `<div class="hsc-body">
-          <dl class="hsc-tiles">
-            <div class="hsc-tile"><dt>Changes</dt><dd>${total}</dd></div>
-          </dl>
-          <div class="hsc-secs">
-            <section><h3>Commodities affected (${h.comms.length})</h3>${pills(h.comms, 'commodities', '', 'comm')}</section>
-            <section><h3>Divisions affected (${h.divs.length})</h3>${pills(divLabels(h.divs), 'divisions', '', 'div')}</section>
-          </div>
-        </div>`}
         <div class="hsc-foot"><p class="hscope" role="status" hidden></p><button type="button" class="hdetbtn" data-hall aria-expanded="false">${CHEV}<span>Show all details</span></button>
           <div class="hd-groups">${renderDetails(h)}</div></div></li>`;
     }).join('');
@@ -1534,7 +1507,7 @@
   function toggleHistory(open) {
     $('main').classList.toggle('hist-open', open);
     $('historyPage').hidden = !open;
-    if (open) { histVer = 1; syncVerButtons(); buildHistFilters(); renderHistorySummary(); layoutChips(); syncExpandAll(); }
+    if (open) { buildHistFilters(); renderHistorySummary(); layoutChips(); syncExpandAll(); }
     window.scrollTo(0, 0);
     (open ? $('histTitle') : $('historyBtn')).focus();
   }
@@ -1758,16 +1731,15 @@
     if (e.target.closest('#historyBtn')) { toggleHistory(true); return; }
     const hm = e.target.closest('[data-hmore]');
     if (hm) { const open = hm.getAttribute('aria-expanded') !== 'true'; hm.setAttribute('aria-expanded', String(open)); hm.querySelector('span').textContent = open ? 'show less' : 'show more'; layoutChips(); return; }
-    const hvb = e.target.closest('[data-hver]'); if (hvb) { setHistVer(+hvb.dataset.hver); return; }
     const ha = e.target.closest('[data-hall]');
-    if (ha) { const open = ha.getAttribute('aria-expanded') !== 'true'; ha.closest('.hsc').querySelectorAll(histVer === 2 ? '.hd-det' : '.hd-grp').forEach(g => { g.open = open; }); layoutChips(); syncExpandAll(); return; }
+    if (ha) { const open = ha.getAttribute('aria-expanded') !== 'true'; ha.closest('.hsc').querySelectorAll('.hd-det').forEach(g => { g.open = open; }); layoutChips(); syncExpandAll(); return; }
     const pl = e.target.closest('[data-pill]');
     if (pl) { const card = pl.closest('.hsc'), same = pl.getAttribute('aria-pressed') === 'true'; applyScope(card, same ? null : pl.dataset.pill, pl.dataset.val); return; }
     const pc = e.target.closest('[data-pillclear]');
     if (pc) { const card = pc.closest('.hsc'); applyScope(card, null); const first = card.querySelector('[data-pill]'); if (first) first.focus(); return; }
     const ga = e.target.closest('[data-gall]');
     if (ga) { const open = ga.getAttribute('aria-expanded') !== 'true'; ga.closest('.hd-grp').querySelectorAll('.hd-det').forEach(d => { d.open = open; }); layoutChips(); syncExpandAll(); return; }
-    if (e.target.closest('#histExpandAll')) { const open = $('histExpandAll').getAttribute('aria-pressed') !== 'true'; document.querySelectorAll('#histSummary ' + (histVer === 2 ? '.hd-det' : '.hd-grp')).forEach(g => { g.open = open; }); layoutChips(); syncExpandAll(); return; }
+    if (e.target.closest('#histExpandAll')) { const open = $('histExpandAll').getAttribute('aria-pressed') !== 'true'; document.querySelectorAll('#histSummary .hd-det').forEach(g => { g.open = open; }); layoutChips(); syncExpandAll(); return; }
     if (e.target.closest('#historyBack')) { toggleHistory(false); return; }
     if (e.target.closest('[data-stub]')) { toast('Not part of this prototype'); return; }
     const rl = e.target.closest('[data-role]'); if (rl) { setRole(rl.dataset.role); return; }
