@@ -309,6 +309,11 @@
   .hd-det[open] > summary svg { transform: rotate(90deg); }
   .hd-det > summary:hover { filter: brightness(1.08); }
   #histSummary[data-ver="2"] .hd-list { gap: 8px; }
+  /* Version B: ribbon fills (white text) */
+  #histSummary[data-ver="2"] .hd-head { background: #0c824b; color: #fff; }
+  #histSummary[data-ver="2"] .st-modified .hd-head { background: #2874c1; }
+  #histSummary[data-ver="2"] .st-removed .hd-head { background: #b42318; }
+  #histSummary[data-ver="2"] .hd-det > summary:hover { filter: brightness(1.06); }
   #histSummary[data-ver="2"] .hsc-foot { padding-top: 12px; }
   .hd-facts { display: flex; flex-wrap: wrap; gap: 14px 40px; margin: 0; }
   .hd-facts dt { font-size: 14px; color: var(--muted); margin: 0 0 4px; }
